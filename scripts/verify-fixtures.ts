@@ -11,12 +11,17 @@ import { sessions, CURRENT_SESSION_ID, CURRENT_TARGET } from '../src/fixtures/se
 import { transcript } from '../src/fixtures/session-07-transcript.ts';
 import { confirmed } from '../src/lib/events.ts';
 import { accuracyTrend, cueTrend, isResolved, unresolvedStreak } from '../src/lib/derive.ts';
+import { validate } from '../api/extract.ts';
+import { RAW } from '../api/cached-extraction.ts';
 import type { ClinicalEvent } from '../src/types.ts';
 
 const fails: string[] = [];
-const check = (n: number, label: string, ok: boolean, detail = '') =>
+let total = 0;
+const check = (n: number, label: string, ok: boolean, detail = '') => {
+  total++;
   ok ? console.log(`  ok   ${n}. ${label}`)
      : fails.push(`${n}. ${label}${detail ? ` — ${detail}` : ''}`);
+};
 
 const history = sessions.filter(s => s.id !== CURRENT_SESSION_ID).sort((a, b) => a.index - b.index);
 const evts = (sid: string) => historicalEvents.filter(e => e.session_id === sid);
@@ -77,8 +82,30 @@ check(10, 'THE FLIP: streak 3 -> 0 and isResolved false -> true on approve',
   && unresolvedStreak(reviewed, sessions, CURRENT_TARGET) === 0,
   `streak after = ${unresolvedStreak(reviewed, sessions, CURRENT_TARGET)}`);
 
+// 11-14 guard the offline path. api/cached-extraction.ts is demo payload exactly like
+// the fixtures above are: if it drifts out of contract, `USE_CACHED_EXTRACTION=1` runs
+// a demo with missing cards, and the only place that shows up is on stage.
+const duration = transcript[transcript.length - 1].t_sec;
+const cached = validate(RAW, text, duration, CURRENT_SESSION_ID);
+const rawSpans = (RAW as { evidence?: string }[]).map(e => e.evidence ?? '');
+
+check(11, 'every cached evidence span appears verbatim in the transcript',
+  rawSpans.length > 0 && rawSpans.every(s => s && text.includes(s)),
+  rawSpans.filter(s => !s || !text.includes(s)).map(s => `"${s.slice(0, 40)}…"`).join(', '));
+
+check(12, 'cached extraction survives validation as 6-8 events',
+  cached.length >= 6 && cached.length <= 8, `got ${cached.length} of ${RAW.length}`);
+
+// Without a rejectable card the review step is ceremonial and the demo loses its point.
+const low = cached.filter(e => e.confidence < 0.7);
+check(13, 'exactly one cached card sits under 0.7 — the one the clinician rejects',
+  low.length === 1, `got ${low.length}: ${low.map(e => e.confidence).join()}`);
+
+check(14, 'SCREENING_FLAG is rejected from the extractor even with valid evidence',
+  validate([{ ...(RAW[0] as object), event_type: 'SCREENING_FLAG' }], text, duration, CURRENT_SESSION_ID).length === 0);
+
 if (fails.length) {
-  console.error(`\nFIXTURES INVALID — ${fails.length} of 10 failing:\n` + fails.map(f => `  ✗ ${f}`).join('\n'));
+  console.error(`\nFIXTURES INVALID — ${fails.length} of ${total} failing:\n` + fails.map(f => `  ✗ ${f}`).join('\n'));
   process.exit(1);
 }
-console.log('\nall 10 checks green');
+console.log(`\nall ${total} checks green`);
