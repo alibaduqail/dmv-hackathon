@@ -1,37 +1,38 @@
 export default function HistoryView() {
   return (
-    <main id="main" tabIndex={-1} className="mx-auto max-w-7xl px-5 py-10 outline-none md:px-8 md:py-14">
+    <main id="main" tabIndex={-1} className="mx-auto max-w-[92rem] px-4 py-6 outline-none md:px-8 md:py-10">
       <div className="max-w-3xl">
-        <p className="text-sm font-bold uppercase tracking-[0.16em] text-accent">Incident history</p>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">Nothing is stored yet.</h1>
-        <p className="mt-5 max-w-2xl text-lg leading-8 text-muted">
-          Ember does not save live video, replay activity, or incident records. A later milestone
-          can add structured records only after the team defines consent, retention, and deletion.
-        </p>
-
-        <section
-          aria-labelledby="empty-history-title"
-          className="mt-10 rounded-2xl border border-divider bg-panel p-6 md:p-8"
-        >
-          <div
-            aria-hidden="true"
-            className="grid size-12 place-items-center rounded-full border-2 border-divider text-xl text-muted"
-          >
-            ○
-          </div>
-          <h2 id="empty-history-title" className="mt-5 text-2xl font-bold">
-            No incident records
-          </h2>
-          <p className="mt-3 max-w-xl leading-7 text-muted">
-            Live preview tracks stop when you leave the scan, and replay frames clear with their
-            source. Ember does not record, upload, save, or identify anyone in this milestone.
+        <section aria-labelledby="history-title" className="border-b-2 border-line pb-5">
+          <p className="gutter">Incident history</p>
+          <h1 id="history-title" className="mt-2 text-xl font-bold tracking-tight md:text-2xl">
+            Nothing is stored yet.
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+            Ember does not save live video, replay activity, or incident records. A later milestone
+            can add structured records only after the team defines consent, retention, and deletion.
           </p>
-          <a
-            href="#scan"
-            className="mt-7 inline-flex min-h-11 items-center rounded-md bg-text px-5 font-bold text-canvas outline-none hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
-          >
-            Return to scan
-          </a>
+        </section>
+
+        <section aria-labelledby="empty-history-title" className="mt-6 border border-line bg-panel">
+          <div className="grid grid-cols-[3.5rem_1fr] items-center gap-x-3 border-b border-divider px-3 py-2">
+            <span className="gutter">Log</span>
+            <span className="readout text-xs text-muted">000 RECORDS · 000 FRAMES RETAINED</span>
+          </div>
+          <div className="px-4 py-6 md:px-6 md:py-8">
+            <h2 id="empty-history-title" className="text-lg font-bold uppercase tracking-wide">
+              No incident records
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
+              Live preview tracks stop when you leave the scan, and replay frames clear with their
+              source. Ember does not record, upload, save, or identify anyone in this milestone.
+            </p>
+            <a
+              href="#scan"
+              className="mt-6 inline-flex min-h-12 items-center bg-accent px-5 font-bold uppercase tracking-wider text-canvas outline-none hover:bg-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Return to scan
+            </a>
+          </div>
         </section>
       </div>
     </main>

@@ -46,9 +46,26 @@ button:disabled {
 .sim-hatch {
   background-image: repeating-linear-gradient(
     135deg,
-    transparent 0 7px,
-    color-mix(in oklab, var(--color-caution) 26%, transparent) 7px 9px
+    transparent 0 5px,
+    color-mix(in oklab, var(--color-sim) 42%, transparent) 5px 8px
   );
+}
+
+/* Instrument readouts: fixed-width digits so a changing frame count never
+   shifts the row it sits in. */
+.readout {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+
+/* The label column of the console. Uppercase, small, quiet, always the same width. */
+.gutter {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {
