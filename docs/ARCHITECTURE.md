@@ -8,7 +8,7 @@ This file owns system boundaries, trust decisions, lifecycle ownership, target m
 
 ## 1. Architectural outcome
 
-Ember has one implemented replay path, one active display-only target, and one blocked future radiometric path:
+Ember has one implemented replay path, one implemented display-only browser path with a blocked attached-device gate, and one blocked future radiometric path:
 
 ```text
 SIMULATED PATH — implemented
@@ -19,7 +19,7 @@ committed PNG manifest
 ReplayThermalSource
         │ generic frame/status callbacks
         ▼
-current ScanView state
+usePreviewSession
         ├── viewport + exact replay provenance
         ├── source status + controls
         └── “No current assessment”
@@ -28,11 +28,11 @@ Replay has no edge into deterministic assessment.
 ```
 
 ```text
-DISPLAY-ONLY UVC PATH — Phase 1D target, not yet implemented
+DISPLAY-ONLY UVC PATH — implemented; attached-device gate blocked
 
 Lepton 3.5 + PureThermal USB
     │ UVC interfaces observed
-    │ browser/colorized stream unproven until Phase 1D
+    │ intended browser stream still requires operator permission evidence
     ▼
 browser MediaDevices/getUserMedia
     │ authorize/discover → operator select → open exact input
@@ -43,7 +43,7 @@ UvcPreviewSource
     └── track/listener ownership
     │
     ▼
-preview session controller
+usePreviewSession
     ├── explicit Replay / Live preview choice
     ├── replay frame OR live MediaStream viewport union
     ├── persistent source truth
@@ -94,7 +94,7 @@ safety presenter
     └── later speech using the same canonical copy
 ```
 
-The Phase 1A evidence is `docs/HARDWARE-PROBE.md`. The deep native-bridge design remains below so a future calibrated hardware proof has a reviewed target, but no current builder may implement or claim it.
+The Phase 1A and Phase 1D browser-attempt evidence is `docs/HARDWARE-PROBE.md`. The deep native-bridge design remains below so a future calibrated hardware proof has a reviewed target, but no current builder may implement or claim it.
 
 React may know the operator-selected surface, truthful provenance, and whether a live `MediaStream` must be attached to `<video>`. It must not inspect display pixels, know USB/calibration mechanics, or pass a preview into assessment.
 
@@ -186,31 +186,24 @@ public/replay/
 scripts/
   generate-replay-assets.mjs     deterministic fixture generator
   verify-replay.ts               source-level replay checks
+  verify-uvc-preview.ts           fake MediaDevices and cleanup cases
 
 src/
   types.ts                        implemented shared contracts
   App.tsx                         hash route switch and navigation
   fixtures/replay.ts             replay manifest
   lib/thermal-source.ts           ReplayThermalSource
-  features/scan/ScanView.tsx     current replay-only composition and view
+  lib/uvc-preview-source.ts       MediaDevices, private identity, generation, tracks
+  features/scan/preview-playback-sink.ts
+                                    retained video-element attachment and cleanup
+  features/scan/usePreviewSession.ts
+                                    replay/live choice and lifecycle composition
+  features/scan/ScanView.tsx     accessible replay/live rendering and controls
   features/history/HistoryView.tsx
   styles/tokens.css
 ```
 
-### Planned Phase 1D additions
-
-```text
-src/lib/
-  uvc-preview-source.ts           MediaDevices, selected input, generation, tracks
-
-src/features/scan/
-  usePreviewSession.ts            replay/live choice and viewport surface
-
-scripts/
-  verify-uvc-preview.ts           fake MediaDevices and cleanup cases
-```
-
-The shared contract is locked before these files are created. A live `MediaStream` is not inserted into `ThermalFrame`; the viewport/session state discriminates replay image from live stream.
+The Phase 1D shared contract is implemented. A live `MediaStream` is not inserted into `ThermalFrame`; the viewport/session state discriminates replay image from live stream.
 
 ### Blocked future additions
 
@@ -242,14 +235,13 @@ Do not create blocked files without a new calibrated Phase 1A pass and an update
 - The sixth frame transitions to `ended` without another timer.
 - `stop()` cancels work, resets index, emits `idle`, and releases callbacks.
 
-Current limitations are explicit:
+Phase 1D removed the replay-only composition shortcuts:
 
-- `ScanView` directly constructs the replay source and reads the replay manifest.
-- Status and control copy is replay-specific.
-- The current loose `ThermalFrame` shape can represent invalid future source/data combinations.
-- Status changes alone do not clear a frame; the future error path therefore needs a controller.
+- `usePreviewSession` constructs both current sources and exposes one discriminated surface.
+- `ScanView` renders the session model and source-specific controls/copy.
+- Live cleanup clears the surface as well as status; a source error cannot retain a stale video.
 
-These are valid Phase 0 shortcuts, not the Phase 1D target. Phase 1D introduces explicit source composition and currentness before wiring a live display stream into the view.
+The loose replay `ThermalFrame` shape still permits invalid future source/data combinations. It remains isolated from live preview and may be hardened only with a future calibrated radiometric source.
 
 ### What replay verification proves
 
@@ -263,7 +255,7 @@ It does not prove restart, route/unmount cleanup, DOM provenance, keyboard behav
 
 This section is retained as reviewed future architecture. It is **not authorized by the current Phase 1A result**.
 
-`docs/SCHEMA.md` remains the truth for code that exists today. A future calibrated Phase 1B must revise it and `src/types.ts` together so invalid source/data combinations do not cross the analysis boundary. Phase 1D must instead add a distinct viewport/session surface for `MediaStream`.
+`docs/SCHEMA.md` remains the truth for code that exists today. A future calibrated Phase 1B must revise it and `src/types.ts` together so invalid source/data combinations do not cross the analysis boundary. Phase 1D added a distinct viewport/session surface for `MediaStream`.
 
 ### Frame discrimination
 
@@ -731,8 +723,8 @@ Prefer a frame-free live connection/status screenshot. If the submission require
 |---|---|---|
 | Replay timer/callbacks | `ReplayThermalSource` | stop, restart, unmount |
 | Preview `MediaStreamTrack`s and device/page listeners | `UvcPreviewSource` | authorize/discover completion, pause, stop, error, restart, switch, route change, hidden visibility, `pagehide`, unmount, late permission result |
-| Preview `video.srcObject` | preview session/view attachment | pause, stop, error, restart, switch, route change, hidden visibility, `pagehide`, unmount |
-| Preview permission promise/currentness | preview session generation | every new action invalidates earlier results; late returned tracks stop immediately |
+| Preview `video.srcObject` | `createPreviewPlaybackSink` | pause, stop, error, restart, switch, route change, hidden visibility, `pagehide`, unmount; retained element reference survives React ref detachment |
+| Preview permission promise/currentness | `UvcPreviewSource` generation | every new action invalidates earlier results; late returned tracks stop immediately |
 | Future WebSocket/listeners + frame-timeout watchdog | `PureThermalSource` | pause where applicable, stop, error, restart, switch, unmount |
 | Newest retained native capture/in-flight credit | native bridge | ack replacement, pause, stop, error, run change, disconnect |
 | Display `blob:` URL | `PureThermalSource` | replacement and every invalidation event |
@@ -797,7 +789,7 @@ Keep verification dependency-free and proportionate:
 |---|---|
 | current `verify:replay` | Manifest/assets, order/provenance, completion, one pause/resume path, stop cleanup |
 | planned replay-verifier extension | Emitted runtime-frame mapping and repeated start/restart |
-| planned Phase 1D verifier | Fake MediaDevices, authorize/discover cleanup, exact-device selection, late permission resolution, pause/reacquire, disconnect, switching, hidden/pagehide handling, generation rejection, track/listener cleanup |
+| current `verify:preview` | Replay camera isolation, fake MediaDevices, authorize/discover cleanup, opaque/exact-device selection, playback gate, already-ended and during-playback track races, late permission resolution, pause/reacquire, restart, disconnect/devicechange, the reusable `stop()`/generation boundary, hidden/pagehide handling, detached playback-sink cleanup, error mapping, and track/listener cleanup; it does not execute the React source-switch or router |
 | future bridge protocol verifier | Handshake, frame length/encoding, origin/version/error fixtures, credit/ack backpressure, timeout, sequence/run rejection, size ceiling, and resource-release spies |
 | future assessment verifier | Validator, clocks, connected regions, persistence/reset, expiry callback, boundaries, tie-break, replay/stale rejection, deterministic output |
 | future speech verifier | Pure formatter, dedupe, cancellation, mute, unavailable synthesizer through a fake adapter |
@@ -821,12 +813,12 @@ Synthetic numeric assessment fixtures must be generated in code and clearly labe
 - No Y16, calibration, orientation, temperature, warning, or threshold is claimed.
 - Phase 1B, Phase 1C, and assessment speech remain blocked.
 
-### Phase 1D — display-only UVC preview
+### Phase 1D — implementation complete; hardware exit gate blocked
 
-- Prove the intended browser-reported device before implementation.
-- Lock a replay-frame/live-`MediaStream` viewport union.
-- Add `UvcPreviewSource`, authorize/discover, operator selection, exact-device verification, generation-gated permission, page-hide/track cleanup, and focused verification.
-- Persist exact non-radiometric provenance and keep **“No current assessment”**.
+- The replay-frame/live-`MediaStream` union, `UvcPreviewSource`, explicit authorize/select flow, playback sink, exact-device verification, generation gate, page/track cleanup, fixed errors, and focused verifier are implemented.
+- Exact non-radiometric provenance and **“No current assessment”** persist throughout the Live-preview surface.
+- The in-app browser reached a pending camera-permission request, but its permission surface could not be presented. Ember logically invalidated that generation and would stop any late stream; no intended-device label, stream settings, playback, or camera-indicator closure was captured.
+- Replay is the submission path. The team may explicitly reopen the gate only before the 17:30 feature freeze and only by running the actual intended input through two complete playback/cleanup cycles in the operator’s demo browser and recording the new evidence.
 - Add no snapshot, recording, canvas, palette analysis, temperature, direction, warning, or speech.
 
 ### Phase 1B — future transport and session, blocked

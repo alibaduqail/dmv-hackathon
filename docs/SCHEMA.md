@@ -64,7 +64,7 @@ export type ThermalProvenance =
 
 Phase 0 renders the replay manifest label plus an exact overlay string. `live-purethermal` is reserved for a future calibrated radiometric source and is blocked by the Phase 1A result. It must not be reused for Phase 1D’s non-radiometric `MediaStream`.
 
-Phase 1D’s source-generic viewport must render exact source truth rather than derive copy from a generic live flag. Replay provenance stays visible whenever replay content is visible.
+Phase 1D’s source-generic viewport renders exact source truth rather than deriving copy from a generic live flag. Replay provenance stays visible whenever replay content is visible.
 
 ---
 
@@ -100,7 +100,7 @@ Replay frames intentionally omit `radiometricValuesC`. Their `minC` / `maxC` val
 
 The foundation interface intentionally leaves radiometry optional because the live producer does not exist yet. It is therefore not an analysis input type. Before any future radiometric analysis, introduce the discriminated live/replay variants and validated-radiometric boundary specified in `docs/ARCHITECTURE.md`; deterministic analysis must never accept this loose shape directly.
 
-A display-only UVC `MediaStream` is not a `ThermalFrame`. Phase 1D must model the viewport as a replay-frame or live-stream union instead of inventing `minC`, `maxC`, `capturedAtMs`, or `radiometricValuesC`. Add that contract here only in the same increment that implements it in `src/types.ts`.
+A display-only UVC `MediaStream` is not a `ThermalFrame`. Phase 1D models the viewport as a replay-frame or live-preview union instead of inventing `minC`, `maxC`, `capturedAtMs`, or `radiometricValuesC`.
 
 ---
 
@@ -122,9 +122,125 @@ export interface ThermalSource {
 }
 ```
 
-Replay delivery uses this interface now, but Phase 0 `ScanView` still constructs `ReplayThermalSource` and reads the manifest directly. Phase 1D introduces a session/composition boundary for replay frames versus a display-only stream. A future `PureThermalSource` may enter only after a new calibrated Phase 1A pass.
+Replay delivery uses this interface. `usePreviewSession` now constructs the replay source and composes replay frames versus a display-only stream; `ScanView` renders the resulting session model. A future `PureThermalSource` may enter only after a new calibrated Phase 1A pass.
 
 Callbacks are push-only. The source does not own React state, classification, speech, history, or persistence.
+
+---
+
+## Phase 1D preview contracts
+
+The display-only UVC path is intentionally separate from `ThermalSource`:
+
+```ts
+export type ScanSourceKind = 'replay' | 'live-preview';
+
+export interface PreviewDeviceChoice {
+  optionId: string;
+  label: string;
+}
+
+export interface PreviewDisplaySettings {
+  width?: number;
+  height?: number;
+  frameRate?: number;
+}
+
+export type ViewportSurface =
+  | {
+      kind: 'replay-frame';
+      frame: ThermalFrame;
+    }
+  | {
+      kind: 'live-preview';
+      stream: MediaStream;
+      label: string;
+      settings: PreviewDisplaySettings;
+    };
+```
+
+Rules:
+
+- `optionId` is a fresh opaque token such as `purethermal-option-1`. It is not the browser’s `deviceId`.
+- The raw `deviceId` exists only in `UvcPreviewSource`’s private in-memory map and exact `getUserMedia` constraint.
+- Only case-insensitive `PureThermal` labels become public choices. A built-in or generically labelled camera is never a fallback.
+- Duplicate matching labels fail as ambiguous instead of exposing identifiers to distinguish them.
+- A live surface is published only after exact active-track identity matches and the current `<video>.play()` promise resolves.
+- Track readiness is checked after the `ended` listener is attached and again after playback resolves; an ended track cannot publish a surface.
+- `PreviewDisplaySettings` copies only positive finite width, height, and frame rate. It never retains or exposes the browser’s settings object, `deviceId`, or `groupId`.
+- A live surface has no replay provenance, timestamp, sequence, temperature metadata, or radiometric values.
+
+### Preview state and errors
+
+```ts
+export type UvcPreviewPhase =
+  | 'authorization-required'
+  | 'authorizing'
+  | 'ready'
+  | 'acquiring'
+  | 'awaiting-playback'
+  | 'streaming'
+  | 'paused'
+  | 'error';
+
+export interface UvcPreviewState {
+  status: SourceStatus;
+  phase: UvcPreviewPhase;
+  error: PreviewError | null;
+}
+```
+
+`PreviewError.code` is one of:
+
+```text
+unsupported-context
+permission-denied
+no-matching-device
+ambiguous-device
+device-in-use
+active-device-mismatch
+playback-failed
+device-disconnected
+authorization-interrupted
+preview-unavailable
+```
+
+UI copy is fixed by code rather than forwarding raw browser exceptions. Every error selects an explicit retry action: `authorize` or `start`.
+
+### Preview lifecycle
+
+`UvcPreviewSource` implements:
+
+```ts
+authorize(): Promise<void>
+select(optionId: string): boolean
+start(): Promise<void>
+pause(): void
+resume(): Promise<void>
+restart(): Promise<void>
+stop(): void
+```
+
+The source owns a monotonically increasing generation. Every new operation invalidates the prior generation, clears the playback sink, stops active tracks, removes track/device/page listeners, and publishes no stale surface.
+
+```text
+authorization-required
+  └─ authorize → authorizing → ready | error
+
+ready + explicit selection
+  └─ start → acquiring → awaiting-playback → streaming | error
+
+streaming
+  ├─ pause → paused             (tracks stopped, element cleared)
+  ├─ restart → acquiring        (fresh exact-device request)
+  ├─ stop → ready               (selection remains session-only)
+  └─ disconnect → error         (tracks stopped, element cleared)
+
+paused
+  └─ resume → acquiring         (fresh exact-device request)
+```
+
+The authorize/discover stream is never passed to the playback sink and stops before enumeration. `visibilitychange` to hidden stops an authorization or preview request; `pagehide` stops and clears it. Source switch and route/unmount cleanup call the same reusable `stop()` path. `createPreviewPlaybackSink` retains the element it actually attached, so `srcObject` still clears if React has already nulled the public ref during unmount.
 
 ---
 
@@ -235,11 +351,13 @@ Rules:
 
 ## State that is not stored
 
-Foundation `ScanView` keeps the current frame, source status, and source instance in local runtime state. `#history` does not persist or fabricate incidents.
+`usePreviewSession` keeps the selected source, current replay/live surface, status, opaque device option, and source instances in local runtime state. The raw browser device identity remains private to `UvcPreviewSource`. All of it disappears when the route session is destroyed. `#history` does not persist or fabricate incidents.
 
 Do not add:
 
 - Frame storage.
+- Video snapshots or recording.
+- Browser device identifiers.
 - Browser local storage.
 - A database.
 - Analytics containing frames or temperatures.

@@ -14,7 +14,7 @@ Two builders. **L** = integration/build lead. **D** = second developer. One owne
 |---|---|---|---|---|
 | 0 — replay foundation | complete by 14:00 | Implemented | `EMB-P0-*` | Replay checks, lint, and build green; shell remains truthfully simulated |
 | 1A — hardware/radiometry proof | closed at 15:25 | Complete investigation; pass gate blocked | `EMB-P1A-*` | No Y16/calibration proof; no-go recorded in `docs/HARDWARE-PROBE.md` |
-| 1D — display-only UVC preview | 15:25–16:15 | Next | `EMB-P1D-*` | Intended device plays locally twice; persistent non-radiometric truth and track cleanup pass |
+| 1D — display-only UVC preview | 15:25–16:15 | Code complete; hardware gate blocked | `EMB-P1D-*` | Intended device did not play by cutoff; use Replay unless explicitly reopened and passed before freeze |
 | 1B — radiometric bridge/source | — | Blocked by 1A | `EMB-P1B-*` | Future only; do not implement at this hackathon |
 | 1C — deterministic assessment | — | Blocked by 1A/1B | `EMB-P1C-*` | Future only; no display-pixel substitute |
 | 2 — assessment speech | — | Blocked by 1C | `EMB-P2-*` | Future only; no spoken heat guidance |
@@ -123,45 +123,47 @@ No numeric assessment policy enters code in Phase 1A.
 
 **Outcome:** the intended PureThermal UVC input either plays locally with persistent non-radiometric truth and complete cleanup, or Phase 1D is marked blocked and the team keeps replay only.
 
-Before parallel coding, **D is the sole contract editor** for `src/types.ts`, `docs/SCHEMA.md`, and the matching decision entry. Lock a replay-frame versus live-`MediaStream` viewport union; never fabricate thermal metadata for a stream.
+**Current state:** contracts, adapter, session, interface, and focused verification are complete. The Codex in-app browser could not present its camera-permission surface, so the exact attached-device label/settings, two playback runs, permission denial, unplug, and camera-indicator closure remain unchecked. The 16:15 cutoff passed, so the hardware gate is blocked and Replay is the submission path. The team may explicitly reopen the gate only before 17:30 by completing and recording two actual-browser playback/cleanup runs.
+
+Before implementation, **D** served as the sole contract editor for `src/types.ts`, `docs/SCHEMA.md`, and the matching decision entry. That review locked the replay-frame versus live-`MediaStream` viewport union; no stream fabricates thermal metadata.
 
 ### Contract and device lock — D, then joint review
 
-- [ ] Confirm the two-step flow: explicit authorization unlocks labels and immediately stops its unattached temporary stream; then the operator selects and opens the exact intended input.
+- [x] Confirm the two-step flow: explicit authorization unlocks labels and immediately stops its unattached temporary stream; then the operator selects and opens the exact intended input.
 - [ ] Record its browser-reported label and actual stream settings; do not assume 160 × 120.
-- [ ] Define `UvcPreviewSource` lifecycle, generation token, error codes, session-only device choice, exact active-track verification, track ownership, `srcObject` cleanup, page-hide handling, and pause-as-stop/reacquire semantics.
-- [ ] Keep Demo replay visibly selected on load/reload; require explicit Live preview selection and Start.
-- [ ] Lock exact adjacent copy: **“Live thermal preview — non-radiometric”**, **“Display-only colorized video. No temperature or safety assessment.”**, and **“No current assessment”**.
+- [x] Define `UvcPreviewSource` lifecycle, generation token, error codes, session-only device choice, exact active-track verification, track ownership, `srcObject` cleanup, page-hide handling, and pause-as-stop/reacquire semantics.
+- [x] Keep Demo replay visibly selected on load/reload; require explicit Live preview selection and Start.
+- [x] Lock exact adjacent copy: **“Live thermal preview — non-radiometric”**, **“Display-only colorized video. No temperature or safety assessment.”**, and **“No current assessment”**.
 
 ### L — preview adapter and lifecycle verifier
 
 Owned paths: `src/lib/uvc-preview-source.ts`, focused preview contracts after handoff, `scripts/verify-uvc-preview.ts`.
 
-- [ ] Request `video` only through injected `MediaDevices`; never request audio or attach the authorize/discover stream.
-- [ ] Stop the authorize/discover tracks immediately, require operator selection, match the active track to the session-only `deviceId`, and fail explicitly on ambiguity or mismatch.
-- [ ] Implement Start, Pause/Resume reacquisition, Restart, Stop, disconnect, hidden/pagehide cleanup, and late-result rejection.
-- [ ] Stop all returned tracks, clear attachments, and remove every listener on each invalidation path.
-- [ ] Add plain Node fake-device checks for discovery cleanup, exact-device match, late permission resolution, pause/reacquire, disconnect, restart, switching, hidden/pagehide behavior, and cleanup.
+- [x] Request `video` only through injected `MediaDevices`; never request audio or attach the authorize/discover stream.
+- [x] Stop the authorize/discover tracks immediately, require operator selection, match the active track to the session-only `deviceId`, and fail explicitly on ambiguity or mismatch.
+- [x] Implement Start, Pause/Resume reacquisition, Restart, Stop, disconnect, hidden/pagehide cleanup, and late-result rejection.
+- [x] Stop all returned tracks, clear attachments, and remove every listener on each invalidation path.
+- [x] Add plain Node fake-device checks for discovery cleanup, exact-device match, already-ended/during-playback track races, late permission resolution, pause/reacquire, disconnect, restart, the reusable `stop()`/generation boundary, hidden/pagehide behavior, detached playback-sink cleanup, and track/listener cleanup. React switching and route cleanup remain code/manual evidence.
 
 ### D — session, viewport, and accessible truth
 
 Owned paths: `src/features/scan/**`, `src/styles/**`, `src/App.tsx` only if routing requires it.
 
-- [ ] Render replay frames with `<img>` and the live stream with `<video>` through a discriminated viewport surface.
-- [ ] Provide explicit Live preview selection, disclosure that authorization may briefly activate the default video input, **Authorize cameras**, an operator device chooser, Start, and Retry without ever attaching the temporary discovery stream.
-- [ ] Show actual selected-device label, exact non-radiometric copy, status word + symbol, and explicit Retry.
-- [ ] Never leave a paused/stopped/error preview frame visible.
-- [ ] Keep every control keyboard-operable, named, visibly focused, and at least 44 × 44 CSS pixels.
-- [ ] Keep the assessment panel at **“No current assessment”**.
-- [ ] Add no canvas, snapshot, recording, upload, storage, palette analysis, temperature, hotspot, direction, warning, or speech path.
+- [x] Render replay frames with `<img>` and the live stream with `<video>` through a discriminated viewport surface.
+- [x] Provide explicit Live preview selection, disclosure that authorization may briefly activate the default video input, **Authorize cameras**, an operator device chooser, Start, and Retry without ever attaching the temporary discovery stream.
+- [x] Show the playing selected-track label, exact non-radiometric copy, status word + symbol, and explicit Retry.
+- [x] Never leave a paused/stopped/error preview frame visible.
+- [x] Keep every control keyboard-operable, named, visibly focused, and at least 44 × 44 CSS pixels.
+- [x] Keep the assessment panel at **“No current assessment”**.
+- [x] Add no canvas, snapshot, recording, upload, storage, palette analysis, temperature, hotspot, direction, warning, or speech path.
 
 ### Joint exit gate
 
 - [ ] All `EMB-P1D-AC-*` scenarios pass.
 - [ ] Intended device plays twice and its camera indicator closes after Stop, route change, and page hide.
 - [ ] Permission denial and unplug clear the viewport and offer explicit recovery.
-- [ ] Preview verifier, replay verifier, lint, and build pass.
-- [ ] If the intended device cannot be selected and played by 16:15, mark Phase 1D blocked and rehearse replay only.
+- [x] Preview verifier, replay verifier, lint, and build pass.
+- [x] The intended device was not selected and played by 16:15; mark the hardware gate blocked and rehearse Replay only unless the team explicitly reopens and passes it before freeze.
 
 ---
 

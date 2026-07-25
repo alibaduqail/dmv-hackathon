@@ -6,7 +6,7 @@
 
 This report closes Phase 1A for the current hackathon hardware path. It is a no-go decision, not a successful radiometry result.
 
-The attached assembly is accepted as a Lepton 3.5 by team identification. macOS recognizes its GroupGets PureThermal USB device and binds UVC interfaces, but Ember did not obtain a Y16 frame, a calibrated conversion, or an orientation result. A potential browser colorized preview is therefore a separate display-only candidate for Phase 1D; browser playback is not yet proven. It is not evidence for temperature, hotspot, direction, severity, guidance, or a safety warning.
+The attached assembly is accepted as a Lepton 3.5 by team identification. macOS recognizes its GroupGets PureThermal USB device and binds UVC interfaces, but Ember did not obtain a Y16 frame, a calibrated conversion, or an orientation result. The implemented browser branch is therefore display-only; its attached-device gate is blocked after playback was not proven by the 16:15 cutoff. It is not evidence for temperature, hotspot, direction, severity, guidance, or a safety warning.
 
 This result is scoped to this laptop, firmware, and capture path. It does not claim that every Lepton 3.5 or PureThermal configuration lacks radiometric capability.
 
@@ -92,7 +92,7 @@ The FFmpeg command exits non-zero because no input is opened. In this run it als
 
 ---
 
-## 4. Authorized next probe
+## 4. Authorized display-only follow-up
 
 Phase 1D may test the UVC device as a browser display source. After explicit Live-preview selection, an **Authorize cameras** action may unlock labels through an unattached temporary stream that is stopped immediately. The operator must then choose the intended label; Start must open that exact session-only `deviceId` and verify the active track matches before presenting a live preview.
 
@@ -111,3 +111,27 @@ Phase 1D must not:
 - silently use a built-in camera or silently switch to replay.
 
 The full Phase 1D gate is in `docs/REQUIREMENTS.md`.
+
+---
+
+## 5. Phase 1D browser attempt — 2026-07-25
+
+The implemented app was opened at the local Vite origin in the Codex in-app browser with the PureThermal assembly still attached.
+
+Observed without capturing a frame:
+
+| Check | Result |
+|---|---|
+| `#scan` default | Demo replay selected; no permission request |
+| Explicit Live selection | Passed; selection alone requested nothing |
+| Persistent truth | Both non-radiometric statements and **“No current assessment”** visible |
+| Authorize action | Reached a pending browser `getUserMedia` permission request |
+| Permission surface | Could not be presented by this in-app browser environment |
+| Stop during pending request | UI generation invalidated; returned to authorization-required and viewport remained empty. The browser promise itself could not be cancelled; any late stream would be stopped. |
+| Browser-reported PureThermal label | Not obtained |
+| Active stream settings | Not obtained |
+| Playing local video | Not obtained |
+| Camera indicator closure | Not observable |
+| Live thermal media capture | None; only the empty app viewport and DOM state were inspected |
+
+This is an environment-scoped blocked attempt, not evidence that a normal browser cannot enumerate the UVC input. It also does not pass `EMB-P1D-AC-002` or the Phase 1D exit gate. Replay is the submission path. The team may explicitly reopen the gate only before the 17:30 feature freeze by completing `docs/SETUP.md`’s validation twice in the actual demo browser, recording only label plus sanitized display settings, and documenting the new gate decision before presenting the live-preview pitch.

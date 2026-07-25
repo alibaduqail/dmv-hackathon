@@ -16,7 +16,7 @@ The reported Node version must be 22.12 or newer. If you use `nvm`, run `nvm use
 
 | Route | Purpose |
 |---|---|
-| `#scan` | Default scan surface and simulated replay |
+| `#scan` | Default Replay surface plus explicit display-only Live preview |
 | `#history` | Honest empty state; no data is persisted |
 
 Reload both routes once. Hash routing must survive a direct reload.
@@ -25,15 +25,18 @@ Reload both routes once. Hash routing must survive a direct reload.
 
 ## Verification
 
-Run all three before handing off:
+Run all four before handing off:
 
 ```sh
 npm run verify:replay
+npm run verify:preview
 npm run lint
 npm run build
 ```
 
 `verify:replay` checks the six-frame manifest, 160 × 120 dimensions, finite metadata, order, deterministic completion, pause/resume, and cleanup. It does not validate thermal accuracy.
+
+`verify:preview` uses injected fake browser media objects. It checks that Replay requests no camera access; authorization stops its unattached temporary stream before enumeration; public choices hide device/group IDs; Start opens and verifies only the selected identity; `streaming` waits for playback; already-ended tracks and tracks ending during playback fail closed; pause/resume, restart, errors, late results, disconnect/devicechange, hidden visibility, `pagehide`, tracks, listeners, and a detached video ref clean up deterministically. It exercises the reusable source boundary and playback sink, not the React router. It does not prove that this laptop’s browser can enumerate or play the attached hardware.
 
 For manual replay verification:
 
@@ -115,58 +118,28 @@ The final FFmpeg command exits non-zero because it opens no input. In the record
 
 ---
 
-## Phase 1D browser-preview preflight
+## Phase 1D browser-preview validation
 
-Do this before implementing the preview adapter:
+The adapter and UI are implemented, but the attached-device gate is blocked after the 16:15 cutoff. Replay is the submission path. These steps may explicitly reopen the gate only if they are completed twice in the exact demo browser before the 17:30 feature freeze and the result is recorded:
 
 1. Confirm the PureThermal device still appears in the metadata probe.
-2. Start Vite with `npm run dev` and open the local origin in the browser used for the demo.
-3. In a deliberate **authorize/discover** action, acknowledge that the browser may briefly activate its default video input, request video permission without audio, never attach the temporary stream, unlock input labels, and immediately stop every temporary track.
-4. Enumerate labels in memory and have the operator choose the intended PureThermal input. Do not auto-select the first or default camera.
-5. Open that exact session-only `deviceId`, verify the active track reports the same `deviceId`, record only its label and sanitized width/height/frame-rate settings, then stop every track.
-6. If the intended label is absent or playback fails, mark Phase 1D blocked. Do not silently use the built-in webcam.
+2. Start Vite with `npm run dev`, open the printed localhost origin, and load `#scan`.
+3. Confirm **Demo replay** is selected and Start runs without a camera prompt.
+4. Select **Live preview**. Confirm selection alone requests nothing and all three truth statements are visible.
+5. Read the disclosure, activate **Authorize cameras**, and allow video access for this localhost origin. Ember requests no audio.
+6. Wait for authorization to finish. The temporary discovery stream is never displayed and its tracks stop before the chooser appears.
+7. Confirm the chooser contains only intended PureThermal-labelled inputs and no option is selected automatically. If the label is missing, generic, or duplicated, do not use a built-in camera; keep the gate blocked.
+8. Choose the intended label and Start. Ember privately requests that exact identity and rejects a mismatched active track before attachment.
+9. Confirm **Live preview playing** appears only after video starts. Record only the active label and width/height/frame-rate shown beneath the viewport.
+10. Confirm **“Live thermal preview — non-radiometric”**, **“Display-only colorized video. No temperature or safety assessment.”**, and **“No current assessment”** remain visible.
+11. Pause: the browser camera indicator must close and no stale video may remain. Resume must reacquire the selected input.
+12. Stop: the indicator must close, the viewport must clear, and the selected option may remain only for the current route session.
+13. Run Start/Stop a second time. Then Start and navigate to `#history`; the indicator must close. Repeat once with the page hidden and once by unplugging the input.
+14. Deny permission once and confirm the visible `!` error plus **Retry camera authorization**. A failure must never silently switch to Replay.
 
-Privacy-safe DevTools preflight:
+The Codex in-app browser reached step 5 but could not present its OS/browser permission surface. Ember logically invalidated that request generation and returned its UI to the authorization-required state; because a browser permission promise cannot be cancelled directly, any stream resolving later would be stopped immediately. That proves neither enumeration nor playback. Do not claim Phase 1D passed unless the team explicitly reopens the gate and completes the two required normal-browser runs before freeze.
 
-```js
-const permissionStream = await navigator.mediaDevices.getUserMedia({
-  video: true,
-  audio: false,
-});
-permissionStream.getTracks().forEach((track) => track.stop());
-
-const videoInputs = (await navigator.mediaDevices.enumerateDevices())
-  .filter((device) => device.kind === 'videoinput');
-console.table(videoInputs.map((device) => ({ label: device.label })));
-
-const intendedLabel = window.prompt(
-  'Enter the exact PureThermal input label shown above'
-);
-const pureThermalInput = videoInputs.find(
-  (device) => device.label === intendedLabel
-);
-if (!pureThermalInput) throw new Error('PureThermal video input not found');
-
-const previewStream = await navigator.mediaDevices.getUserMedia({
-  video: { deviceId: { exact: pureThermalInput.deviceId } },
-  audio: false,
-});
-const previewTrack = previewStream.getVideoTracks()[0];
-const previewSettings = previewTrack.getSettings();
-if (previewSettings.deviceId !== pureThermalInput.deviceId) {
-  previewStream.getTracks().forEach((track) => track.stop());
-  throw new Error('Selected and active video inputs do not match');
-}
-console.log({
-  label: previewTrack.label,
-  width: previewSettings.width,
-  height: previewSettings.height,
-  frameRate: previewSettings.frameRate,
-});
-previewStream.getTracks().forEach((track) => track.stop());
-```
-
-Do not print, copy, or persist a `deviceId` or `groupId`. Do not add a canvas, screenshot, `ImageCapture`, `MediaRecorder`, upload, or palette-analysis step. Even when the video uses RGB-formatted display pixels, the Lepton is not a visible-light RGB sensor and the stream is not calibrated radiometry.
+Do not open DevTools to print, copy, or persist a `deviceId` or `groupId`. Do not add a canvas, screenshot, `ImageCapture`, `MediaRecorder`, upload, or palette-analysis step. Even when the video uses RGB-formatted display pixels, the Lepton is not a visible-light RGB sensor and the stream is not calibrated radiometry.
 
 The Phase 1D UI must persist:
 

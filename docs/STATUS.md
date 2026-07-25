@@ -1,6 +1,6 @@
 # STATUS.md — where the build actually is
 
-**Current baseline:** Phase 0 is committed on the Ember integration branch. Phase 1A investigation is complete with a calibrated-radiometry **no-go**: macOS recognizes the attached GroupGets PureThermal UVC interfaces, but Ember has no Y16 frame, calibration mapping, capture orientation, or temperature evidence. Phase 1D display-only browser preview is next; radiometric bridge, assessment, and assessment speech are blocked.
+**Current baseline:** Phase 0 and the Phase 1D display-only browser implementation are committed on the Ember integration branch. Phase 1A closed with a calibrated-radiometry **no-go**. Phase 1D code and dependency-injected source-lifecycle verification are complete, but its hardware exit gate is **blocked** after the intended input did not play by the 16:15 cutoff. The Codex in-app browser reached a pending camera-permission request and could not present the permission surface, so no attached PureThermal label, stream settings, playback, or camera-indicator closure is claimed. Replay is the submission path unless the team explicitly reopens and passes the two-run gate before the 17:30 feature freeze. Radiometric bridge, assessment, and assessment speech remain blocked.
 
 This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule) or `docs/DECISIONS.md` (the running log). It says what exists, what is next, and what remains unproven.
 
@@ -15,9 +15,15 @@ This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule
 | Replay fixture | Six committed simulated PNGs, 160 × 120, with ordered finite metadata and exact non-live provenance |
 | Replay runtime | `ReplayThermalSource` supports start, pause, resume, stop, restart-by-start, deterministic completion, and timer cleanup |
 | Scan shell | `#scan` is default; high-contrast viewport, text status, source symbol, progress, and five controls |
-| Privacy shell | `#history` truthfully states that no frames or incidents are stored |
-| Accessibility foundation | Skip link, semantic landmarks, live status, text + symbol status, visible focus, 44px-or-larger controls, reduced-motion support |
+| Privacy shell | `#history` truthfully states that no live video, replay activity, or incidents are stored |
+| Accessibility foundation | Skip link, semantic landmarks, route-specific titles, post-navigation main focus, live status, text + symbol status, visible focus, 44px-or-larger controls, reduced-motion support |
 | Browser QA | Scan/history reload, replay controls, route cleanup, 390px layout, accessible names, control sizing, and console errors were manually checked; environment details must be recorded when rerun in Phase 3 |
+| Preview contract | Replay frame versus live `MediaStream` surface, opaque device choices, sanitized display settings, fixed error codes, and preview phase/state live in `src/types.ts` |
+| Preview runtime | `UvcPreviewSource` owns temporary authorization cleanup, private exact-device identity, generation gating, playback gating, pause/reacquire, disconnect handling, and listener/track cleanup |
+| Preview session | `usePreviewSession` keeps Replay selected by default, composes both sources, owns the identity-guarded `<video>` sink, and clears both surfaces on switch/route/unmount |
+| Preview interface | Explicit Live selection, authorization disclosure/action, operator chooser, accessible controls/errors/Retry, persistent non-radiometric truth, sanitized active label/settings, and no-assessment copy |
+| Preview verification | Plain Node fakes cover replay isolation, discovery cleanup, exact matching, playback gating/failure, ended-track races, errors, late results, pause/resume, restart, the `stop()`/generation boundary, disconnect/devicechange, hidden/pagehide, detached playback-sink cleanup, and zero listener/track retention; React switching/routing remains code/manual evidence |
+| Phase 1D browser attempt | DOM/source-truth/pending-request-invalidation/mobile-target checks passed; OS/browser camera permission could not be completed in the in-app browser, so the attached-device gate is blocked |
 | Documentation | Product, atomic phased requirements, safety boundary, implemented schema, target architecture, schedule, demo, setup, references, and decisions describe Ember |
 | Collaboration | Repo-local `ember-collaboration` skill, partner onboarding, lane ownership, handoff template, and verified optional agent-tool guide |
 | Phase 1A probe | macOS 26.5.2 arm64 sees GroupGets `PureThermal (fw:v1.3.0)`, vendor/product `0x1e4e/0x0100`, with UVC control/streaming interfaces owned by `UVCAssistant`; exact board revision and capture mode remain unknown |
@@ -27,11 +33,12 @@ This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule
 
 ```text
 npm run verify:replay  →  green
+npm run verify:preview →  green
 npm run lint           →  green
 npm run build          →  green
 ```
 
-Production build: 20 modules, 203.83 kB JavaScript / 63.70 kB gzip, 15.20 kB CSS / 4.04 kB gzip.
+Production build: 23 modules, 221.32 kB JavaScript / 68.00 kB gzip, 16.01 kB CSS / 4.19 kB gzip.
 
 ### What runs now
 
@@ -45,28 +52,31 @@ Production build: 20 modules, 203.83 kB JavaScript / 63.70 kB gzip, 15.20 kB CSS
 - The viewport and frame alt text both identify the sequence as simulated.
 - **“Demo replay — not live”** appears above the viewport and again over every displayed frame.
 - The assessment panel always says **“No current assessment”**. PNG pixels do not create warnings.
+- Demo replay remains selected after load, reload, and returning from `#history`; merely selecting Live preview requests no camera permission.
+- Live preview persistently shows **“Live thermal preview — non-radiometric”**, **“Display-only colorized video. No temperature or safety assessment.”**, and **“No current assessment”** before, during, and after a stream.
+- **Authorize cameras** opens and immediately stops a temporary, unattached, video-only discovery stream before publishing PureThermal-labelled choices.
+- The operator must choose an input. Start uses the private exact identity, verifies the active track identity, attaches locally, and reaches `streaming` only after `<video>.play()` resolves.
+- Pause stops tracks and clears `srcObject`; Resume reacquires. Stop, Restart, errors, switch, route change, hidden visibility, `pagehide`, unmount, and late results share the same cleanup/generation boundary.
+- Fixed visible errors include a non-color `!` symbol and explicit Retry. Raw exception messages and device/group identifiers never render.
 
-`#history` renders an empty state and explains the local, ephemeral frame policy.
+`#history` renders an empty state and explains that live video, replay activity, and incidents are not stored.
 
 ---
 
 ## 2. Next
 
-**Phase 1D · non-radiometric live preview.**
+**Phase 3 · Replay accessibility and demo QA.**
 
-The first task is still a device gate: explicitly authorize camera discovery, stop the unattached temporary stream, have the operator select the intended PureThermal-labelled input, open that session-only `deviceId`, verify the active track matches, and record only its label plus sanitized display settings. The Phase 1A shell probe did not enumerate an AVFoundation video device, so browser playback is planned—not yet claimed.
+The Phase 1D implementation work is done, but its hardware gate is blocked and Replay is the submission path. Continue Replay accessibility, offline, fallback, and presentation QA. Only if the team explicitly reopens the gate before 17:30 should an operator use the actual demo browser, complete its camera permission prompt, and:
 
-If the intended input plays:
+1. Confirm only PureThermal-labelled choices appear and no input is selected automatically.
+2. Select the intended label, Start, and record only the active label plus width/height/frame rate shown by Ember.
+3. Confirm the playing video keeps both non-radiometric statements and **“No current assessment”** visible.
+4. Stop and confirm the video clears and the browser camera indicator closes.
+5. Run the same intended input a second time, then repeat cleanup on route change and page hide.
+6. Deny permission once and unplug once to verify the visible Retry states with the actual browser.
 
-1. Add a distinct `UvcPreviewSource` around `navigator.mediaDevices`; do not reuse `PureThermalSource`.
-2. Model the viewport as either a replay frame or live `MediaStream`; do not fabricate temperature fields.
-3. Keep Demo replay selected by default. Live preview requires explicit selection and Start.
-4. Keep **“Live thermal preview — non-radiometric”** and **“Display-only colorized video. No temperature or safety assessment.”** adjacent to the video.
-5. Stop every media track and clear the viewport on discovery completion, Pause, Stop, Restart, switch, error, route change, hidden/pagehide, and unmount.
-6. Keep the assessment panel at **“No current assessment”**.
-7. Verify permission denial, wrong camera, unplug, late permission results, keyboard operation, track cleanup, replay verification, lint, and build.
-
-If the intended device cannot play by the Phase 1D cutoff, mark it blocked and run the existing labelled replay only.
+If all required runs and cleanup checks are not completed before freeze, keep Phase 1D’s hardware gate blocked and use the existing labelled Replay for the submission.
 
 ---
 
@@ -74,17 +84,16 @@ If the intended device cannot play by the Phase 1D cutoff, mark it blocked and r
 
 | # | Risk | Owner / response |
 |---|---|---|
-| 1 | Browser visibility and playback of the intended PureThermal UVC input are unproven | L — run the explicit-permission Phase 1D preflight before coding the adapter |
+| 1 | Browser visibility and playback of the intended PureThermal UVC input are unproven | Operator — grant permission in the actual demo browser, select the label, and run twice |
 | 2 | FFmpeg/AVFoundation listed no video devices in this Codex shell despite macOS UVC attachment | L — do not call the webcam path working until browser evidence identifies the exact input |
-| 3 | A display-only `MediaStream` does not fit the discrete `ThermalFrame` contract | D — lock a discriminated viewport/session contract; never fabricate `minC`/`maxC` |
+| 3 | The in-app browser left `getUserMedia` pending because its permission UI could not be presented | Operator — use the normal demo browser; logical invalidation proved only UI/generation cleanup, not cancellation or playback |
 | 4 | Radiometric Phase 1B, deterministic Phase 1C, and assessment speech are blocked | both — preserve them as future architecture, not hackathon behavior |
 | 5 | A visual-only feed does not yet deliver the core blind-user directional warning | docs/demo owner — state this limitation plainly in the pitch and submission |
-| 6 | Permission denial, camera ambiguity, unplug, late results, and media-track cleanup are unimplemented | L/D — required Phase 1D failure and lifecycle gates |
+| 6 | Permission denial, camera ambiguity, unplug, and cleanup pass with fakes but not the attached browser/device | Operator — complete the Phase 1D manual matrix before claiming it |
 | 7 | 200% zoom and VoiceOver remain unproven; replay route reload, controls, cleanup, and mobile layout were manually checked | D — Phase 3 |
 | 8 | `error` and `live-purethermal` are reserved contracts with no current producer | do not reuse `live-purethermal` for a non-radiometric stream |
 | 9 | Replay min/max values are simulated metadata | never display them as evidence or use them for classification |
-| 10 | Current `ScanView` composes Replay directly and status copy is replay-specific | expected Phase 0 shortcut; Phase 1D adds explicit source/viewport composition |
-| 11 | Automated replay checks do not cover restart, route cleanup, or DOM accessibility | extend source checks; record the Phase 3 manual environment and results |
+| 10 | Automated replay checks still do not cover restart, route cleanup, or DOM accessibility | record the remaining Phase 3 manual environment and results |
 
 ---
 
@@ -93,9 +102,9 @@ If the intended device cannot play by the Phase 1D cutoff, mark it blocked and r
 - `ReplayThermalSource.start()` is also the restart primitive. The UI exposes separate Start and Restart labels around the same fresh-run behavior.
 - The source uses one timeout. Stop and unmount call `source.stop()`; the verifier proves stop cleanup at source level.
 - Replay timestamps are logical fixture timestamps: `startedAtMs + capturedAtOffsetMs`. Pausing delays delivery but does not rewrite capture offsets.
-- `ScanView` state is intentionally local in Phase 0. A focused session hook—not a global store—is planned when the second source exists.
+- `usePreviewSession` is the focused local composition boundary; no global store exists.
 - No API, model endpoint, database, local storage, analytics, or cloud frame path exists.
-- No live frame, assessment, warning, speech, history record, notification, smart plug, or relay is claimed.
+- A display-only live stream path exists, but no successful attached-device playback, live frame capture, assessment, warning, speech, history record, notification, smart plug, or relay is claimed.
 - Display images and radiometric values are separate by contract. Replay has only the display side.
 - The attached sensor is thermal. A colorized webcam-compatible stream may contain RGB-formatted display pixels, but it is not a visible-light RGB sensor and its pixels are not temperature data.
 - Phase 1D is authorized only to display the local stream and source state. It may not snapshot, record, analyze the palette, infer heat direction, or speak guidance.

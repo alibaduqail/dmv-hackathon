@@ -1,6 +1,6 @@
 # REQUIREMENTS.md — what Ember must prove
 
-**Status:** Phase 0 is implemented. Phase 1A investigation is complete with the calibrated-radiometry gate blocked. Phase 1D is the planned display-only branch; radiometric Phases 1B, 1C, and assessment speech are blocked.
+**Status:** Phase 0 is implemented. Phase 1A investigation is complete with the calibrated-radiometry gate blocked. Phase 1D’s display-only code and focused verifier are implemented, but its attached-device/browser exit gate is blocked after missing the 16:15 cutoff. Replay is the submission path unless the team explicitly reopens and passes that gate before the 17:30 feature freeze. Radiometric Phases 1B, 1C, and assessment speech are blocked.
 
 This is the atomic, testable requirements source for Ember. It says **what** must be true and how the team accepts it. `mvp.md` owns the product claim and scope, `docs/SCHEMA.md` documents implemented contracts, `docs/ARCHITECTURE.md` owns boundaries and target placement, `docs/PLAN.md` owns timing and lane assignment, and `docs/STATUS.md` owns current evidence.
 
@@ -12,7 +12,7 @@ If a requirement conflicts with Ember’s safety rules, the safety rule wins. Re
 
 Ember’s product target is a handheld thermal companion for blind and low-vision people. A user points a Lepton 3.5 and PureThermal assembly toward a nearby surface, and a future radiometric build reports an observable higher-heat region through redundant visible guidance and matching speech.
 
-The current hackathon path does not have calibrated radiometry. It may add a live, local, colorized UVC preview for transport and lifecycle demonstration, but that preview cannot deliver temperature, hotspot, direction, safety guidance, or the core blind-user warning.
+The current hackathon path does not have calibrated radiometry. It implements a local, colorized UVC preview adapter for display transport and lifecycle demonstration, but attached-device playback is unproven and the gate is blocked. Even after a future pass, that preview cannot deliver temperature, hotspot, direction, safety guidance, or the core blind-user warning.
 
 Primary actors:
 
@@ -116,7 +116,7 @@ P0 labelled replay ────────────────────�
 | `EMB-P0-FR-007` | Functional | Replay always produces “No current assessment”. | Code review |
 | `EMB-P0-FR-008` | Functional | `#history` truthfully reports that no frames or incidents are stored. | Code + manual browser check |
 | `EMB-P0-DR-001` | Data | Manifest/frame metadata is finite, ordered, uniquely identified, correctly dimensioned, and truthfully provenanced. | `verify:replay` |
-| `EMB-P0-IR-001` | Integration | Replay implements `ThermalSource` and emits frames/status through its callbacks. Phase 0 `ScanView` still composes Replay and reads its manifest directly; Phase 1D removes that known dependency. | Typecheck/build + code review |
+| `EMB-P0-IR-001` | Integration | Replay implements `ThermalSource` and emits frames/status through its callbacks. Phase 0 originally composed Replay directly in `ScanView`; Phase 1D moved that composition into `usePreviewSession`. | Typecheck/build + code review |
 | `EMB-P0-NFR-001` | Accessibility | Controls are keyboard operable, named, visibly focused, and at least 44 × 44 CSS pixels. | Manual browser check |
 | `EMB-P0-NFR-002` | Reliability | No pending replay work survives stop or route cleanup. | Source-level automated check + manual route check |
 | `EMB-P0-NFR-003` | Verification | Replay verification, lint, and production build pass. | Named commands |
@@ -178,7 +178,7 @@ Phase 1A work is closed, but Phase 1B is not authorized. Calibrated 160 × 120 r
 
 **Purpose:** prove that the attached UVC device can supply a local, display-only browser preview while keeping source truth, permission, accessibility, privacy, and cleanup explicit.
 
-**State:** planned. The USB/UVC interfaces are present, but an actual AVFoundation or browser video device was not proven by Phase 1A.
+**State:** implementation complete; attached-device exit gate blocked after the 16:15 cutoff. The USB/UVC interfaces are present. The in-app browser reached a pending permission request, but its permission surface could not be presented. Ember logically invalidated that generation and would stop any late stream, but no exact browser label, playing stream, settings, or camera-indicator closure is claimed.
 
 ### Requirements
 
@@ -196,7 +196,7 @@ Phase 1A work is closed, but Phase 1B is not authorized. Calibrated 160 × 120 r
 | `EMB-P1D-NFR-001` | Privacy | Keep device choice session-only. Do not use local storage, analytics, screenshots, canvas extraction, `ImageCapture`, `MediaRecorder`, upload, frame logging, or persistence. |
 | `EMB-P1D-NFR-002` | Safety | The preview has no edge into frame validation, palette interpretation, hotspot extraction, assessment, guidance, warnings, or speech. The assessment value is always absent. |
 | `EMB-P1D-NFR-003` | Accessibility | Source selection, controls, status, provenance, error, and Retry are keyboard operable, visibly focused, named, and at least 44 × 44 CSS pixels; meaning remains complete without color or audio. |
-| `EMB-P1D-NFR-004` | Verification | A dependency-injected plain Node check covers authorize/discover cleanup, exact selected-device matching, late `getUserMedia` resolution, pause/reacquire, disconnect, restart, source switching, route cleanup, hidden/pagehide cleanup, and track cleanup; manual evidence verifies the selected camera label and camera indicator closes. |
+| `EMB-P1D-NFR-004` | Verification | A dependency-injected plain Node check covers authorize/discover cleanup, exact selected-device matching, already-ended and during-playback track races, late `getUserMedia` resolution, pause/reacquire, disconnect, restart, the reusable `stop()`/generation boundary, hidden/pagehide cleanup, detached playback-sink cleanup, and track cleanup. React source-switch and route cleanup require code review plus manual browser evidence; manual hardware evidence verifies the selected label and camera indicator closes. |
 
 ### Acceptance scenarios
 
@@ -210,6 +210,8 @@ Phase 1A work is closed, but Phase 1B is not authorized. Calibrated 160 × 120 r
 ### Exit gate
 
 The actual intended UVC device plays locally twice; source truth remains visible; failure and all lifecycle invalidations release tracks; the focused verifier, replay verifier, lint, and build pass; and the submission describes the preview as display-only.
+
+Current evidence: `verify:preview`, `verify:replay`, lint, and build pass. Browser DOM checks passed default Replay, explicit Live selection without permission, persistent truth, logical invalidation of a pending authorization, route reset, 390px reflow, and 44px targets. The hardware gate is blocked. It may be explicitly reopened only before the 17:30 feature freeze and only after two actual-browser playback/cleanup runs plus the remaining manual hardware checks are recorded.
 
 ---
 
@@ -516,7 +518,6 @@ These are decisions, not permission to invent values. The named phase must resol
 | Decision | Due | Owner/evidence |
 |---|---|---|
 | Exact browser-reported PureThermal input label and stream settings | Phase 1D preflight | Browser evidence; do not persist device ID |
-| Preview viewport/session contract and structured error codes | Before Phase 1D code | `src/types.ts` + `docs/SCHEMA.md` + decision |
 | WebSocket port/origin allowlist, frame timeout, clock skew, and extrema-integrity tolerance | Future reopened Phase 1B | Protocol fixtures + demo-laptop measurement |
 | Assessment policy values and tie-break | Future reopened Phase 1C | Controlled calibrated device evidence + deterministic fixtures |
 | Capture-to-assessment freshness/latency budget | Future reopened Phase 1C | Demo-laptop measurement |

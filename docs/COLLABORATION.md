@@ -18,6 +18,7 @@ git switch --track origin/codex/ember
 node --version
 npm ci
 npm run verify:replay
+npm run verify:preview
 npm run lint
 npm run build
 ```
@@ -33,6 +34,7 @@ git pull --ff-only
 node --version
 npm ci
 npm run verify:replay
+npm run verify:preview
 npm run lint
 npm run build
 ```
@@ -74,9 +76,10 @@ The committed foundation currently proves:
 - Visible replay provenance: **“Demo replay — not live”**.
 - Keyboard-sized controls, visible focus, text status, and a non-color status symbol.
 - Phase 1A is closed with calibrated radiometry blocked; `docs/HARDWARE-PROBE.md` records the attached USB/UVC evidence and missing Y16/calibration proof.
-- No browser live preview, hotspot classification, speech, model endpoint, notifications, or persisted history is implemented yet.
+- The Phase 1D browser preview adapter, session, interface, and fake-MediaDevices verification are implemented; its attached-device gate is blocked after the intended input did not play by the 16:15 cutoff.
+- No hotspot classification, speech, model endpoint, notifications, or persisted history is implemented.
 
-Do not describe a planned Phase 1D capability as present. The replay proves the interface lifecycle only. A future colorized UVC preview proves display transport only; neither proves temperature accuracy, direction, warning behavior, or touch safety.
+Describe Phase 1D precisely: the local display-only path is implemented and its source lifecycle is verified with fakes, while the attached-device gate is blocked and Replay is the submission path. React source-switch and route cleanup remain code/manual evidence, not `verify:preview` coverage. The team may explicitly reopen the hardware gate only before the 17:30 freeze by completing two actual-browser playback/cleanup runs and recording the result. Neither path proves temperature accuracy, direction, warning behavior, or touch safety.
 
 ---
 
@@ -185,6 +188,7 @@ text plus a non-color cue. Frames are ephemeral. Replay stays visibly labelled.
 Acceptance:
 <focused checks>
 npm run verify:replay
+npm run verify:preview
 npm run lint
 npm run build
 
@@ -294,6 +298,7 @@ A lane is ready to integrate when:
 
    ```sh
    npm run verify:replay
+   npm run verify:preview
    npm run lint
    npm run build
    ```

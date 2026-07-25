@@ -4,7 +4,7 @@ Acceptance criteria for the repo. If a change does not improve a beat below or p
 
 Use a heating pad, reusable hand warmer, or warm mug. No exposed burner and no invitation for a judge to touch a heated object.
 
-The radiometric assessment sequence is blocked by Phase 1A and must not be used for this hackathon build. If Phase 1D passes, run the display-only sequence below. Otherwise run the foundation/replay sequence. Never narrate a planned capability as present.
+The radiometric assessment sequence is blocked by Phase 1A and must not be used for this hackathon build. Phase 1D’s adapter/UI are implemented, but its attached-device gate is blocked after the intended input did not play by the 16:15 cutoff. Run the foundation/replay sequence for the submission. The display-only sequence below becomes available only if the team explicitly reopens the gate, completes two actual-browser playback/cleanup runs before the 17:30 feature freeze, and records the new evidence and decision. Never narrate implemented-but-unverified hardware behavior as working.
 
 | Time | Beat | Depends on |
 |---|---|---|
@@ -15,9 +15,9 @@ The radiometric assessment sequence is blocked by Phase 1A and must not be used 
 | 1:35–1:55 | Stop the preview. Show that the image clears and the camera indicator closes. | lifecycle, privacy |
 | 1:55–2:25 | Explicitly select/start the replay. Demonstrate pause/resume with **“Demo replay — not live”** visible. | replay |
 | 2:25–2:45 | Open `#history`. Show that no video, frames, or incidents are stored. | privacy |
-| 2:45–3:00 | “The live preview proves local capture; the labelled replay proves the accessible lifecycle. Calibrated directional guidance remains the next hardware milestone.” | honest close |
+| 2:45–3:00 | If the gate passed: “The live preview proves local display transport; the labelled replay proves the accessible lifecycle. Calibrated directional guidance remains the next hardware milestone.” | Phase 1D only |
 
-If Phase 1D has not passed, skip its three beats and spend that time on keyboard controls, source truth, cleanup, and the product concept. The close is a limitation statement, not a guarantee of temperature accuracy or touch safety.
+Because Phase 1D’s hardware gate is blocked, skip its three beats and spend that time on keyboard controls, source truth, cleanup, and the product concept. Use those beats only if the gate is explicitly reopened and passes before freeze. The close is a limitation statement, not a guarantee of temperature accuracy or touch safety.
 
 ---
 
@@ -55,7 +55,7 @@ Criteria 01–04 are judged on what gets uploaded, unnarrated.
 
 **README, first line is track fit:**
 
-> Ember widens independent access to everyday spaces by giving blind and low-vision people a non-contact way to locate higher heat before reaching toward it.
+> Ember is designed to widen independent access to everyday spaces by helping blind and low-vision people locate higher heat before reaching toward it.
 
 Then: problem, target user, one architecture diagram, accessible output, privacy boundary, and a plain table of what is live versus simulated.
 
@@ -75,7 +75,7 @@ Then: problem, target user, one architecture diagram, accessible output, privacy
 
 This copy describes the product target. Do not use it as the current-build pitch unless a future calibrated Phase 1A, Phase 1B, Phase 1C, and Phase 2 all pass.
 
-## The 60-second display-only pitch — only after Phase 1D passes
+## The 60-second display-only pitch — only after Phase 1D is explicitly reopened and passes
 
 > A hot pan and a cold pan can make the same sound. For someone who is blind or has low vision, checking by contact can mean finding the danger too late.
 >
@@ -101,7 +101,7 @@ Land on the live non-radiometric label and **“No current assessment”**.
 >
 > The safety boundary is already locked: only deterministic rules over validated live radiometric data may classify heat. Ember will never infer temperature from a colored image or claim an object is safe to touch.
 >
-> Our Phase 1A probe found the PureThermal USB/UVC interfaces, but not a Y16 frame or calibrated temperature mapping. The radiometric warning path is blocked, and the display-only browser preview is also omitted from this demo unless its separate gate passes.
+> Our Phase 1A probe found the PureThermal USB/UVC interfaces, but not a Y16 frame or calibrated temperature mapping. The radiometric warning path is blocked, and the display-only browser preview is also omitted from this demo unless its separate gate is explicitly reopened and passes before freeze.
 >
 > We chose a truthful fallback because accessibility starts with knowing what the system can and cannot perceive.
 
@@ -113,7 +113,7 @@ Land on the visible replay provenance and stop.
 
 - **“Can it guarantee I will not be burned?”** No. The current build makes no heat assessment. A future calibrated build may report observed higher heat and direction, but it still cannot account for every material, reflection, distance, exposure, or person.
 - **“Does AI decide what is dangerous?”** No. The current build makes no assessment. A future assessment must come from deterministic rules over validated radiometry; generated language could only explain it.
-- **“Are you storing video?”** Live video is not implemented yet. If Phase 1D passes, the app keeps its stream local, never records it, and stops all tracks on cleanup. A reviewed submission recording may externally capture only a staged non-personal demo. The replay PNGs are committed simulated fixtures, and `#history` stores nothing.
+- **“Are you storing video?”** No. The implemented preview keeps any stream local, exposes no recording path, and stops all tracks on cleanup. Actual attached-device playback remains unverified. A reviewed submission recording may externally capture only a staged non-personal demo. The replay PNGs are committed simulated fixtures, and `#history` stores nothing.
 - **“Is the replay real camera output?”** No. It is a simulated interface fixture labelled on screen at all times.
 - **“Is the preview RGB?”** It may be carried as RGB-formatted display video, but the Lepton is a thermal sensor. Those colors are not calibrated temperature values.
 - **“Does the preview locate higher heat?”** No. It is display-only. Temperature, hotspot, direction, warning, and speech remain disabled.
