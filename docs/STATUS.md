@@ -1,6 +1,6 @@
 # STATUS.md — where the build actually is
 
-**As of 13:10 EDT, hackathon day.** Phase 0 is built in the working tree. The repository is an Ember-only Vite application with a verified offline replay foundation.
+**As of 13:25 EDT, hackathon day.** Phase 0 is built in the working tree. The repository is an Ember-only Vite application with a verified offline replay foundation.
 
 This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule) or `docs/DECISIONS.md` (the running log). It says what exists, what is next, and what remains unproven.
 
@@ -19,6 +19,7 @@ This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule
 | Accessibility foundation | Skip link, semantic landmarks, live status, text + symbol status, visible focus, 44px-or-larger controls, reduced-motion support |
 | Browser QA | Scan and history reloads, replay controls, route cleanup, 390px layout, accessible names, control sizing, and console errors checked |
 | Documentation | Product, safety boundary, contracts, architecture, schedule, demo, setup, references, and decisions pivoted to Ember |
+| Collaboration | Repo-local `ember-collaboration` skill, partner onboarding, lane ownership, handoff template, and verified optional agent-tool guide |
 
 **Verification actually run:**
 
@@ -100,4 +101,4 @@ Runtime: React 19, React DOM, Tailwind v4.
 
 Build: TypeScript, Vite, React Vite plugin, oxlint, type packages.
 
-No router, state library, chart library, test framework, model SDK, database client, camera SDK, or native USB dependency is installed.
+No router, state library, chart library, test framework, model SDK, database client, camera SDK, native USB dependency, or agent runtime is installed. Contributor agent tools are optional workstation tooling documented in `docs/AGENT-TOOLS.md`; they do not enter Ember’s application dependency graph.

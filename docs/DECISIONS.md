@@ -1,6 +1,6 @@
 # DECISIONS.md
 
-Append-only, newest at the bottom. The only handoff mechanism.
+Append-only, newest at the bottom. This is the durable record for project decisions and surprises; detailed work handoffs may live in team chat or a pull request using `docs/COLLABORATION.md`.
 
 Format: `HH:MM — who — what changed — what would surprise the next person`
 
@@ -22,3 +22,5 @@ Log when you change a shape in `SCHEMA.md`, cut a demo beat, discover hardware b
 13:03 — team — Replay foundation verified: six assets, ordered completion, pause/resume, stop cleanup, lint, and production build are green; no live capture or assessment is claimed.
 13:10 — team — Browser QA passed for scan/history reloads, all replay controls, route cleanup, 390px layout, accessible names, 44px controls, and console errors; 200% zoom and VoiceOver remain for Phase 3.
 13:14 — review — Hardened source truth and routing before commit: replay provenance is a discriminated type plus runtime guard, unknown hashes use an explicit route allowlist, and the skip control focuses the current route’s main content without changing its hash.
+13:25 — team — Added a repo-local Ember collaboration skill, partner workflow, and primary-source agent-tool guide; tools remain contributor-only, one coordinator owns integration, full Ruflo initialization is deferred, and no tool may independently change safety contracts, merge, or push.
+13:35 — review — Made `.agents/skills/ember-collaboration` canonical with a Claude symlink, required Node 22.12 for native TypeScript replay verification, declared Phase 1 active, and required evidence rather than delegated authority for every hardware claim.

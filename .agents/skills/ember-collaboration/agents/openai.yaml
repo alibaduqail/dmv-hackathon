@@ -1,0 +1,5 @@
+interface:
+  display_name: "Ember Collaboration"
+  short_description: "Coordinate safe multi-agent Ember development"
+  brand_color: "#FF6B35"
+  default_prompt: "Use $ember-collaboration to coordinate this Ember task and leave a complete partner handoff."

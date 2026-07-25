@@ -69,7 +69,18 @@ Frames are ephemeral. Stop, route change, or source error invalidates “current
 ```
 AGENTS.md                         source of truth for every coding agent
 CLAUDE.md                         Claude Code-specific discipline only
+README.md                         GitHub landing and verified quick start
 mvp.md                            product and claim boundary
+
+.agents/
+  skills/
+    ember-collaboration/
+      SKILL.md                    shared multi-agent workflow
+      agents/openai.yaml          portable skill metadata
+
+.claude/
+  skills/
+    ember-collaboration           symlink to the canonical .agents skill
 
 docs/
   STATUS.md                       cold-start briefing
@@ -78,6 +89,8 @@ docs/
   PLAN.md                         the only schedule
   DEMO.md                         acceptance and pitch
   SETUP.md                        local, hardware, and offline setup
+  COLLABORATION.md                partner onboarding and lane handoffs
+  AGENT-TOOLS.md                  verified optional agent-tool guide
   REFERENCES.md                   primary sources and prior art
   DECISIONS.md                    append-only handoff
 
@@ -176,7 +189,7 @@ Unknown hashes fall back to `#scan`. A reload must preserve either named route. 
 
 `ThermalProvenance.label` renders next to the viewport and remains visible whenever its frame is visible. It cannot be hidden behind a tooltip, color, hover, or screen-reader-only class.
 
-Replay copy is exact: **“Demo replay — not live.”**
+Replay copy is exact: **“Demo replay — not live”**.
 
 ### 4.7 Classification stays pure and deterministic
 

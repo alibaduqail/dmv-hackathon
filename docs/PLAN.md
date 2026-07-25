@@ -57,7 +57,7 @@ The source contract ships before the device bridge. One UI, two transports.
 
 ### Foundation merge
 
-One owner confirms the other lane’s files before committing. Do not push in this milestone.
+One owner confirms the other lane’s files before committing. Push the verified foundation only to the shared `codex/ember` integration branch; do not push directly to `main`.
 
 ---
 

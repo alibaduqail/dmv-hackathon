@@ -1,15 +1,18 @@
 # SETUP.md
 
+Partner onboarding, branch ownership, agent prompts, and handoffs are documented in `docs/COLLABORATION.md`. Optional Ponytail, Ruflo, Impeccable, Emil Design Engineering, and complementary agent setup is documented separately in `docs/AGENT-TOOLS.md`; none is required to run Ember.
+
 ## Web app
 
-Requirements: Node.js supported by Vite 8 and npm. This machine currently uses Node `v26.5.0`.
+Requirements: Node.js 22.12 or newer and npm. `npm run verify:replay` relies on Node’s native TypeScript stripping. This machine currently uses Node `v26.5.0`.
 
 ```sh
+node --version
 npm ci
 npm run dev
 ```
 
-Open the local URL Vite prints.
+The reported Node version must be 22.12 or newer. If you use `nvm`, run `nvm use` first. Open the local URL Vite prints.
 
 | Route | Purpose |
 |---|---|
@@ -103,3 +106,19 @@ Before 17:30:
 5. If the live bridge exists, unplug the camera mid-stream and confirm the UI enters `error` without retaining a current assessment.
 
 The offline fallback is the committed replay, not a cached live frame.
+
+---
+
+## Contributor agent tooling
+
+Do not add coding-agent or design-agent packages to Ember’s `package.json`. They are optional workstation tools and must not affect `npm ci`, the offline demo, or the production bundle.
+
+Before enabling one:
+
+1. Read its verified entry in `docs/AGENT-TOOLS.md`.
+2. Pin down its job, owned files, off-limits files, and required checks.
+3. Use a short-lived branch from `codex/ember`.
+4. Inspect requested permissions and generated configuration before accepting them.
+5. Review every resulting diff; never let a tool make a safety claim or push by default.
+
+Use `.agents/skills/ember-collaboration/SKILL.md` to create the task brief and final handoff. Claude Code discovers the same skill through `.claude/skills/ember-collaboration`.
