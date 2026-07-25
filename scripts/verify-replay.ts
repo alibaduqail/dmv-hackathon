@@ -123,11 +123,63 @@ const verifyRestart = async () => {
   assert(firstRun.length === framesBeforeRestart, 'Restart left the previous run emitting frames.');
 };
 
+// EMB-P4-NFR-001: five lifecycle cycles must leave no pending timer and no live callback.
+// The replay source owns no socket, listener, or object URL, so the timer spy is the whole surface.
+const verifyLifecycleResources = async () => {
+  const realSetTimeout = globalThis.setTimeout;
+  const realClearTimeout = globalThis.clearTimeout;
+  const pending = new Set<unknown>();
+
+  globalThis.setTimeout = ((handler: (...args: unknown[]) => void, delayMs?: number, ...args: unknown[]) => {
+    const id: unknown = realSetTimeout((...fired: unknown[]) => {
+      pending.delete(id);
+      handler(...fired);
+    }, delayMs, ...args);
+    pending.add(id);
+    return id;
+  }) as unknown as typeof setTimeout;
+
+  globalThis.clearTimeout = ((id: unknown) => {
+    pending.delete(id);
+    realClearTimeout(id as Parameters<typeof clearTimeout>[0]);
+  }) as unknown as typeof clearTimeout;
+
+  try {
+    for (let cycle = 1; cycle <= 5; cycle += 1) {
+      const frames: ThermalFrame[] = [];
+      const statuses: SourceStatus[] = [];
+      const source = new ReplayThermalSource(testManifest);
+
+      source.start(frame => frames.push(frame), status => statuses.push(status));
+      await waitFor(() => frames.length === 2);
+      source.pause();
+      assert(source.status === 'paused', `Cycle ${cycle} did not pause.`);
+      source.resume();
+      await waitFor(() => frames.length >= 3);
+      source.stop();
+      // Assert before awaiting: a leaked timer would fire, self-clear, and hide the leak.
+      assert(pending.size === 0, `Cycle ${cycle} left ${pending.size} timers pending after stop.`);
+      assert(source.status === 'idle', `Cycle ${cycle} did not return to idle after stop.`);
+      await wait(25);
+
+      const framesAtStop = frames.length;
+      const statusesAtStop = statuses.length;
+      await wait(20);
+      assert(frames.length === framesAtStop, `Cycle ${cycle} emitted a frame after stop.`);
+      assert(statuses.length === statusesAtStop, `Cycle ${cycle} emitted a status after stop.`);
+    }
+  } finally {
+    globalThis.setTimeout = realSetTimeout;
+    globalThis.clearTimeout = realClearTimeout;
+  }
+};
+
 await verifyAssets();
 verifyProvenanceGuard();
 await verifyCompletion();
 await verifyPauseResume();
 await verifyStopCleanup();
 await verifyRestart();
+await verifyLifecycleResources();
 
-console.log('Replay verified: assets, order, completion, pause/resume, cleanup, and restart.');
+console.log('Replay verified: assets, order, completion, pause/resume, cleanup, restart, and five-cycle resource release.');
