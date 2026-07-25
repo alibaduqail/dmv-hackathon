@@ -1,6 +1,8 @@
-// npm run verify:fixtures — asserts the seven invariants in
-// .claude/skills/seed-fixtures/SKILL.md. If one fails, THE FIXTURE IS WRONG.
-// Never adjust derive.ts to make an assertion pass.
+// npm run verify:fixtures — the seven invariants from
+// .claude/skills/seed-fixtures/SKILL.md, plus three that guard the demo itself
+// (the opening numbers and the banner flip).
+//
+// IF ONE FAILS, THE FIXTURE IS WRONG. Never adjust derive.ts to make it pass.
 //
 // Runs on node's type stripping — no ts-node, no tsx.
 
@@ -8,7 +10,8 @@ import { historicalEvents } from '../src/fixtures/events.ts';
 import { sessions, CURRENT_SESSION_ID, CURRENT_TARGET } from '../src/fixtures/sessions.ts';
 import { transcript } from '../src/fixtures/session-07-transcript.ts';
 import { confirmed } from '../src/lib/events.ts';
-import { unresolvedStreak } from '../src/lib/derive.ts';
+import { accuracyTrend, cueTrend, isResolved, unresolvedStreak } from '../src/lib/derive.ts';
+import type { ClinicalEvent } from '../src/types.ts';
 
 const fails: string[] = [];
 const check = (n: number, label: string, ok: boolean, detail = '') =>
@@ -50,8 +53,32 @@ const totals = [...new Set(historicalEvents.flatMap(e => e.trials_total ? [e.tri
 check(7, 'trial totals are 20 in every session',
   totals.length === 1 && totals[0] === 20, `got ${totals.join() || 'none'}`);
 
+// Not in the skill's seven, but it is the demo. The record opens on "stuck at 30%,
+// needing maximum support" and the banner flips live on stage. A fixture typo that
+// breaks either one is invisible until you are in front of judges.
+const pcts = accuracyTrend(historicalEvents, sessions, CURRENT_TARGET).map(p => p.pct);
+check(8, 'accuracy trend reads 20,25,30,30,35,30',
+  pcts.join() === '20,25,30,30,35,30', `got ${pcts.join() || 'none'}`);
+
+const cues = cueTrend(historicalEvents, sessions, CURRENT_TARGET).map(c => c.cue);
+check(9, 'cue trend is tactile,tactile,visual,tactile,visual,visual — not monotonic',
+  cues.join() === 'tactile_cue,tactile_cue,visual_cue,tactile_cue,visual_cue,visual_cue',
+  `got ${cues.join() || 'none'}`);
+
+// Simulate the stage moment: the clinician approves the independent production.
+const reviewed: ClinicalEvent[] = [...historicalEvents, {
+  ...historicalEvents[0],
+  id: 'evt-sim', session_id: CURRENT_SESSION_ID, event_type: 'INDEPENDENT_PRODUCTION',
+  trials_correct: null, trials_total: null, status: 'approved',
+}];
+check(10, 'THE FLIP: streak 3 -> 0 and isResolved false -> true on approve',
+  !isResolved(historicalEvents, CURRENT_SESSION_ID, CURRENT_TARGET)
+  && isResolved(reviewed, CURRENT_SESSION_ID, CURRENT_TARGET)
+  && unresolvedStreak(reviewed, sessions, CURRENT_TARGET) === 0,
+  `streak after = ${unresolvedStreak(reviewed, sessions, CURRENT_TARGET)}`);
+
 if (fails.length) {
-  console.error(`\nFIXTURES INVALID — ${fails.length} of 7 failing:\n` + fails.map(f => `  ✗ ${f}`).join('\n'));
+  console.error(`\nFIXTURES INVALID — ${fails.length} of 10 failing:\n` + fails.map(f => `  ✗ ${f}`).join('\n'));
   process.exit(1);
 }
-console.log('\nall 7 invariants green');
+console.log('\nall 10 checks green');

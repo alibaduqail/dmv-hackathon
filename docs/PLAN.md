@@ -59,24 +59,24 @@ Two people. **L** = build lead, **D** = second dev. Check boxes as you go. Log s
 
 Read `.claude/skills/seed-fixtures/SKILL.md` first. Fixtures are not test data — they are the demo's entire payload.
 
-**L**
-- [ ] `src/fixtures/sessions.ts` — 7 sessions. 1–6 `transcript_id = null`, 7 populated, `status='pending'`
-- [ ] `src/fixtures/events.ts` — 32 historical events, **4/5/6/6/5/6** per session, all `approved` (two `edited`), `reviewed_at` non-null
-- [ ] `src/fixtures/session-07-transcript.ts` — the arc: `verbal_cue` → INDEPENDENT_PRODUCTION, 14/20
-- [ ] `supabase/migrations/001_init.sql` + seed. Tables only — no auth, no RLS, no policies
-- [ ] **commit + push**
-
-`derive.ts` and `verify:fixtures` already exist and are correct. Phase 1 is **pure data entry** — fill the four files in `src/fixtures/`, then make the script green. No wiring left to do.
+**L — done. FROZEN 10:35, 25 minutes early**
+- [x] `src/fixtures/sessions.ts` — 7 sessions, cast, `CURRENT_SESSION_ID` / `CURRENT_TARGET`
+- [x] `src/fixtures/events.ts` — 32 historical events, 4/5/6/6/5/6, two `edited`
+- [x] `src/fixtures/session-07-transcript.ts` — 84 lines, the four plants documented in its header
+- [x] `supabase/migrations/001_init.sql` — 6 tables, no auth, no RLS
+- [x] `npm run verify:fixtures` → **10/10 green**
+- [ ] `src/fixtures/thermal/` PNGs — Phase 6, capture at lunch
+- [ ] Supabase seed script — **skipped: nothing in the app reads the DB.** Say if you want the history mirrored for a README screenshot (~20 lines)
 
 **D**
 - [ ] `src/features/record/` skeleton against stubbed `derive.ts` — chart shells, session list
 - [ ] Capture thermal frames **at lunch, not at 17:00**. Vendor app, sustain 3s each, export PNG, note nostril peak + facial baseline off the app readout
 
 **Exit gate — 11:00, non-negotiable:**
-- [ ] `npm run verify:fixtures` green
-- [ ] `unresolvedStreak('/r/ initial') === 3`
-- [ ] Every session-7 `evidence` string appears **verbatim** in the transcript
-- [ ] **Log `FIXTURES FROZEN` in `DECISIONS.md`.** After this, a fixture change needs both of you to agree
+- [x] `npm run verify:fixtures` green
+- [x] `unresolvedStreak('/r/ initial') === 3`
+- [x] Every session-7 `evidence` string appears **verbatim** in the transcript
+- [x] **`FIXTURES FROZEN` logged in `DECISIONS.md`.** A fixture change now needs both of you to agree
 
 ---
 
