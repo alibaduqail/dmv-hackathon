@@ -437,7 +437,7 @@ pass, and a fake-source result cannot satisfy an attached-hardware condition.
 | `EMB-P4-FR-001` | In progress | The production Replay completed twice with a reload, but external networking remained connected. Repeat after physically disconnecting networking. |
 | `EMB-P4-FR-004` | In progress | Production `#scan` and `#history` both survived reload with local rendered asset references, but the disconnected-network condition remains untested. |
 | `EMB-P4-NFR-001` | Passed for applicable Replay scope | Five injected-scheduler cycles retained one bounded timer while active and zero after stop. Five fake preview cycles also returned tracks/listeners/attachment to zero, but this does not reopen Phase 1D. |
-| `EMB-P4-NFR-002` | In progress | `verify:replay`, `verify:preview`, lint, production build, and the local-build audit pass in the current worktree. Clean-checkout reproduction is pending. |
+| `EMB-P4-NFR-002` | Passed | Detached commit `ed19552` completed `npm ci --offline`, then passed `verify:replay`, `verify:preview`, lint, production build, and the local-build audit. |
 | `EMB-P4-NFR-003` | Pending | Product code must freeze at 17:30 and the frozen commit must be recorded. |
 | `EMB-P4-FR-006`, `FR-007` | Not applicable | Phase 1D’s attached-device gate did not pass. |
 | `EMB-P4-FR-002`, `FR-003`, `FR-005` | Not applicable | Radiometric Phase 1B did not pass. |
@@ -445,7 +445,7 @@ pass, and a fake-source result cannot satisfy an attached-hardware condition.
 | Acceptance | State | Evidence or remaining gate |
 |---|---|---|
 | `EMB-P4-AC-001` | In progress | Build references and application network APIs pass static audit; strict disconnected-network behavior remains a human run. |
-| `EMB-P4-AC-004` | In progress | All current-worktree checks are green; clean-checkout and frozen-commit evidence remain open. |
+| `EMB-P4-AC-004` | In progress | Clean-checkout checks are green at `ed19552`; Phase 3’s required manual evidence, second-builder review, and the frozen commit remain open. |
 | `EMB-P4-AC-006`, `AC-007` | Not applicable | Phase 1D’s attached-device gate did not pass. |
 | `EMB-P4-AC-002`, `AC-003` | Not applicable | Radiometric Phase 1B did not pass. |
 | `EMB-P4-AC-005` | Not applicable | Assessment speech Phase 2 did not pass. |

@@ -1,6 +1,6 @@
 # STATUS.md — where the build actually is
 
-**Current baseline:** Phase 0 and the Phase 1D display-only browser implementation are committed on the Ember integration branch. Phase 1A closed with a calibrated-radiometry **no-go**, and Phase 1D’s attached-device gate remains **blocked**. Phase 3 manual accessibility evidence is still open. Phase 4 hardening has started: deterministic five-cycle resource checks, a production-like localhost command, a built-asset/network-API audit, and two production Replay rehearsals with route reloads are green. The laptop’s external network was not disconnected during those rehearsals, so the strict offline gate is still open and no offline claim is authorized yet. Replay remains the submission path. Radiometric bridge, assessment, and assessment speech remain blocked.
+**Current baseline:** Phase 0 and the Phase 1D display-only browser implementation are committed on the Ember integration branch. Phase 1A closed with a calibrated-radiometry **no-go**, and Phase 1D’s attached-device gate remains **blocked**. Phase 3 manual accessibility evidence is still open. Phase 4 hardening has started: deterministic five-cycle resource checks, a production-like localhost command, a built-asset/network-API audit, two production Replay rehearsals with route reloads, and a clean-checkout hardening run are green. The laptop’s external network was not disconnected during the browser rehearsals, so the strict offline gate is still open and no offline claim is authorized yet. Replay remains the submission path. Radiometric bridge, assessment, and assessment speech remain blocked.
 
 This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule) or `docs/DECISIONS.md` (the running log). It says what exists, what is next, and what remains unproven.
 
@@ -31,6 +31,7 @@ This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule
 | Phase 4 resource hardening | An injected replay scheduler proves one bounded timer while active and zero timers after each of five restart/stop cycles; preview fakes prove one bounded set of applicable listeners/attachment while active and zero tracks/listeners/attachments after each of five stop cycles |
 | Phase 4 local-build audit | The production output contains three local document assets, one local stylesheet, all six replay frames, and no application use of `fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource`, or `sendBeacon` |
 | Phase 4 production rehearsal | `#scan` completed the six-frame Replay twice from the production server, including reload between runs; `#history` and `#scan` survived reload and all rendered asset references were local. External networking remained connected, so this is not the disconnected-network acceptance run |
+| Phase 4 clean checkout | Detached commit `ed19552` completed `npm ci --offline` and `npm run verify:hardening`; dependency installation and every current automated check passed without registry access |
 
 **Verification actually run:**
 
@@ -75,7 +76,7 @@ Production build: 23 modules, 221.46 kB JavaScript / 68.06 kB gzip, 16.01 kB CSS
 The Phase 1D implementation work is done, but its hardware gate is blocked and Replay is the submission path. Before freeze:
 
 1. Record the Phase 3 browser, viewport, keyboard, zoom, color/audio, and VoiceOver matrix.
-2. Run `npm run verify:hardening` from the candidate checkout.
+2. Have the second builder review or reproduce `npm run verify:hardening` from the candidate checkout.
 3. Run `npm run demo:offline`, physically disconnect external networking, complete Replay twice with a `#scan` reload between runs, and reload `#history`.
 4. Record the exact commit and a second-builder review, then freeze product code at 17:30.
 
@@ -98,7 +99,7 @@ If the disconnected-network run is not completed, keep Phase 4 open and describe
 | 9 | Replay min/max values are simulated metadata | never display them as evidence or use them for classification |
 | 10 | Replay restart and source-level cleanup are automated, but route/DOM accessibility remains browser evidence | record the remaining Phase 3 manual environment and results |
 | 11 | Production Replay and routes passed while external networking remained connected | operator — repeat the exact production rehearsal after physically disconnecting external networking |
-| 12 | The hardening suite has not yet been reproduced from a clean checkout and frozen commit | integration owner — run the clean-checkout gate, record the commit, and stop product changes at 17:30 |
+| 12 | Clean-checkout hardening passed at `ed19552`, but the final candidate is not yet reviewed or frozen | both — record the final commit and stop product changes at 17:30 |
 
 ---
 

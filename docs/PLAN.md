@@ -381,6 +381,7 @@ No architecture refactor begins in this phase.
 ### Evidence recorded at 17:01
 
 - `npm run verify:hardening` passed the replay, preview, lint, production-build, and local-build dependency checks.
+- Detached commit `ed19552` passed `npm ci --offline` followed by the complete hardening suite.
 - Replay timers and fake preview resources returned to zero after each of five cycles.
 - The production server completed Replay twice with a reload between runs; `#scan` and `#history` both survived reload and rendered only local asset references.
 - External networking remained connected during the browser rehearsal. `EMB-P4-FR-001`, `FR-004`, and `AC-001` therefore remain open until a human repeats it after physically disconnecting networking.
