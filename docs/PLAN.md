@@ -59,7 +59,7 @@ Two people. **L** = build lead, **D** = second dev. Check boxes as you go. Log s
 
 Read `.claude/skills/seed-fixtures/SKILL.md` first. Fixtures are not test data — they are the demo's entire payload.
 
-**L — done. FROZEN 10:35, 25 minutes early**
+**L — done. FROZEN 10:13, 47 minutes early**
 - [x] `src/fixtures/sessions.ts` — 7 sessions, cast, `CURRENT_SESSION_ID` / `CURRENT_TARGET`
 - [x] `src/fixtures/events.ts` — 32 historical events, 4/5/6/6/5/6, two `edited`
 - [x] `src/fixtures/session-07-transcript.ts` — 84 lines, the four plants documented in its header
