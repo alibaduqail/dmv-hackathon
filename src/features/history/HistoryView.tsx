@@ -5,8 +5,8 @@ export default function HistoryView() {
         <p className="text-sm font-bold uppercase tracking-[0.16em] text-accent">Incident history</p>
         <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">Nothing is stored yet.</h1>
         <p className="mt-5 max-w-2xl text-lg leading-8 text-muted">
-          This foundation keeps thermal frames in memory only. A later milestone can add incident
-          records after the team defines consent, retention, and deletion behavior.
+          Ember does not save live video, replay activity, or incident records. A later milestone
+          can add structured records only after the team defines consent, retention, and deletion.
         </p>
 
         <section
@@ -23,8 +23,8 @@ export default function HistoryView() {
             No incident records
           </h2>
           <p className="mt-3 max-w-xl leading-7 text-muted">
-            Replay frames disappear when playback stops or you leave the scan. Ember does not
-            upload, save, or identify anyone in this milestone.
+            Live preview tracks stop when you leave the scan, and replay frames clear with their
+            source. Ember does not record, upload, save, or identify anyone in this milestone.
           </p>
           <a
             href="#scan"

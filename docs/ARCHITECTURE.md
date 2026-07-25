@@ -8,7 +8,7 @@ This file owns system boundaries, trust decisions, lifecycle ownership, target m
 
 ## 1. Architectural outcome
 
-Ember has one source lifecycle and two truthfully different data paths:
+Ember has one implemented replay path, one implemented display-only browser path with a blocked attached-device gate, and one blocked future radiometric path:
 
 ```text
 SIMULATED PATH — implemented
@@ -19,7 +19,7 @@ committed PNG manifest
 ReplayThermalSource
         │ generic frame/status callbacks
         ▼
-current ScanView state
+usePreviewSession
         ├── viewport + exact replay provenance
         ├── source status + controls
         └── “No current assessment”
@@ -28,7 +28,34 @@ Replay has no edge into deterministic assessment.
 ```
 
 ```text
-LIVE PATH — planned, gated by hardware proof
+DISPLAY-ONLY UVC PATH — implemented; attached-device gate blocked
+
+Lepton 3.5 + PureThermal USB
+    │ UVC interfaces observed
+    │ intended browser stream still requires operator permission evidence
+    ▼
+browser MediaDevices/getUserMedia
+    │ authorize/discover → operator select → open exact input
+    ▼
+UvcPreviewSource
+    ├── SourceStatus + structured errors
+    ├── generation-gated MediaStream
+    └── track/listener ownership
+    │
+    ▼
+usePreviewSession
+    ├── explicit Replay / Live preview choice
+    ├── replay frame OR live MediaStream viewport union
+    ├── persistent source truth
+    └── “No current assessment”
+
+    ✕ no fabricated ThermalFrame
+    ✕ no canvas/snapshot/palette analysis
+    ✕ no assessment, warning, or speech
+```
+
+```text
+RADIOMETRIC ASSESSMENT PATH — future; blocked by Phase 1A result
 
 physical scene
     │ imperfect thermal observation
@@ -67,7 +94,9 @@ safety presenter
     └── later speech using the same canonical copy
 ```
 
-React may know the operator-selected source descriptor and truthful provenance. It must not know USB, calibration, binary framing, or native transport mechanics.
+The Phase 1A and Phase 1D browser-attempt evidence is `docs/HARDWARE-PROBE.md`. The deep native-bridge design remains below so a future calibrated hardware proof has a reviewed target, but no current builder may implement or claim it.
+
+React may know the operator-selected surface, truthful provenance, and whether a live `MediaStream` must be attached to `<video>`. It must not inspect display pixels, know USB/calibration mechanics, or pass a preview into assessment.
 
 ---
 
@@ -75,12 +104,13 @@ React may know the operator-selected source descriptor and truthful provenance. 
 
 1. **Fail closed.** Missing calibration, malformed data, stale input, replay input, and source failure produce no current assessment.
 2. **Separate display from evidence.** `displayUrl` is for the viewport. Only validated calibrated radiometric values can enter analysis.
-3. **One current run.** A session generation and source run ID prevent an old callback, timer, socket, expiry, or utterance from affecting a new run.
-4. **One decision authority.** Deterministic assessment code selects regions, level, direction, and guidance. Presentation code only formats that result.
-5. **Replay is infrastructure, not a counterfeit live mode.** It validates lifecycle and UI while providing a self-contained local fallback that remains visibly simulated.
-6. **Local and ephemeral by design.** No cloud tier, API, database, service worker frame cache, analytics, or incident persistence exists in the MVP.
-7. **Deep modules over scattered rules.** Source lifecycle, bridge framing, assessment, and speech each hide their internal mechanics behind a narrow interface.
-8. **No numeric safety policy before evidence.** Threshold, area, persistence, and freshness values remain unset until controlled hardware observations justify them.
+3. **A stream is not a frame.** A browser `MediaStream` uses a distinct preview surface; never invent `minC`, `maxC`, or radiometric values to fit `ThermalFrame`.
+4. **One current run.** A session generation and source run ID prevent an old callback, permission result, media track, timer, socket, expiry, or utterance from affecting a new run.
+5. **One decision authority.** Deterministic assessment code selects regions, level, direction, and guidance. Presentation code only formats that result.
+6. **Replay is infrastructure, not a counterfeit live mode.** It validates lifecycle and UI while providing a self-contained local fallback that remains visibly simulated.
+7. **Local and ephemeral by design.** No cloud tier, API, database, service worker frame cache, analytics, incident persistence, snapshot, or recording exists in the MVP.
+8. **Deep modules over scattered rules.** Replay source, UVC preview lifecycle, future bridge framing, future assessment, and future speech each hide their mechanics behind a narrow interface.
+9. **No numeric safety policy before evidence.** Threshold, area, persistence, and freshness values remain unset until controlled calibrated hardware observations justify them.
 
 ---
 
@@ -89,15 +119,17 @@ React may know the operator-selected source descriptor and truthful provenance. 
 | Boundary | Trust decision |
 |---|---|
 | Physical scene → sensor | Thermal observation is imperfect. Reflections, emissivity, distance, angle, calibration, and personal sensitivity prevent touch-safety guarantees. |
-| Firmware/Y16 → bridge | Untrusted until the exact board, firmware, capture mode, calibration mode, encoding, and orientation are reproduced. Y16 shape alone does not prove Celsius. |
-| Native bridge | Trusted to capture, convert, normalize orientation, and encode display data. It is forbidden from classification and product guidance. |
-| Loopback transport | Treat bytes as untrusted even on localhost. Validate origin, version, type, length, sequence, calibration state, and allocation size. |
-| `PureThermalSource` | Converts structurally valid protocol messages into decoded live frames, maps errors, owns temporary display URLs, enforces frame flow control/timeouts, and rejects old runs. |
-| Session controller | Owns source choice, lifecycle, currentness, controller generation, assessment expiry, reference cleanup, and analyzer reset. It is the only layer allowed to make a frame current in React. |
-| Assessment engine | Owns semantic/calibration/freshness narrowing and classification. It contains no model, DOM, speech, storage, network, or physical-control call. |
-| Safety presenter and speech | Render an existing assessment. They cannot change its level, location, policy, or guidance decision. |
+| PureThermal UVC → browser preview | Phase 1D may trust the browser only to identify a selected device and display a local stream. RGB-formatted colorized pixels are not temperature or analysis evidence. |
+| `UvcPreviewSource` | Owns authorize/discover cleanup, exact session-selected input match, permission-result currentness, `MediaStreamTrack` lifecycle, page-hide/disconnect listeners, and structured preview errors. It cannot create a `ThermalFrame` or assessment. |
+| Preview session controller | Owns explicit source choice, generation, replay-frame/live-stream viewport union, status/provenance, element detachment, and cleanup. |
+| Firmware/Y16 → bridge | **Blocked future boundary.** Untrusted until exact board, firmware, capture mode, calibration mode, encoding, and orientation are reproduced. Y16 shape alone does not prove Celsius. |
+| Native bridge | **Blocked future layer.** Would capture, convert, normalize orientation, and encode display data; it is forbidden from classification and product guidance. |
+| Loopback transport | **Blocked future layer.** Treat bytes as untrusted even on localhost. Validate origin, version, type, length, sequence, calibration state, and allocation size. |
+| `PureThermalSource` | **Blocked future layer.** Would convert structurally valid protocol messages into decoded radiometric frames and own temporary display resources. |
+| Assessment engine | **Blocked future layer.** Owns semantic/calibration/freshness narrowing and classification; no preview pixels can enter it. |
+| Safety presenter and speech | **Blocked future layers.** Render an existing validated assessment and cannot change its decision. |
 | Replay | Display/lifecycle fixture only. It is rejected from analysis at the provenance and validation gates. |
-| Logs, disk, cloud, agent memory | Outside the frame-data boundary. Live frames and radiometric arrays may not enter them. |
+| Logs, disk, cloud, agent memory | Outside the runtime frame-data boundary. Live streams, frames, screenshots, recordings, and radiometric arrays may not enter them, except for the reviewed external staged Phase 5 media artifact defined below. |
 
 ---
 
@@ -105,14 +137,16 @@ React may know the operator-selected source descriptor and truthful provenance. 
 
 | Layer | Owns | Must not own |
 |---|---|---|
-| Native bridge | USB/UVC, calibration interpretation, Celsius conversion, orientation, palette/display encoding, WebSocket framing | UI, thresholds, hotspots, speech, persistence |
-| Bridge protocol client | Handshake, message validation, binary decoding, protocol errors | React state, classification, source selection |
+| `UvcPreviewSource` | authorize/discover, `getUserMedia`, exact input match, Start/Pause/Resume/Stop, generation, page-hide handling, track and listener cleanup | Pixel extraction, `ThermalFrame`, temperature, policy, warning, speech, persistence |
+| Preview session controller | Explicit source choice, viewport union, current status/provenance, media-element detachment, stale-result rejection | Device heuristics, pixel analysis, fabricated metadata |
 | `ThermalSource` adapters | Start/pause/resume/stop, frame delivery, status mapping, source resource cleanup | DOM, policy, speech, history |
-| Session controller | Active source, generation/run identity, frame/status snapshot, invalidation, assessment expiry, analyzer reset | USB details, binary parsing, threshold implementation |
-| Assessment engine | Semantic validity gate, region extraction, persistence, deterministic selection and spatial mapping | Generated language, DOM, speech, hardware action |
-| Safety presenter | Canonical visible/speech-ready copy and symbol from a structured assessment | Classification, thresholds, arbitrary free-form warnings |
-| `ScanView` | Render controller snapshot and invoke named controller actions | Construct sources, parse manifests/protocols, retain stale state |
-| Speech renderer | Feature detection, mute, dedupe, rate limit, cancel, repeat | Assessment decisions or visual completeness |
+| `ScanView` | Render replay `<img>` or live `<video>`, exact provenance/status, and named controller actions | Construct sources, select an arbitrary camera, analyze pixels, retain stale state |
+| Future native bridge | USB/Y16, calibration interpretation, Celsius conversion, orientation, display encoding, WebSocket framing | UI, thresholds, hotspots, speech, persistence |
+| Future bridge client | Handshake, message validation, binary decoding, protocol errors | React state, classification, source selection |
+| Future radiometric session | Active source, run identity, frame currentness, assessment expiry, analyzer reset | USB details, binary parsing, threshold implementation |
+| Future assessment engine | Semantic validity gate, region extraction, persistence, deterministic selection and spatial mapping | Preview pixels, generated language, DOM, speech, hardware action |
+| Future safety presenter | Canonical visible/speech-ready copy and symbol from a structured assessment | Classification, thresholds, arbitrary free-form warnings |
+| Future speech renderer | Feature detection, mute, dedupe, rate limit, cancel, repeat | Assessment decisions or visual completeness |
 | `#history` | Honest privacy/empty state | Frames, fabricated incidents, automatic persistence |
 
 ---
@@ -134,6 +168,7 @@ mvp.md                            product claim and scope
 
 docs/
   STATUS.md                       current evidence and blockers
+  HARDWARE-PROBE.md               Phase 1A privacy-safe no-go evidence
   REQUIREMENTS.md                 atomic phased requirements and acceptance
   ARCHITECTURE.md                 this file
   SCHEMA.md                       implemented TypeScript contracts
@@ -151,43 +186,40 @@ public/replay/
 scripts/
   generate-replay-assets.mjs     deterministic fixture generator
   verify-replay.ts               source-level replay checks
+  verify-uvc-preview.ts           fake MediaDevices and cleanup cases
 
 src/
   types.ts                        implemented shared contracts
   App.tsx                         hash route switch and navigation
   fixtures/replay.ts             replay manifest
   lib/thermal-source.ts           ReplayThermalSource
-  features/scan/ScanView.tsx     current replay-only composition and view
+  lib/uvc-preview-source.ts       MediaDevices, private identity, generation, tracks
+  features/scan/preview-playback-sink.ts
+                                    retained video-element attachment and cleanup
+  features/scan/usePreviewSession.ts
+                                    replay/live choice and lifecycle composition
+  features/scan/ScanView.tsx     accessible replay/live rendering and controls
   features/history/HistoryView.tsx
   styles/tokens.css
 ```
 
-### Planned additions by phase
+The Phase 1D shared contract is implemented. A live `MediaStream` is not inserted into `ThermalFrame`; the viewport/session state discriminates replay image from live stream.
+
+### Blocked future additions
 
 ```text
-native/
-  purethermal-bridge/
-    README.md                     exact board/firmware/probe/launch evidence
-    <probe and bridge files>      language selected only after Phase 1A
-
-src/lib/
-  purethermal-source.ts           public live ThermalSource adapter
-  purethermal/
-    bridge-protocol.ts            control and binary frame validation
-  thermal-assessment.ts           deep deterministic assessment module
-  safety-presentation.ts          canonical assessment formatter
-  speech-renderer.ts              Phase 2 browser speech adapter
-
-src/features/scan/
-  useThermalSession.ts            composition, lifecycle, source selection
-
-scripts/
-  verify-bridge-protocol.ts       protocol fixtures and failure cases
-  verify-thermal-assessment.ts    generated numeric grids; no replay PNGs
-  verify-speech-renderer.ts       fake synthesizer and cancellation checks
+native/purethermal-bridge/**      calibrated capture and loopback producer
+src/lib/purethermal-source.ts     radiometric live ThermalSource
+src/lib/purethermal/**            bridge protocol
+src/lib/thermal-assessment.ts     deterministic assessment
+src/lib/safety-presentation.ts    assessment formatter
+src/lib/speech-renderer.ts        assessment speech
+scripts/verify-bridge-protocol.ts
+scripts/verify-thermal-assessment.ts
+scripts/verify-speech-renderer.ts
 ```
 
-Do not create these files before their phase authorizes them. Keep the existing replay implementation stable; a file move is not required to add the live sibling.
+Do not create blocked files without a new calibrated Phase 1A pass and an updated decision. Keep the existing replay implementation stable; a file move is not required to add Phase 1D.
 
 ---
 
@@ -203,14 +235,13 @@ Do not create these files before their phase authorizes them. Keep the existing 
 - The sixth frame transitions to `ended` without another timer.
 - `stop()` cancels work, resets index, emits `idle`, and releases callbacks.
 
-Current limitations are explicit:
+Phase 1D removed the replay-only composition shortcuts:
 
-- `ScanView` directly constructs the replay source and reads the replay manifest.
-- Status and control copy is replay-specific.
-- The current loose `ThermalFrame` shape can represent invalid future source/data combinations.
-- Status changes alone do not clear a frame; the future error path therefore needs a controller.
+- `usePreviewSession` constructs both current sources and exposes one discriminated surface.
+- `ScanView` renders the session model and source-specific controls/copy.
+- Live cleanup clears the surface as well as status; a source error cannot retain a stale video.
 
-These are valid Phase 0 shortcuts, not the Phase 1 target. Phase 1B introduces composition and currentness before wiring Live into the view.
+The loose replay `ThermalFrame` shape still permits invalid future source/data combinations. It remains isolated from live preview and may be hardened only with a future calibrated radiometric source.
 
 ### What replay verification proves
 
@@ -220,9 +251,11 @@ It does not prove restart, route/unmount cleanup, DOM provenance, keyboard behav
 
 ---
 
-## 7. Target source and frame contracts
+## 7. Blocked future radiometric source and frame contracts
 
-`docs/SCHEMA.md` remains the truth for code that exists today. Before Phase 1B integration, revise it and `src/types.ts` together so invalid source/data combinations do not cross the analysis boundary.
+This section is retained as reviewed future architecture. It is **not authorized by the current Phase 1A result**.
+
+`docs/SCHEMA.md` remains the truth for code that exists today. A future calibrated Phase 1B must revise it and `src/types.ts` together so invalid source/data combinations do not cross the analysis boundary. Phase 1D added a distinct viewport/session surface for `MediaStream`.
 
 ### Frame discrimination
 
@@ -328,11 +361,13 @@ Error messages are user-safe and contain no frame payload or temperature array.
 
 ---
 
-## 8. Native bridge and protocol
+## 8. Blocked future native bridge and protocol
 
 ### Hardware probe before language choice
 
-Do not select the bridge language/library until Phase 1A reproduces:
+The 2026-07-25 Phase 1A probe did not meet this gate. No bridge language is selected and no native bridge is authorized. `docs/HARDWARE-PROBE.md` records the UVC metadata and missing frame/calibration evidence.
+
+In a future reopened Phase 1A, do not select the bridge language/library until it reproduces:
 
 1. Exact PureThermal board revision.
 2. Firmware and USB identity.
@@ -452,7 +487,7 @@ The live demo topology is local HTTP plus loopback WebSocket unless the bridge s
 
 ---
 
-## 9. Thermal session controller
+## 9. Blocked future radiometric session controller
 
 Phase 1B moves callback wiring and source composition out of `ScanView` into `useThermalSession`.
 
@@ -526,7 +561,7 @@ No non-streaming live state may retain a current assessment.
 
 ---
 
-## 10. Deterministic assessment engine
+## 10. Blocked future deterministic assessment engine
 
 Expose one deep module:
 
@@ -618,7 +653,7 @@ No current assessment is represented as `null`, not as a `ThermalAssessment` wit
 
 ---
 
-## 11. Safety presentation and speech
+## 11. Blocked future safety presentation and assessment speech
 
 Assessment and copy have one path:
 
@@ -687,7 +722,10 @@ Prefer a frame-free live connection/status screenshot. If the submission require
 | Resource | Owner | Release events |
 |---|---|---|
 | Replay timer/callbacks | `ReplayThermalSource` | stop, restart, unmount |
-| WebSocket/listeners + frame-timeout watchdog | `PureThermalSource` | pause where applicable, stop, error, restart, switch, unmount |
+| Preview `MediaStreamTrack`s and device/page listeners | `UvcPreviewSource` | authorize/discover completion, pause, stop, error, restart, switch, route change, hidden visibility, `pagehide`, unmount, late permission result |
+| Preview `video.srcObject` | `createPreviewPlaybackSink` | pause, stop, error, restart, switch, route change, hidden visibility, `pagehide`, unmount; retained element reference survives React ref detachment |
+| Preview permission promise/currentness | `UvcPreviewSource` generation | every new action invalidates earlier results; late returned tracks stop immediately |
+| Future WebSocket/listeners + frame-timeout watchdog | `PureThermalSource` | pause where applicable, stop, error, restart, switch, unmount |
 | Newest retained native capture/in-flight credit | native bridge | ack replacement, pause, stop, error, run change, disconnect |
 | Display `blob:` URL | `PureThermalSource` | replacement and every invalidation event |
 | Radiometric buffer | `PureThermalSource`; session borrows current read-only reference | replacement and every invalidation event |
@@ -705,7 +743,31 @@ Prefer a frame-free live connection/status screenshot. If the submission require
 browser ← local Vite or production static assets
 ```
 
-### Live demo
+### Phase 1D display-only demo
+
+```text
+PureThermal USB
+      ↓ colorized UVC
+browser MediaDevices
+      ↓ MediaStream
+local <video> viewport
+
+      ✕ no assessment path
+```
+
+There is no cloud service, database, authentication system, model endpoint, or frame store.
+
+Use one local web process:
+
+1. Start the local production-like web build.
+2. Open `#scan`.
+3. Select Live preview deliberately.
+4. Grant camera permission.
+5. Confirm the browser-reported selected input before status becomes streaming.
+
+The exact browser preflight is in `docs/SETUP.md`. There is no native bridge command for the current build.
+
+### Future radiometric demo — blocked
 
 ```text
 PureThermal USB
@@ -715,16 +777,7 @@ native bridge on 127.0.0.1
 browser served locally
 ```
 
-There is no cloud service, database, authentication system, model endpoint, or frame store.
-
-Use two explicit local processes for the hackathon rather than adding a supervisor:
-
-1. Start the verified native bridge.
-2. Start the local production-like web build.
-3. Open `#scan`.
-4. Select Live deliberately.
-
-The exact bridge command enters `docs/SETUP.md` only after Phase 1A selects and reproduces the capture path.
+This topology may return only after a new calibrated Phase 1A pass.
 
 ---
 
@@ -736,11 +789,12 @@ Keep verification dependency-free and proportionate:
 |---|---|
 | current `verify:replay` | Manifest/assets, order/provenance, completion, one pause/resume path, stop cleanup |
 | planned replay-verifier extension | Emitted runtime-frame mapping and repeated start/restart |
+| current `verify:preview` | Replay camera isolation, fake MediaDevices, authorize/discover cleanup, opaque/exact-device selection, playback gate, already-ended and during-playback track races, late permission resolution, pause/reacquire, restart, disconnect/devicechange, the reusable `stop()`/generation boundary, hidden/pagehide handling, detached playback-sink cleanup, error mapping, and track/listener cleanup; it does not execute the React source-switch or router |
 | future bridge protocol verifier | Handshake, frame length/encoding, origin/version/error fixtures, credit/ack backpressure, timeout, sequence/run rejection, size ceiling, and resource-release spies |
 | future assessment verifier | Validator, clocks, connected regions, persistence/reset, expiry callback, boundaries, tie-break, replay/stale rejection, deterministic output |
 | future speech verifier | Pure formatter, dedupe, cancellation, mute, unavailable synthesizer through a fake adapter |
 | lint + build | Static integration and production compilation |
-| manual QA record | Hash reload, keyboard/focus/target size, VoiceOver, live regions, 200% zoom, narrow reflow, device unplug, offline run |
+| manual QA record | Hash reload, keyboard/focus/target size, VoiceOver, live regions, 200% zoom, narrow reflow, exact selected device, permission denial, camera indicator/track cleanup, device unplug, offline run |
 
 Synthetic numeric assessment fixtures must be generated in code and clearly labelled. They are not the six replay PNGs and never appear as a live demo result.
 
@@ -753,20 +807,28 @@ Synthetic numeric assessment fixtures must be generated in code and clearly labe
 - Keep replay source, manifest, accessible shell, truthful history, and checks stable.
 - Correct documentation/code drift without implying future features exist.
 
-### Phase 1A — hardware proof
+### Phase 1A — investigation complete; calibrated gate blocked
 
-- Add native probe/readme only after exact hardware inspection.
-- Update setup, status, and decision evidence.
-- Make no React warning or threshold change.
+- `docs/HARDWARE-PROBE.md` records USB/UVC presence and every missing radiometric field.
+- No Y16, calibration, orientation, temperature, warning, or threshold is claimed.
+- Phase 1B, Phase 1C, and assessment speech remain blocked.
 
-### Phase 1B — transport and session
+### Phase 1D — implementation complete; hardware exit gate blocked
+
+- The replay-frame/live-`MediaStream` union, `UvcPreviewSource`, explicit authorize/select flow, playback sink, exact-device verification, generation gate, page/track cleanup, fixed errors, and focused verifier are implemented.
+- Exact non-radiometric provenance and **“No current assessment”** persist throughout the Live-preview surface.
+- The in-app browser reached a pending camera-permission request, but its permission surface could not be presented. Ember logically invalidated that generation and would stop any late stream; no intended-device label, stream settings, playback, or camera-indicator closure was captured.
+- Replay is the submission path. The team may explicitly reopen the gate only before the 17:30 feature freeze and only by running the actual intended input through two complete playback/cleanup cycles in the operator’s demo browser and recording the new evidence.
+- Add no snapshot, recording, canvas, palette analysis, temperature, direction, warning, or speech.
+
+### Phase 1B — future transport and session, blocked
 
 - Lock valid WebSocket subprotocol, credit/ack flow control, decoded-frame/currentness contracts, structured errors, clocks/timeouts, and pause semantics.
 - Add bridge protocol client, `PureThermalSource`, and `useThermalSession`.
 - Add explicit Live / Demo replay choice and generic source copy.
 - Clear stale frame/assessment on every invalidation.
 
-### Phase 1C — deterministic assessment
+### Phase 1C — future deterministic assessment, blocked
 
 - Lock a hardware-derived policy.
 - Add the deep assessment engine and Node verifier.
@@ -774,7 +836,7 @@ Synthetic numeric assessment fixtures must be generated in code and clearly labe
 - Add canonical safety presentation and visible assessment UI.
 - Do not classify replay.
 
-### Phase 2 — speech
+### Phase 2 — future assessment speech, blocked
 
 - Add the speech renderer and controls.
 - Verify copy parity, cancellation, dedupe, mute, and failure.
@@ -788,7 +850,7 @@ Synthetic numeric assessment fixtures must be generated in code and clearly labe
 
 ### Phase 4 — hardening
 
-- Exercise bridge absence, device unplug, calibration failure, malformed/stale/out-of-order frames, hidden tab, TTS failure, source switching, and repeated offline runs.
+- Exercise applicable completed paths. For Phase 1D: permission denial, wrong/missing device, unplug, late results, hidden tab, source switching, track cleanup, and repeated offline runs.
 
 ### Phase 5 — packaging
 
@@ -801,20 +863,24 @@ Synthetic numeric assessment fixtures must be generated in code and clearly labe
 ## 16. Landmines
 
 1. A colored UVC preview is not radiometry.
-2. Raw Y16 counts are not necessarily calibrated Celsius.
-3. Mirrored display and radiometric orientation create incorrect directional guidance.
-4. Replay min/max values are simulated and cannot tune policy.
-5. A loose optional-radiometry frame type permits source-truth mistakes.
-6. A status-only error callback can leave a stale frame visible.
-7. `setInterval` or an unbounded socket queue creates stale delivery.
-8. Restarted runs can reuse frame IDs; run identity is mandatory.
-9. Pure per-frame analysis alone cannot provide persistence; use a pure reducer with explicit reset state.
-10. Free-form presentation messages can diverge from deterministic assessment.
-11. Browser speech can be unavailable or duplicate screen-reader announcements.
-12. A public HTTPS page may not be able to open an insecure local WebSocket.
-13. `public` assets use root URLs; never turn a bridge frame into a remote URL.
-14. Do not add persistence to make `#history` look finished.
-15. Do not install a runtime dependency to solve a contributor-tool or orchestration problem.
+2. RGB-formatted display video does not make the Lepton a visible-light RGB sensor.
+3. Never fabricate `ThermalFrame` temperature fields for a `MediaStream`.
+4. A late `getUserMedia` promise can revive a stopped session unless generation-gated and immediately cleaned up.
+5. A paused `<video>` can leave a stale frame visible; Phase 1D pause stops tracks and clears `srcObject`.
+6. Raw Y16 counts are not necessarily calibrated Celsius.
+7. Mirrored display and radiometric orientation create incorrect directional guidance.
+8. Replay min/max values are simulated and cannot tune policy.
+9. A loose optional-radiometry frame type permits source-truth mistakes.
+10. A status-only error callback can leave a stale frame visible.
+11. `setInterval` or an unbounded socket queue creates stale delivery.
+12. Restarted runs can reuse frame IDs; run identity is mandatory.
+13. Pure per-frame analysis alone cannot provide persistence; use a pure reducer with explicit reset state.
+14. Free-form presentation messages can diverge from deterministic assessment.
+15. Browser speech can be unavailable or duplicate screen-reader announcements.
+16. A public HTTPS page may not be able to open an insecure local WebSocket.
+17. `public` assets use root URLs; never turn a bridge frame into a remote URL.
+18. Do not add persistence to make `#history` look finished.
+19. Do not install a runtime dependency to solve a contributor-tool or orchestration problem.
 
 ---
 
@@ -823,11 +889,12 @@ Synthetic numeric assessment fixtures must be generated in code and clearly labe
 | Surface | Done when |
 |---|---|
 | Replay foundation | Source-level checks pass; browser evidence is scoped accurately; replay never assesses |
-| Hardware gate | Exact device/calibration/orientation is reproduced without persisting a live frame |
-| Bridge | One validated live frame crosses a versioned loopback protocol; disconnect is explicit and private |
-| Source integration | Live and replay share lifecycle through the session controller; switching is deliberate; stale callbacks fail |
-| Assessment | Only validated live radiometry reaches a deterministic, resettable engine with a locked policy |
-| Presentation | One structured result creates matching visible and speech-ready copy without a touch-safety claim |
+| Phase 1A decision | USB/UVC observations and every missing radiometric field are explicit; downstream radiometric gates are blocked |
+| Phase 1D preview | Exact selected UVC input plays locally; provenance persists; stop/error/switch/route cleanup releases every track; no analysis path exists |
+| Future bridge | Only after a new Phase 1A pass: one validated live frame crosses a versioned loopback protocol |
+| Future source integration | Only after a new Phase 1A pass: radiometric live and replay lifecycle share a controller without stale callbacks |
+| Future assessment | Only validated live radiometry reaches a deterministic, resettable engine with a locked policy |
+| Future presentation | One validated structured result creates matching visible and speech-ready copy without a touch-safety claim |
 | Accessibility | Text + symbol remains complete without color/speech; manual matrix is recorded |
 | Whole demo | Every claimed path runs twice offline; replay remains an honest independent fallback |
 

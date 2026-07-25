@@ -13,10 +13,11 @@ Two builders. **L** = integration/build lead. **D** = second developer. One owne
 | Phase | Normal-path window | State | Requirement scope | Exit gate |
 |---|---|---|---|---|
 | 0 — replay foundation | complete by 14:00 | Implemented | `EMB-P0-*` | Replay checks, lint, and build green; shell remains truthfully simulated |
-| 1A — hardware/radiometry proof | 14:00–14:30 | Next | `EMB-P1A-*` | Exact board/firmware plus calibrated 160 × 120 radiometry reproduced outside React |
-| 1B — bridge/source integration | 14:30–15:00 | Gated by 1A | `EMB-P1B-*` | One live frame crosses a versioned loopback source; disconnect and switching are correct |
-| 1C — deterministic assessment | 15:00–15:30 | Gated by 1B | `EMB-P1C-*` | Hardware-validated policy yields one stable structured live assessment |
-| 2 — spoken interaction | 15:30–16:15 | Gated by 1C for live claims | `EMB-P2-*` | Screen and speech render the same current assessment |
+| 1A — hardware/radiometry proof | closed at 15:25 | Complete investigation; pass gate blocked | `EMB-P1A-*` | No Y16/calibration proof; no-go recorded in `docs/HARDWARE-PROBE.md` |
+| 1D — display-only UVC preview | 15:25–16:15 | Code complete; hardware gate blocked | `EMB-P1D-*` | Intended device did not play by cutoff; use Replay unless explicitly reopened and passed before freeze |
+| 1B — radiometric bridge/source | — | Blocked by 1A | `EMB-P1B-*` | Future only; do not implement at this hackathon |
+| 1C — deterministic assessment | — | Blocked by 1A/1B | `EMB-P1C-*` | Future only; no display-pixel substitute |
+| 2 — assessment speech | — | Blocked by 1C | `EMB-P2-*` | Future only; no spoken heat guidance |
 | 3 — demo/accessibility QA | 16:15–17:00 | Planned | `EMB-P3-*` | Both builders complete the locked demo and manual accessibility matrix |
 | 4 — offline/failure hardening | 17:00–17:30 | Planned | `EMB-P4-*` | Every completed path runs twice; all required checks pass |
 | **Feature freeze** | **17:30** | Hard stop | — | No product code changes |
@@ -26,30 +27,24 @@ Two builders. **L** = integration/build lead. **D** = second developer. One owne
 ### Dependency rule
 
 ```text
-1A calibrated radiometry
-  → 1B live transport
-    → 1C deterministic assessment
-      → 2 live assessment speech
-        → 3 live demo acceptance
+1A hardware probe
+  ├─ calibrated radiometry proven → 1B bridge → 1C assessment → 2 speech
+  │                                BLOCKED      BLOCKED         BLOCKED
+  └─ calibrated radiometry unavailable → 1D display-only UVC preview
+                                               └─ 3 QA → 4 hardening → 5 package
 ```
 
-No builder skips a gate. Phase 0 independently supports the replay-only fallback through Phases 3–5.
+No builder skips a gate. Phase 0 remains the independent labelled fallback. Phase 1D proves only browser video transport and cleanup; it has no route into radiometric validation or assessment.
 
-### 15:00 live cutoff
+### Recorded hardware-cutoff decision
 
-**14:30 checkpoint:**
+At 15:25, Phase 1A was closed as a calibrated-radiometry no-go:
 
-- If Phase 1A passes, follow the normal windows above.
-- If it has not passed, L may continue the hardware proof until 15:00 while D immediately starts the replay-only lane: extend replay verification, prepare the Phase 3 QA record, and harden truth/evidence docs.
-- If Phase 1A passes between 14:30 and 15:00, replan Live to Phase 1B from 15:00–15:30 and Phase 1C from 15:30–16:15. Product speech is cut; only a clearly synthetic formatter check may occur. Phase 3 still begins at 16:15.
-
-If Phase 1A has not proven calibrated radiometry by **15:00**:
-
-1. Stop bridge debugging.
-2. Mark Phases 1B and 1C blocked in `docs/STATUS.md`.
-3. Do not present synthetic assessment fixtures as camera output.
-4. L owns replay verifier/offline rehearsal; D owns accessibility QA and pitch/evidence docs, with disjoint claims recorded in the handoff.
-5. Describe the bridge and assessment as the next milestone.
+1. Stop Y16 bridge, calibration, assessment, and assessment-speech implementation.
+2. Keep Phases 1B, 1C, and 2 blocked.
+3. Do not present synthetic assessment fixtures or colorized display pixels as camera temperature output.
+4. Use the remaining implementation window for Phase 1D display-only preview plus the existing replay fallback.
+5. Preserve the exact preview and replay truth statements in UI, demo, recording, and submission.
 
 ---
 
@@ -73,7 +68,7 @@ If Phase 1A has not proven calibrated radiometry by **15:00**:
 - [x] Add Start, Pause, Resume, Restart, and Stop controls.
 - [x] Keep exact replay provenance adjacent to every displayed frame.
 - [x] Render source status through words and a non-color symbol.
-- [x] Keep the assessment panel at “No current assessment.”
+- [x] Keep the assessment panel at “No current assessment”.
 
 ### Evidence and remaining verification debt
 
@@ -90,42 +85,91 @@ The two unchecked items improve reproducibility; they do not authorize live work
 
 ## 3. Phase 1A — prove the hardware before designing around it
 
-**Outcome:** reproducible evidence that the exact device yields calibrated, correctly oriented 160 × 120 radiometry. No React warning is built in this phase.
+**Outcome:** the investigation is complete and the calibrated-radiometry pass gate is blocked. No React warning is authorized.
 
 ### L — device probe owner
 
-Owned paths: future `native/purethermal-bridge/**`, `docs/SETUP.md`, hardware handoff.
+Owned paths: `docs/HARDWARE-PROBE.md`, `docs/SETUP.md`, hardware handoff.
 
-- [ ] Inspect and record board revision, Lepton module, firmware, USB identity, host OS, and cable.
-- [ ] Enumerate the exact capture modes.
-- [ ] Reproduce one 160 × 120 Y16 frame outside React.
-- [ ] Determine whether values are calibrated Celsius-capable radiometry or raw counts.
-- [ ] Record conversion/calibration evidence and active mode.
-- [ ] Verify display/grid orientation using left/right and upper/lower placement.
-- [ ] Produce the privacy-safe proof bundle: exact commit/command, device/mode/host, calibration source, aggregate pixel/finite counts, min/max, one-way checksum, and orientation results.
-- [ ] Keep live frame bytes and radiometric arrays out of Git and logs.
+- [x] Record macOS 26.5.2 arm64, GroupGets USB identity, PureThermal firmware `v1.3.0`, UVC interface classes, and the team-identified Lepton 3.5.
+- [x] Record exact board revision and cable model as unknown instead of inventing them; USB enumeration proves the connection carries data.
+- [x] Attempt metadata-only AVFoundation enumeration; this shell listed no video device or capture mode.
+- [x] Record that no 160 × 120 Y16 buffer, calibrated Celsius conversion, frame aggregate, checksum, or orientation result was obtained.
+- [x] Keep all frame bytes, screenshots, radiometric arrays, and scene data out of Git and logs.
+- [x] Produce the privacy-safe no-go report with exact commands and per-requirement results.
 
 ### D — independent evidence reviewer
 
 Owned paths: findings/handoff only until the probe passes.
 
-- [ ] Reproduce the capture or complete the fixed proof-bundle checklist with an explicit pass/fail for every field.
-- [ ] Confirm dimensions, pixel count, encoding, byte order, calibration source, timestamp source, and orientation are explicit.
-- [ ] Reject “Y16 means Celsius” reasoning without calibration evidence.
-- [ ] Draft the smallest bridge-language recommendation based on the reproduced path; do not install it into the web app.
+- [x] Complete the proof-bundle checklist with explicit partial/failed/passed results.
+- [x] Record dimensions, pixel count, encoding, byte order, calibration source, timestamp source, and orientation as unproven.
+- [x] Reject “UVC,” “Y16,” or colorized pixels as Celsius evidence.
+- [x] Select a browser MediaDevices display-only probe rather than a radiometric bridge; do not install a native bridge.
+- [ ] Second human builder confirms the attached-device metadata and no-go before submission.
 
 ### Joint exit gate
 
-- [ ] Requirements `EMB-P1A-AC-001` through `004` pass.
-- [ ] Second builder reproduces or reviews the proof.
-- [ ] `docs/DECISIONS.md` records device identity, calibration result, orientation, and selected bridge approach.
-- [ ] `docs/STATUS.md` marks the gate passed or blocked.
+- [x] Requirements `EMB-P1A-AC-001`, `002`, and `004` are explicitly failed; `003` passes by selecting the no-radiometry branch.
+- [ ] Second human builder confirms the report; this does not change the blocked result.
+- [x] `docs/DECISIONS.md` records device identity, missing calibration/orientation, and the display-only browser approach.
+- [x] `docs/STATUS.md` marks the investigation complete and the calibrated gate blocked.
 
 No numeric assessment policy enters code in Phase 1A.
 
 ---
 
-## 4. Phase 1B — local bridge, live adapter, and session lifecycle
+## 4. Phase 1D — browser display-only preview
+
+**Outcome:** the intended PureThermal UVC input either plays locally with persistent non-radiometric truth and complete cleanup, or Phase 1D is marked blocked and the team keeps replay only.
+
+**Current state:** contracts, adapter, session, interface, and focused verification are complete. The Codex in-app browser could not present its camera-permission surface, so the exact attached-device label/settings, two playback runs, permission denial, unplug, and camera-indicator closure remain unchecked. The 16:15 cutoff passed, so the hardware gate is blocked and Replay is the submission path. The team may explicitly reopen the gate only before 17:30 by completing and recording two actual-browser playback/cleanup runs.
+
+Before implementation, **D** served as the sole contract editor for `src/types.ts`, `docs/SCHEMA.md`, and the matching decision entry. That review locked the replay-frame versus live-`MediaStream` viewport union; no stream fabricates thermal metadata.
+
+### Contract and device lock — D, then joint review
+
+- [x] Confirm the two-step flow: explicit authorization unlocks labels and immediately stops its unattached temporary stream; then the operator selects and opens the exact intended input.
+- [ ] Record its browser-reported label and actual stream settings; do not assume 160 × 120.
+- [x] Define `UvcPreviewSource` lifecycle, generation token, error codes, session-only device choice, exact active-track verification, track ownership, `srcObject` cleanup, page-hide handling, and pause-as-stop/reacquire semantics.
+- [x] Keep Demo replay visibly selected on load/reload; require explicit Live preview selection and Start.
+- [x] Lock exact adjacent copy: **“Live thermal preview — non-radiometric”**, **“Display-only colorized video. No temperature or safety assessment.”**, and **“No current assessment”**.
+
+### L — preview adapter and lifecycle verifier
+
+Owned paths: `src/lib/uvc-preview-source.ts`, focused preview contracts after handoff, `scripts/verify-uvc-preview.ts`.
+
+- [x] Request `video` only through injected `MediaDevices`; never request audio or attach the authorize/discover stream.
+- [x] Stop the authorize/discover tracks immediately, require operator selection, match the active track to the session-only `deviceId`, and fail explicitly on ambiguity or mismatch.
+- [x] Implement Start, Pause/Resume reacquisition, Restart, Stop, disconnect, hidden/pagehide cleanup, and late-result rejection.
+- [x] Stop all returned tracks, clear attachments, and remove every listener on each invalidation path.
+- [x] Add plain Node fake-device checks for discovery cleanup, exact-device match, already-ended/during-playback track races, late permission resolution, pause/reacquire, disconnect, restart, the reusable `stop()`/generation boundary, hidden/pagehide behavior, detached playback-sink cleanup, and track/listener cleanup. React switching and route cleanup remain code/manual evidence.
+
+### D — session, viewport, and accessible truth
+
+Owned paths: `src/features/scan/**`, `src/styles/**`, `src/App.tsx` only if routing requires it.
+
+- [x] Render replay frames with `<img>` and the live stream with `<video>` through a discriminated viewport surface.
+- [x] Provide explicit Live preview selection, disclosure that authorization may briefly activate the default video input, **Authorize cameras**, an operator device chooser, Start, and Retry without ever attaching the temporary discovery stream.
+- [x] Show the playing selected-track label, exact non-radiometric copy, status word + symbol, and explicit Retry.
+- [x] Never leave a paused/stopped/error preview frame visible.
+- [x] Keep every control keyboard-operable, named, visibly focused, and at least 44 × 44 CSS pixels.
+- [x] Keep the assessment panel at **“No current assessment”**.
+- [x] Add no canvas, snapshot, recording, upload, storage, palette analysis, temperature, hotspot, direction, warning, or speech path.
+
+### Joint exit gate
+
+- [ ] All `EMB-P1D-AC-*` scenarios pass.
+- [ ] Intended device plays twice and its camera indicator closes after Stop, route change, and page hide.
+- [ ] Permission denial and unplug clear the viewport and offer explicit recovery.
+- [x] Preview verifier, replay verifier, lint, and build pass.
+- [x] The intended device was not selected and played by 16:15; mark the hardware gate blocked and rehearse Replay only unless the team explicitly reopens and passes it before freeze.
+
+---
+
+## 5. Phase 1B — local bridge, live adapter, and session lifecycle
+
+**State:** blocked by the Phase 1A result. Retained as future architecture; do not implement during this hackathon.
 
 **Outcome:** a truthful live frame reaches the generic scan surface, while source selection and failure cannot leave stale state.
 
@@ -182,9 +226,11 @@ Owned paths: `src/lib/purethermal-source.ts`, `src/lib/purethermal/**`, `src/fea
 
 ---
 
-## 5. Phase 1C — deterministic validation and assessment
+## 6. Phase 1C — deterministic validation and assessment
 
 **Outcome:** one device-validated policy turns only current live radiometry into one structured spatial assessment.
+
+**State:** blocked by Phases 1A and 1B. A colorized preview cannot satisfy this gate.
 
 ### Policy lock before warning integration
 
@@ -236,11 +282,13 @@ Before L edits the scan presentation, D hands off the exact Phase 1B session-hoo
 
 ---
 
-## 6. Phase 2 — spoken interaction
+## 7. Phase 2 — spoken interaction
 
 **Outcome:** speech is an optional renderer of the same canonical structured state visible on screen.
 
-If Phase 1C is blocked, do not add product speech controls or stage a warning. L may verify the pure formatter against an explicitly synthetic structured object; record the result as **formatter verified / product speech blocked**. D continues the replay accessibility lane.
+**State:** product assessment speech is blocked by Phase 1C. Do not speak heat guidance from Phase 1D pixels.
+
+Phase 1C is blocked. Do not add a formatter, product speech controls, synthetic assessment fixture, or staged warning during this hackathon. The rows below are retained as future work only.
 
 ### L — formatter and speech adapter
 
@@ -266,11 +314,11 @@ If Phase 1C is blocked, do not add product speech controls or stage a warning. L
 - [ ] Repetition, staleness, mute, and unavailable TTS behave correctly.
 - [ ] Replay may speak provenance but never thermal guidance.
 
-The formatter-only fallback is not a Phase 2 product pass and no submission surface may present it as camera behavior.
+No Phase 2 fallback is authorized for the current build.
 
 ---
 
-## 7. Phase 3 — demo flow and accessibility QA
+## 8. Phase 3 — demo flow and accessibility QA
 
 **Outcome:** both builders can run the supported path, and a blind/low-vision interaction does not depend on color, speech, or precision pointing.
 
@@ -284,13 +332,14 @@ No architecture refactor begins in this phase.
 - [ ] Test VoiceOver labels, state, provenance, and status; test warning and announcement count only if Phase 1C/2 passed.
 - [ ] Test with Ember speech muted, then enabled if Phase 2 passed.
 - [ ] Test 200% zoom and 320–390px reflow.
-- [ ] Verify thermal images never receive keyboard focus or carry essential meaning.
+- [ ] Verify replay images and any live `<video>` never receive keyboard focus or carry essential meaning.
 - [ ] Test with color unavailable and audio muted.
+- [ ] If Phase 1D passed, verify exact selected-device label, both non-radiometric statements, **“No current assessment”**, permission/error status, and Stop/Retry without color or audio.
 
 ### L — demo operator and evidence
 
 - [ ] Rehearse `docs/DEMO.md` with a heating pad, reusable hand warmer, or warm mug.
-- [ ] If Phase 1B passed, rehearse the explicit live failure → labelled replay fallback.
+- [ ] If Phase 1D passed, rehearse explicit preview failure → labelled replay fallback and confirm the camera indicator closes.
 - [ ] If Phase 1C passed, confirm no stale assessment survives expiry, switching, or stop.
 - [ ] Capture only evidence permitted by the privacy boundary.
 - [ ] Have both builders run the three-minute script independently.
@@ -303,7 +352,7 @@ No architecture refactor begins in this phase.
 
 ---
 
-## 8. Phase 4 — offline and failure hardening
+## 9. Phase 4 — offline and failure hardening
 
 **Outcome:** every completed capability is local, recoverable, resource-bounded, and repeatable at freeze.
 
@@ -311,16 +360,16 @@ No architecture refactor begins in this phase.
 
 - [ ] Lock and run the production-like local command.
 - [ ] Disconnect the network and run Replay twice with a reload between runs.
-- [ ] If Phase 1B passed, run Live twice using only the local bridge.
-- [ ] Run five fixture-driven lifecycle/source-switch cycles; resource spies return to zero after each stop for timers, sockets/listeners, object URLs, borrowed grids, retained captures/credits, expiry timers, and speech.
+- [ ] If Phase 1D passed, run the intended UVC preview twice without network.
+- [ ] Run five fixture-driven lifecycle/source-switch cycles; resource spies return to zero after each stop for replay timers and applicable media tracks/listeners/element attachments.
 - [ ] Run every verifier required by completed phases, then lint and build.
 - [ ] Hand the exact command output and frozen commit candidate to D.
 
 ### D — manual failure and truth audit
 
 - [ ] Reload `#scan` and `#history` with the network disconnected.
-- [ ] If Phase 1B passed, test bridge absent, device unplug, calibration unavailable, malformed/oversized/stale/out-of-order frames, silent frame timeout, and hidden page.
-- [ ] If Phase 1B passed, deliberately switch failed Live → Replay and verify old frame, assessment, speech, and provenance are gone first.
+- [ ] If Phase 1D passed, test permission denial, wrong/missing intended device, device in use, unplug, playback failure, late permission result, and hidden page.
+- [ ] If Phase 1D passed, deliberately switch failed Live preview → Replay and verify the stream, tracks, element attachment, and provenance are gone first.
 - [ ] If Phase 2 passed, verify the selected voice works without network or record app speech unavailable while visible output remains complete.
 - [ ] Update `docs/STATUS.md` with each gate marked passed, blocked, or not applicable and review the frozen candidate.
 
@@ -342,12 +391,13 @@ No architecture refactor begins in this phase.
 - Deterministic classification for any live warning claim.
 - Visible text + non-color symbol.
 - Exact replay provenance.
+- Exact live non-radiometric provenance and no-assessment copy.
 - Fail-closed stale/error behavior.
 - Honest replay-only fallback if live work is blocked.
 
 ---
 
-## 9. Phase 5 — package the frozen truth
+## 10. Phase 5 — package the frozen truth
 
 **Outcome:** a judge can reproduce the supported build and distinguish every live, simulated, verified, planned, and blocked capability.
 
@@ -377,7 +427,7 @@ No architecture refactor begins in this phase.
 
 ---
 
-## 10. Integration cadence
+## 11. Integration cadence
 
 At each phase boundary:
 
@@ -392,12 +442,12 @@ Do not merge an unreviewed shared-contract change or let two lanes edit the same
 
 ---
 
-## 11. Standing rules
+## 12. Standing rules
 
 - Never claim that an object is safe to touch.
 - Deterministic code owns classification; generated language cannot change it.
 - Text + symbol are required; color and speech reinforce them.
-- Live frames and radiometric arrays are ephemeral and local.
+- Live streams, tracks, frames, and radiometric arrays are ephemeral and local. A reviewed external staged Phase 5 recording does not authorize in-app capture.
 - Replay is visibly and audibly simulated and never enters analysis.
 - No smart plug, relay, notification, cloud frame store, or autonomous action.
 - No runtime dependency without explicit approval.

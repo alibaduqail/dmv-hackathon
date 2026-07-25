@@ -24,7 +24,7 @@ Surface material and reflected radiation can materially change an apparent tempe
 
 **Use:** claim boundary and demo-object selection.
 
-**Product consequence:** Ember reports observed higher heat and direction. It does not guarantee an object is safe to touch.
+**Product consequence:** A future calibrated Ember build may report observed higher heat and direction. The current non-radiometric path makes no assessment, and no version guarantees an object is safe to touch.
 
 ---
 
@@ -41,7 +41,7 @@ The repository shows PureThermal UVC capture paths across operating systems. Its
 - Prove Y16 outside React first.
 - Keep display pixels separate from analysis values.
 - Treat board firmware, telemetry, and calibration as explicit inputs.
-- Put capture behind a native bridge.
+- Put calibrated Y16 capture behind a native bridge only after a new hardware proof. This does not apply to Phase 1D’s browser display-only stream.
 
 **Do not install blindly.** GroupGets says its software is example code, may be outdated, and is not guaranteed to function.
 
@@ -81,8 +81,8 @@ Every action available to a pointer must be available by keyboard. A thermal vie
 
 ## What not to build from
 
-- **Webcam-only tutorials.** A colored video preview is not proof of radiometric Y16.
+- **Webcam-only tutorials.** They may inform permission, selection, `<video>`, and track-cleanup mechanics for Phase 1D. They are not proof of radiometric Y16 and must never inform temperature or warning logic.
 - **Color-palette inversion.** Display RGB cannot be converted back into trustworthy Celsius values.
 - **Medical thermography thresholds.** Ember is an everyday heat-awareness companion, not a diagnostic or body-temperature product.
-- **Cloud video pipelines.** The MVP’s frames are local and ephemeral.
+- **Cloud video pipelines.** Live media is local and ephemeral; committed replay PNGs are simulated fixtures.
 - **Smart-home automation examples.** No relay or smart plug is in scope.
