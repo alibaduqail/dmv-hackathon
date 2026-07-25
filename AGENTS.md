@@ -5,7 +5,9 @@ Source of truth for every coding agent on this repo — Claude Code, Codex, Chat
 **Project:** Tally — turns a therapy session into clinician-confirmed data that keeps a child's care authorized.
 **Track:** 02, Health Tech & Accessibility. **Submit 7:00 PM.** Product spec: `mvp.md`.
 
-**Then read `docs/ARCHITECTURE.md`** (file tree, exported signatures, landmines) and **`docs/PLAN.md`** (phases, owners, gates — the only schedule). This file says how we work; those say where things go and what happens next.
+**Picking this up cold? Read `docs/STATUS.md`** — what's built, what's next, what's known broken.
+
+Then **`docs/ARCHITECTURE.md`** (file tree, exported signatures, landmines) and **`docs/PLAN.md`** (phases, owners, gates — the only schedule). This file says how we work; those say where things go and what happens next.
 
 ---
 

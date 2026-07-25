@@ -26,5 +26,7 @@ Log when you: change a shape in `SCHEMA.md`, cut something from the demo, discov
 10:13 — claude — Transcript plants are commented at the top of `session-07-transcript.ts`: t=452 independent production, t=742 "fourteen out of twenty", **t=628 client self-report ("I think I got that one right") — that is the intended ~0.6 rejectable card**, since the prompt documents what the CLINICIAN observed, not what the client claims. t=845 leaves /r/ blends open.
 10:13 — claude — `001_init.sql` uses plain `text` where SCHEMA names an enum. Validation is at the API boundary; a CHECK here would be a second thing to keep in sync and would surface as a 500 instead of a dropped event.
 10:13 — claude — **No Supabase seed script written.** Nothing in the app reads Supabase, so seeding 39 historical rows buys zero demo beats. `api/extract.ts` inserting session-7 events in Phase 2 is enough to show a populated table. Say so if you want the history mirrored for the README screenshot — it is ~20 lines.
+10:15 — claude — Added `docs/STATUS.md` — cold-start briefing: what's built, what's next, resolved vs open issues. `AGENTS.md` now points there first. **Open blockers are D's: `vercel dev` unproven, no `.env`, no `ANTHROPIC_API_KEY`.** Phase 2 cannot start without the key.
+10:15 — claude — Pushed to `origin/main` (github.com/alibaduqail/dmv-hackathon). Remote had no branches; first push. Six commits of history now backed up off this laptop.
 15:00 — ____ — Thermal gate: GO / NO-GO → ____
 17:30 — ____ — FEATURE FREEZE.
