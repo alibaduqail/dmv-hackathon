@@ -355,7 +355,7 @@ Implemented source-only subset:
 
 - `EMB-P2-FR-005` through `007` apply to current source status and provenance.
 - Source-status dedupe, a 2.5-second minimum interval, replacement cancellation, Mute, Repeat, unavailable/throwing TTS, and exact replay provenance are covered by `npm run verify:speech`.
-- The visual status region remains polite so a silent TTS failure cannot remove assistive output. Ember speech defaults off, and visible status plus its non-color symbol remain present.
+- Routine source status remains polite while Ember speech is off or muted. While app speech is enabled, that live region is disabled to avoid duplicates; an utterance error or three-second start timeout disables app speech and announces the failed status through a polite fallback. Visible status plus its non-color symbol remain present.
 - `EMB-P2-FR-001` through the assessment portions of `004` remain blocked and receive no substitute data.
 
 ### Acceptance scenarios

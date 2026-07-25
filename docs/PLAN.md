@@ -304,7 +304,7 @@ Phase 1C is blocked, so no assessment formatter, synthetic assessment fixture, o
 - [x] Add speech enable, Mute, and Repeat source-status controls with visible state and accessible names.
 - [x] Keep complete source text + symbol when speech is unavailable or muted.
 - [x] Use polite status for routine source changes; no urgent validated warning exists.
-- [x] Keep the source live region polite so TTS failure cannot remove assistive output; Ember speech defaults off.
+- [x] Keep routine source status polite when Ember speech is off or muted; while enabled, avoid duplicate output and restore a polite fallback if an utterance errors or does not start within three seconds.
 - [x] Announce replay provenance/source failure as status, never as an assessment.
 
 ### Exit gate

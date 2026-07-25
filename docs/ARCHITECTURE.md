@@ -668,7 +668,7 @@ visible source status + truthful provenance
 optional native Web Speech
 ```
 
-It defaults off, uses semantic source-status keys, enforces a 2.5-second minimum interval, keeps only the latest queued status, and cancels on replacement, route/unmount, hidden/pagehide, mute, or disable. Enable, Mute, and Repeat are visible native buttons. Missing or throwing browser speech leaves visual status unchanged. No replay frame, preview stream/pixel, or `ThermalAssessment` reaches this path.
+It defaults off, uses semantic source-status keys, enforces a 2.5-second minimum interval, keeps only the latest queued status, and cancels on replacement, route/unmount, hidden/pagehide, mute, or disable. Enable, Mute, and Repeat are visible native buttons. While app speech is enabled it owns routine announcements; an utterance error or three-second start timeout disables it and emits a polite fallback without changing visible status. No replay frame, preview stream/pixel, or `ThermalAssessment` reaches this path.
 
 Future assessment and copy still have one separate path:
 

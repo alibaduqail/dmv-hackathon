@@ -1,4 +1,5 @@
 export const MINIMUM_ANNOUNCEMENT_INTERVAL_MS = 2_500;
+export const SPEECH_START_TIMEOUT_MS = 3_000;
 
 export interface SpeechPresentation {
   kind: 'source-status';
@@ -16,11 +17,25 @@ interface SpeechControllerOptions {
 }
 
 interface BrowserSpeechScope {
-  speechSynthesis?: Pick<SpeechSynthesis, 'cancel' | 'speak'>;
-  SpeechSynthesisUtterance?: new (text?: string) => SpeechSynthesisUtterance;
-  performance?: Pick<Performance, 'now'>;
+  speechSynthesis?: {
+    cancel(): void;
+    speak(utterance: BrowserSpeechUtterance): void;
+  };
+  SpeechSynthesisUtterance?: new (text?: string) => BrowserSpeechUtterance;
+  performance?: { now(): number };
   setTimeout?: (run: () => void, delayMs: number) => unknown;
   clearTimeout?: (handle: unknown) => void;
+}
+
+interface BrowserSpeechUtterance {
+  text: string;
+  onstart?: (() => void) | null;
+  onerror?: (() => void) | null;
+}
+
+interface SpeechDelivery {
+  type: 'started' | 'failed';
+  text: string;
 }
 
 const normalize = (value: string) => value.trim().replace(/\s+/g, ' ');
@@ -139,6 +154,7 @@ export function createBrowserSpeechController(
   scope: BrowserSpeechScope | undefined = typeof window === 'undefined'
     ? undefined
     : window as unknown as BrowserSpeechScope,
+  onDelivery?: (delivery: SpeechDelivery) => void,
 ) {
   const synthesis = scope?.speechSynthesis;
   const Utterance = scope?.SpeechSynthesisUtterance;
@@ -150,9 +166,42 @@ export function createBrowserSpeechController(
     || !scope.clearTimeout
   ) return null;
 
+  let generation = 0;
+  let deliveryTimeout: unknown = null;
+  const clearDeliveryTimeout = () => {
+    if (deliveryTimeout !== null) scope.clearTimeout!(deliveryTimeout);
+    deliveryTimeout = null;
+  };
   return createSpeechController({
-    speak: text => synthesis.speak(new Utterance(text)),
-    cancel: () => synthesis.cancel(),
+    speak: text => {
+      const currentGeneration = ++generation;
+      let failed = false;
+      const reportFailure = () => {
+        if (failed || currentGeneration !== generation) return;
+        failed = true;
+        clearDeliveryTimeout();
+        onDelivery?.({ type: 'failed', text });
+      };
+      try {
+        const utterance = new Utterance(text);
+        utterance.onstart = () => {
+          if (failed || currentGeneration !== generation) return;
+          clearDeliveryTimeout();
+          onDelivery?.({ type: 'started', text });
+        };
+        utterance.onerror = reportFailure;
+        deliveryTimeout = scope.setTimeout!(reportFailure, SPEECH_START_TIMEOUT_MS);
+        synthesis.speak(utterance);
+      } catch (error) {
+        reportFailure();
+        throw error;
+      }
+    },
+    cancel: () => {
+      generation += 1;
+      clearDeliveryTimeout();
+      synthesis.cancel();
+    },
     now: () => scope.performance!.now(),
     schedule: (run, delayMs) => scope.setTimeout!(run, delayMs),
     clear: handle => scope.clearTimeout!(handle),
