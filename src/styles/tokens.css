@@ -1,17 +1,18 @@
-/* Marginalia. The interface is a page a clinician marks up.
-   RED MEANS A HUMAN TOUCHED IT — it is the only saturated color in the product.
-   Do not add colors. No gradients, no shadows, no radius above 2px, no icon library. */
+/* Ember is safety-facing and accessibility-first.
+   Every state uses words and structure in addition to color. */
 
 @theme {
-  --color-paper: #fbfaf7;      /* page */
-  --color-ink: #1a1917;        /* confirmed text */
-  --color-grey: #8c8a85;       /* AI proposals — low contrast on purpose */
-  --color-hairline: #ddd9d0;   /* rules, dashed borders */
-  --color-red: #c4342b;        /* the human mark. Nothing else uses this. */
+  --color-canvas: #080b0f;
+  --color-panel: #111821;
+  --color-panel-strong: #1a2532;
+  --color-text: #f7fafc;
+  --color-muted: #bdc9d6;
+  --color-line: #465568;
+  --color-accent: #6ee7b7;
+  --color-caution: #ffd166;
+  --color-danger: #ff7b7b;
+  --color-focus: #8dc8ff;
 
-  --font-display: 'Instrument Serif', Georgia, serif;
-  --font-body: 'Karla', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-
-  --radius-card: 2px;
+  --font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
