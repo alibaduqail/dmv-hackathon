@@ -1,37 +1,24 @@
 # DECISIONS.md
 
-Append-only, newest at the bottom. The only handoff mechanism — nobody has time for a standup.
+Append-only, newest at the bottom. The only handoff mechanism.
 
 Format: `HH:MM — who — what changed — what would surprise the next person`
 
-Log when you: change a shape in `SCHEMA.md`, cut something from the demo, discover something is broken, or make a call the other person would make differently.
+Log when you change a shape in `SCHEMA.md`, cut a demo beat, discover hardware behavior, change a safety threshold, or make a call the other builder would make differently.
 
 ---
 
-09:00 — team — Track 02, Health Tech & Accessibility. Locked. Other three tracks dead.
-09:10 — team — Product is Tally: documentation system for pediatric SLPs. Niche is teletherapy for speech sound disorders in 3–8 clinician insurance-billing private practices.
-09:15 — team — Thermal camera in scope as a second evidence type (VPI screening), gated at 3:00 PM. Pre-captured frames only, no capture code.
-09:50 — claude — Docs moved from `tally-docs/` to repo root so Codex/GPT auto-loads `AGENTS.md`. Added `docs/ARCHITECTURE.md`: file tree, exported signatures, build order, landmines.
-09:50 — claude — Five architecture calls locked, rationale in ARCHITECTURE §4. Most load-bearing: **Supabase is write-only at runtime** — no render path reads it, which is the only way AGENTS non-negotiable #6 ("runs with the network unplugged") is actually true.
-09:50 — claude — Build order revised: `types.ts` + `store.ts` + `derive.ts` signatures ship BEFORE fixtures. mvp.md's schedule left the second dev with nothing to own until 4:00 PM; the seam unblocks them by 10:15.
-09:55 — claude — Added `docs/PLAN.md`: 8 phases with owners, checkboxes, exit gates. Moved the schedule out of ARCHITECTURE §6 so there is exactly one. Phase 5 (16:00–17:00) is offline hardening — it is the phase teams skip and then lose at 17:20.
-10:10 — claude — Phase 0 shipped (`c2ee4a6`). Scaffold, types, store, derive, hash routing, verify script, api stub. `npm run build` and `tsc -b` green.
-10:10 — claude — **`unresolvedStreak` doc conflict, resolved in code.** SCHEMA.md says "consecutive sessions with no INDEPENDENT_PRODUCTION" — read literally that counts sessions 1–6 and returns 6, contradicting the seed-fixtures invariant of 3. Implemented as "consecutive recent sessions carrying an open QUESTION_UNRESOLVED for the target", which matches the fixture arc's "Unresolved (2)/(3)" labels. Sessions with zero confirmed events for the target are skipped, so session 7 pre-review doesn't count. Rationale is in the docstring. **Fixtures must place a QUESTION_UNRESOLVED on /r/ initial in sessions 4, 5 and 6 or the banner never flips.**
-10:10 — claude — `store.ts` is `store.tsx` (contains JSX). Relative imports inside `src/` now carry their extension (`'./events.ts'`) — that is what lets `verify:fixtures` run on bare node with no ts-node/tsx dependency. Keep the convention.
-10:10 — claude — `derive.ts` written with real bodies rather than Phase-0 stubs; Phase 1 is pure data entry. `verify:fixtures` is already red 6/7 and is Phase 1's exit gate.
-10:10 — claude — Tailwind v4 via `@tailwindcss/vite`. No `tailwind.config.js`, no PostCSS. Tokens are `@theme` vars in `src/styles/tokens.css` — use `bg-paper text-ink border-hairline text-red font-mono`.
-10:10 — claude — Deps added: `tailwindcss`, `@tailwindcss/vite`, `@supabase/supabase-js`. Nothing else. No router — hash switch in `App.tsx`.
-10:13 — claude — **FIXTURES FROZEN.** 7 sessions, 32 historical events (4/5/6/6/5/6), session-07 transcript, `001_init.sql`. `npm run verify:fixtures` → 10/10 green.
-10:13 — claude — Added checks 8–10 beyond the skill's seven: accuracy trend `20,25,30,30,35,30`, cue trend non-monotonic, and **THE FLIP** (streak 3→0, isResolved false→true on approve). Check 10 simulates the stage moment. The skill's seven don't cover the demo's opening numbers or its payoff, and a fixture typo in either is invisible until you're in front of judges.
-10:13 — claude — Transcript plants are commented at the top of `session-07-transcript.ts`: t=452 independent production, t=742 "fourteen out of twenty", **t=628 client self-report ("I think I got that one right") — that is the intended ~0.6 rejectable card**, since the prompt documents what the CLINICIAN observed, not what the client claims. t=845 leaves /r/ blends open.
-10:13 — claude — `001_init.sql` uses plain `text` where SCHEMA names an enum. Validation is at the API boundary; a CHECK here would be a second thing to keep in sync and would surface as a 500 instead of a dropped event.
-10:13 — claude — **No Supabase seed script written.** Nothing in the app reads Supabase, so seeding 39 historical rows buys zero demo beats. `api/extract.ts` inserting session-7 events in Phase 2 is enough to show a populated table. Say so if you want the history mirrored for the README screenshot — it is ~20 lines.
-10:15 — claude — Added `docs/STATUS.md` — cold-start briefing: what's built, what's next, resolved vs open issues. `AGENTS.md` now points there first. **Open blockers are D's: `vercel dev` unproven, no `.env`, no `ANTHROPIC_API_KEY`.** Phase 2 cannot start without the key.
-10:15 — claude — Pushed to `origin/main` (github.com/alibaduqail/dmv-hackathon). Remote had no branches; first push. Six commits of history now backed up off this laptop.
-11:20 — claude (second dev) — `outputs/` shell shipped: four tabs (soap_note, home_program, next_session_plan, auth_summary), local useState switch, renders `artifact.body` when present else empty-state copy. No generation, no Spanish toggle — Phase 3. Single file, no `ArtifactPane.tsx` split needed at this size.
-12:20 — claude (second dev) — `record/` done: `RecordView.tsx` + `AccuracyTrend.tsx` + `CueTrend.tsx`, inline SVG (no charting lib), both trends and the streak read through `useStore()` + `derive.ts` only. `tsc -b`, `npm run build`, `npm run verify:fixtures` all green (14/14).
-11:25 — claude (lead) — **Phase 2 extraction shipped.** `api/prompt.ts` (three load-bearing lines verbatim, six-session history as context, ambiguity rule that produces the ~0.6 card), `api/extract.ts` (all 10 validation rules, reject-never-repair, silent drops, never 4xx/5xx to the UI). Three deviations: **(1)** the offline cache is `api/cached-extraction.ts`, not the `.json` named in `ARCHITECTURE.md` §3 — a module needs no `resolveJsonModule`, no `with { type: 'json' }`, and no bet on Vercel's bundler, and `tsc` checks it. It holds RAW model output and runs through the same `validate()` as the live path, so a drifting cache fails `verify:fixtures` instead of failing on stage. **(2)** No `@anthropic-ai/sdk` — raw `fetch` to `/v1/messages`, ~15 lines, because `AGENTS.md` freezes `package.json` without asking. Say the word and I'll swap it. **(3)** `tsconfig.node.json` now includes `api/`, which was in no tsconfig at all — `npx tsc -b` was silently skipping every file that runs on stage.
-11:25 — claude (lead) — `verify:fixtures` is now **14 checks, not 10**. 11-14 guard the offline path: every cached evidence span verbatim in the transcript, cache survives validation as 6-8 events, exactly one card under 0.7, and `SCREENING_FLAG` rejected from the extractor even with valid evidence. The count is now derived, so adding a check can't leave the tail message stale.
-11:25 — claude (lead) — **The cache is hand-built, not from a live run**, because there is still no `ANTHROPIC_API_KEY`. Eight events, tuned to the four transcript plants; every span asserted verbatim. `USE_CACHED_EXTRACTION=1` returns all 8 today, proven by direct handler invocation. **Refresh it from a known-good live run the moment the key lands, and again if `prompt.ts` changes.** Still D's blockers: no key, and `vercel dev` remains unproven — the `vercel` CLI is not installed on this laptop, so `POST /api/extract` has never been served over HTTP.
-15:00 — ____ — Thermal gate: GO / NO-GO → ____
-17:30 — ____ — FEATURE FREEZE.
+12:45 — team — Pivoted the repository from Tally to Ember; Git history is the only archive, so no active legacy folder or compatibility layer remains.
+12:46 — team — Product locked: handheld thermal companion for blind and low-vision people, Track 02 Health Tech & Accessibility; feature freeze 17:30 and submission 19:00.
+12:47 — team — Safety boundary locked: never promise an object is safe to touch; report observed higher heat, direction, and a conservative next step.
+12:48 — team — Classification belongs to deterministic code; language generation may explain a structured assessment but cannot choose thresholds, severity, or actions.
+12:49 — team — Every warning requires visible text plus a non-color symbol; color reinforces meaning and speech is additive.
+12:50 — team — Frames are ephemeral by default; foundation `#history` is an honest empty state with no persistence.
+12:51 — team — Foundation source seam locked: `ThermalSource` callbacks isolate React from replay and the future PureThermal bridge.
+12:52 — team — Replay locked to six simulated 160 × 120 PNGs and the exact persistent label “Demo replay — not live”; replay cannot be used to claim radiometric accuracy.
+12:53 — team — Foundation routes locked to `#scan` default and `#history`; `ScanView` owns local state, with no API or database.
+12:54 — team — Live PureThermal Y16 requires a local native bridge and remains the next phase; direct browser radiometry is not assumed.
+12:55 — team — No smart plug, relay, notification, autonomous physical action, or cloud frame storage in the hackathon MVP.
+13:03 — team — Replay foundation verified: six assets, ordered completion, pause/resume, stop cleanup, lint, and production build are green; no live capture or assessment is claimed.
+13:10 — team — Browser QA passed for scan/history reloads, all replay controls, route cleanup, 390px layout, accessible names, 44px controls, and console errors; 200% zoom and VoiceOver remain for Phase 3.
+13:14 — review — Hardened source truth and routing before commit: replay provenance is a discriminated type plus runtime guard, unknown hashes use an explicit route allowlist, and the skip control focuses the current route’s main content without changing its hash.
