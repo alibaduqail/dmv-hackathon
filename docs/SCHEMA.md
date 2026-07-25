@@ -297,6 +297,24 @@ Pausing affects delivery timing, not the fixture’s logical capture offsets.
 
 ---
 
+## Source speech contract
+
+`src/lib/speech.ts` accepts only operational source status:
+
+```ts
+export interface SpeechPresentation {
+  kind: 'source-status';
+  key: string;
+  text: string;
+}
+```
+
+`formatReplayStatus` always prefixes the exact **“Demo replay — not live”** provenance. `formatLivePreviewStatus` always prefixes **“Live thermal preview — non-radiometric”**. The controller defaults disabled, keeps the latest status only, deduplicates by `key`, enforces a 2.5-second minimum interval, and exposes `present`, `setEnabled`, `setMuted`, `repeat`, and `cancel`.
+
+The browser adapter returns `null` when Web Speech is unavailable and absorbs synthesis/cancellation errors. Speech state and utterances are runtime-only. No frame, stream, pixel, `ThermalAssessment`, temperature, direction, guidance, or warning is accepted by this contract.
+
+---
+
 ## Future seams — declared, not produced
 
 The foundation exports these shapes so later phases do not smuggle decisions into UI components.
@@ -361,4 +379,5 @@ Do not add:
 - Browser local storage.
 - A database.
 - Analytics containing frames or temperatures.
+- Speech transcripts or persisted mute/enable preferences.
 - A cached “last current” assessment after stop, route change, or source error.

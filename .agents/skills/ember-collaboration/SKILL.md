@@ -70,6 +70,8 @@ Do not let two agents edit the same high-conflict file concurrently. Give a subc
 
 ```sh
 npm run verify:replay
+npm run verify:preview
+npm run verify:speech
 npm run lint
 npm run build
 ```
@@ -78,7 +80,7 @@ npm run build
 
 ## Integrate safely
 
-- Use `codex/ember` as the shared integration branch until the team deliberately promotes it.
+- Branch from current `main`, push only short-lived branches, and integrate through reviewed pull requests.
 - Create a short-lived branch for parallel work; merge only after its owner supplies verification evidence.
 - Let one integration owner push the shared branch. Other agents hand off commits or patches.
 - Use conventional one-line commits that describe one working increment.

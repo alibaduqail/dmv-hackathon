@@ -25,11 +25,12 @@ Reload both routes once. Hash routing must survive a direct reload.
 
 ## Verification
 
-Run all four before handing off:
+Run all five before handing off:
 
 ```sh
 npm run verify:replay
 npm run verify:preview
+npm run verify:speech
 npm run lint
 npm run build
 ```
@@ -37,6 +38,8 @@ npm run build
 `verify:replay` checks the six-frame manifest, 160 × 120 dimensions, finite metadata, order, deterministic completion, pause/resume, and cleanup. It does not validate thermal accuracy.
 
 `verify:preview` uses injected fake browser media objects. It checks that Replay requests no camera access; authorization stops its unattached temporary stream before enumeration; public choices hide device/group IDs; Start opens and verifies only the selected identity; `streaming` waits for playback; already-ended tracks and tracks ending during playback fail closed; pause/resume, restart, errors, late results, disconnect/devicechange, hidden visibility, `pagehide`, tracks, listeners, and a detached video ref clean up deterministically. It exercises the reusable source boundary and playback sink, not the React router. It does not prove that this laptop’s browser can enumerate or play the attached hardware.
+
+`verify:speech` uses injected speech and clock functions. It checks exact source provenance, dedupe, the 2.5-second minimum interval, stale replacement, cancellation, Mute, Repeat, and unavailable or throwing TTS. It does not claim assessment speech or prove a browser voice works offline.
 
 For manual replay verification:
 
@@ -48,6 +51,7 @@ For manual replay verification:
 6. Stop and confirm the heading returns to **“Replay ready”** and the displayed frame clears.
 7. Start again, navigate to `#history`, wait, then return; no old timer or frame may advance in the background.
 8. Confirm **“Demo replay — not live”** stays adjacent to the viewport whenever a replay frame is displayed.
+9. Enable source speech, confirm it announces exact replay provenance, then verify Mute leaves visible status complete and Repeat replays only the current source status.
 
 Run the controls by keyboard only. Every control needs a visible focus indicator and accessible name.
 
@@ -173,7 +177,7 @@ Before enabling one:
 
 1. Read its verified entry in `docs/AGENT-TOOLS.md`.
 2. Pin down its job, owned files, off-limits files, and required checks.
-3. Use a short-lived branch from `codex/ember`.
+3. Use a short-lived branch from current `main`.
 4. Inspect requested permissions and generated configuration before accepting them.
 5. Review every resulting diff; never let a tool make a safety claim or push by default.
 

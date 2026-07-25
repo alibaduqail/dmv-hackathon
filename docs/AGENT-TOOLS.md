@@ -50,7 +50,7 @@ Before installing a project-scoped tool:
 ```sh
 git status --short --untracked-files=all
 git fetch origin
-git switch codex/ember
+git switch main
 git pull --ff-only
 git switch -c codex/tool-name-evaluation
 ```

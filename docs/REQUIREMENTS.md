@@ -1,6 +1,6 @@
 # REQUIREMENTS.md — what Ember must prove
 
-**Status:** Phase 0 is implemented. Phase 1A investigation is complete with the calibrated-radiometry gate blocked. Phase 1D’s display-only code and focused verifier are implemented, but its attached-device/browser exit gate is blocked after missing the 16:15 cutoff. Replay is the submission path unless the team explicitly reopens and passes that gate before the 17:30 feature freeze. Radiometric Phases 1B, 1C, and assessment speech are blocked.
+**Status:** Phase 0 is implemented. Phase 1A investigation is complete with the calibrated-radiometry gate blocked. Phase 1D’s display-only code and focused verifier are implemented, but its attached-device/browser exit gate is blocked after missing the 16:15 cutoff. Optional source-status speech is implemented; assessment speech remains blocked by Phase 1C. Replay is the submission path unless the team explicitly reopens and passes the preview gate before the 17:30 feature freeze.
 
 This is the atomic, testable requirements source for Ember. It says **what** must be true and how the team accepts it. `mvp.md` owns the product claim and scope, `docs/SCHEMA.md` documents implemented contracts, `docs/ARCHITECTURE.md` owns boundaries and target placement, `docs/PLAN.md` owns timing and lane assignment, and `docs/STATUS.md` owns current evidence.
 
@@ -80,7 +80,8 @@ P0 replay source + accessible shell ──────────────�
                                                                          │
 P1A hardware/radiometry probe — COMPLETE, CALIBRATED GATE BLOCKED         │
   ├─ radiometry proven ─> P1B bridge ─> P1C assessment ─> P2 speech       │
-  │                       BLOCKED         BLOCKED          BLOCKED         │
+  │                       BLOCKED         BLOCKED          assessment      │
+  │                                                        speech BLOCKED  │
   └─ radiometry unavailable ─> P1D display-only UVC preview ──────────┐   │
                                                                      │   │
 P0 labelled replay ───────────────────────────────────────────────────┴──> P3 QA
@@ -93,7 +94,7 @@ P0 labelled replay ────────────────────�
 - Because calibrated radiometry was not proven by the Phase 1 hardware cutoff, stop the radiometric bridge, assessment, and assessment-speech path.
 - Phase 1D may render a local colorized UVC stream only through its separate no-analysis acceptance gate.
 - A replay-only submission remains valid, but it must not display or speak a fabricated thermal assessment.
-- Phase 2 is future-only while Phase 1C is blocked; do not use synthetic assessment data to imply hackathon speech progress.
+- Phase 2 assessment speech is future-only while Phase 1C is blocked. Optional source-status speech may announce visible operational status and provenance, but it receives no replay pixels, preview pixels, or assessment object.
 - Phase 4 hardens only the capabilities that actually passed.
 - Phase 5 describes failed gates as future work, not partial success.
 
@@ -194,7 +195,7 @@ Phase 1A work is closed, but Phase 1B is not authorized. Calibrated 160 × 120 r
 | `EMB-P1D-FR-006` | Functional | Permission denied, no matching device, device in use, unsupported context, playback failure, and disconnect produce visible text plus a non-color status symbol and an explicit Retry action. Failure never silently starts Replay. |
 | `EMB-P1D-DR-001` | Data | Only the browser-reported selected track label and sanitized display settings may appear. Width, height, and frame rate may be shown only after the selected stream reports them; never display or log `deviceId`/`groupId`, Celsius, calibration, thermal extrema, or radiometric arrays. |
 | `EMB-P1D-NFR-001` | Privacy | Keep device choice session-only. Do not use local storage, analytics, screenshots, canvas extraction, `ImageCapture`, `MediaRecorder`, upload, frame logging, or persistence. |
-| `EMB-P1D-NFR-002` | Safety | The preview has no edge into frame validation, palette interpretation, hotspot extraction, assessment, guidance, warnings, or speech. The assessment value is always absent. |
+| `EMB-P1D-NFR-002` | Safety | The preview has no edge into frame validation, palette interpretation, hotspot extraction, assessment, guidance, warnings, or assessment speech. Source-status speech consumes status/provenance only. The assessment value is always absent. |
 | `EMB-P1D-NFR-003` | Accessibility | Source selection, controls, status, provenance, error, and Retry are keyboard operable, visibly focused, named, and at least 44 × 44 CSS pixels; meaning remains complete without color or audio. |
 | `EMB-P1D-NFR-004` | Verification | A dependency-injected plain Node check covers authorize/discover cleanup, exact selected-device matching, already-ended and during-playback track races, late `getUserMedia` resolution, pause/reacquire, disconnect, restart, the reusable `stop()`/generation boundary, hidden/pagehide cleanup, detached playback-sink cleanup, and track cleanup. React source-switch and route cleanup require code review plus manual browser evidence; manual hardware evidence verifies the selected label and camera indicator closes. |
 
@@ -333,7 +334,7 @@ A controlled non-personal warm object produces a stable structured live assessme
 
 **Purpose:** add speech as a renderer of the same structured assessment, never as a decision system.
 
-**State:** product assessment speech is blocked by Phase 1C. Phase 1D may expose accessible source status through the existing live region, but it cannot speak heat guidance.
+**State:** source-status speech is implemented and verified. Product assessment speech remains blocked by Phase 1C, and no formatter or synthetic assessment exists.
 
 ### Requirements
 
@@ -350,6 +351,13 @@ A controlled non-personal warm object produces a stable structured live assessme
 | `EMB-P2-NFR-002` | Resilience | Missing voices, denied speech, or TTS errors cannot block, alter, or erase the visual experience. |
 | `EMB-P2-NFR-003` | Privacy | No utterance, assessment, or voice preference is persisted or sent to a model endpoint. |
 
+Implemented source-only subset:
+
+- `EMB-P2-FR-005` through `007` apply to current source status and provenance.
+- Source-status dedupe, a 2.5-second minimum interval, replacement cancellation, Mute, Repeat, unavailable/throwing TTS, and exact replay provenance are covered by `npm run verify:speech`.
+- The visual status region remains polite so a silent TTS failure cannot remove assistive output. Ember speech defaults off, and visible status plus its non-color symbol remain present.
+- `EMB-P2-FR-001` through the assessment portions of `004` remain blocked and receive no substitute data.
+
 ### Acceptance scenarios
 
 - `EMB-P2-AC-001` — **Given** one current validated live assessment from a future passed Phase 1C, **when** formatting runs, **then** visible and speech-ready canonical guidance match.
@@ -360,7 +368,7 @@ A controlled non-personal warm object produces a stable structured live assessme
 
 ### Exit gate
 
-Only a future passed Phase 1C may authorize this phase. One validated live assessment must produce matching visible and spoken copy once; mute and TTS failure leave visible output complete. While Phase 1C is blocked, no formatter or product-speech progress is claimed for the hackathon.
+The source-status subset passes its focused verifier and does not constitute an assessment-speech phase pass. Only a future passed Phase 1C may authorize canonical heat guidance. Until then, assessment-specific acceptance rows remain blocked/not applicable.
 
 ---
 
@@ -370,9 +378,9 @@ Only a future passed Phase 1C may authorize this phase. One validated live asses
 
 | ID | Type | Requirement |
 |---|---|---|
-| `EMB-P3-FR-001` | Accessibility | Complete every action belonging to passed capability gates with keyboard alone in a logical order; speech actions apply only if Phase 2 passed. |
+| `EMB-P3-FR-001` | Accessibility | Complete every action belonging to passed capability gates with keyboard alone in a logical order; implemented source-speech actions apply now, while assessment-speech actions remain conditional. |
 | `EMB-P3-FR-002` | Accessibility | Controls retain visible focus and 44 × 44 minimum targets at desktop, narrow width, and 200% zoom. |
-| `EMB-P3-FR-003` | Accessibility | VoiceOver announces names, state, provenance, and status once in a logical order; current-warning checks apply only if Phase 1C passed. |
+| `EMB-P3-FR-003` | Accessibility | With Ember speech muted, VoiceOver announces names, state, provenance, and status once in a logical order. Test Ember source speech in a separate pass; current-warning checks apply only if Phase 1C passed. |
 | `EMB-P3-FR-004` | Accessibility | Status always remains understandable with color unavailable and speech muted; warning parity applies only if Phase 1C passed. |
 | `EMB-P3-FR-005` | Accessibility | Thermal images are not keyboard focus targets and never carry essential meaning alone. |
 | `EMB-P3-FR-006` | Accessibility | A 320–390px layout and 200% zoom reflow without clipping essential controls or requiring horizontal scrolling. |
@@ -384,7 +392,7 @@ Only a future passed Phase 1C may authorize this phase. One validated live asses
 ### Acceptance scenarios
 
 - `EMB-P3-AC-001` — **Given** keyboard-only operation, **when** the complete demo runs, **then** every action is reachable, named, visibly focused, and correctly enabled.
-- `EMB-P3-AC-002` — **Given** VoiceOver, **when** source state changes, **then** each meaningful status/provenance update is announced once; if Phase 1C/2 passed, assessment/app-speech updates also occur once without frame-by-frame noise.
+- `EMB-P3-AC-002` — **Given** VoiceOver with Ember speech muted, **when** source state changes, **then** each meaningful status/provenance update is announced once. In a separate app-speech pass, equivalent source statuses are deduplicated without frame-by-frame noise; future assessment speech remains conditional on Phase 1C/2.
 - `EMB-P3-AC-003` — **Given** 200% zoom and a 320–390px viewport, **then** essential copy and controls reflow without loss.
 - `EMB-P3-AC-004` — **Given** color is unavailable and speech is muted, **then** provenance and source state remain understandable; if Phase 1C passed, direction, level wording, and guidance also remain understandable.
 - `EMB-P3-AC-005` — **Given** either builder follows the demo script, **then** the chosen live or replay path completes without undocumented intervention.
@@ -420,7 +428,7 @@ The common replay/status manual QA record is complete for the locked browser/Voi
 - `EMB-P4-AC-002` — **Given** Phase 1B passed and Live is streaming, **when** USB disconnects, **then** no stale warning remains and explicit Restart or Replay selection is available.
 - `EMB-P4-AC-003` — **Given** Phase 1B passed and five Live / Replay switch cycles run, **then** provenance always matches the active source, no callback crosses runs, and stopped resource-spy counts return to zero.
 - `EMB-P4-AC-004` — **Given** all checks required by completed phases, **when** run at freeze, **then** they pass from a clean checkout.
-- `EMB-P4-AC-005` — **Given** Phase 2 passed, **when** the production-like build runs without network, **then** the selected speech voice works locally or app speech is explicitly marked unavailable while the complete visual path remains.
+- `EMB-P4-AC-005` — **Given** implemented source speech, **when** the production-like build runs without network, **then** a browser speech voice works locally or app speech is explicitly marked unavailable while the complete visual path remains; future assessment speech remains conditional.
 - `EMB-P4-AC-007` — **Given** Phase 1D passed and five Replay / Live preview switch cycles run, **then** source truth always matches, no late permission result crosses generations, and every stopped preview has zero tracks/listeners and no `srcObject`.
 
 ### Exit gate
@@ -497,7 +505,7 @@ The active Phase 1D path crosses these gates:
 1. **USB/UVC → browser MediaDevices:** macOS UVC presence is not enough; explicit permission and browser-reported label must identify the intended input.
 2. **MediaDevices → `UvcPreviewSource`:** the adapter accepts a current-generation `MediaStream`, owns tracks/listeners, and exposes status/errors without extracting pixels.
 3. **Preview source → session/viewport:** the controller accepts only the current generation, attaches the stream to `<video>`, and keeps exact non-radiometric truth visible.
-4. **Preview → assessment:** no edge exists. Temperature, hotspot, direction, guidance, warning, and speech are unreachable.
+4. **Preview → assessment:** no edge exists. Temperature, hotspot, direction, guidance, warning, and assessment speech are unreachable; optional speech receives operational status/provenance only.
 5. **Replay → viewport:** replay follows `ThermalSource`, retains exact simulated provenance, and has no assessment edge.
 
 The blocked future radiometric path remains ordered:
@@ -521,7 +529,7 @@ These are decisions, not permission to invent values. The named phase must resol
 | WebSocket port/origin allowlist, frame timeout, clock skew, and extrema-integrity tolerance | Future reopened Phase 1B | Protocol fixtures + demo-laptop measurement |
 | Assessment policy values and tie-break | Future reopened Phase 1C | Controlled calibrated device evidence + deterministic fixtures |
 | Capture-to-assessment freshness/latency budget | Future reopened Phase 1C | Demo-laptop measurement |
-| Speech engine, dedupe key, interval, Repeat empty state | Future reopened Phase 2 | Formatter checks + browser evidence |
+| Assessment-speech formatter, dedupe identity, and copy parity | Future reopened Phase 2 | Assessment formatter checks + browser evidence |
 | Browser/VoiceOver versions and WCAG target | Before Phase 3 | QA matrix |
 | Production-like offline launch command | Before Phase 4 | Clean-checkout rehearsal |
 | Live media privacy exception, if needed | Before Phase 5 | Written staged-scene decision |

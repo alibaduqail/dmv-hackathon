@@ -44,8 +44,9 @@ Phase 0 is complete and verified:
 - A six-frame 160 × 120 simulated PNG replay.
 - Start, pause, resume, restart, and stop controls.
 - Source status in text, not color alone.
+- Optional native source speech with Enable, Mute, and Repeat; it accepts status/provenance only.
 - Shared `ThermalSource` contracts and `ReplayThermalSource`.
-- `npm run verify:replay`, `npm run verify:preview`, build, and lint green.
+- `npm run verify:replay`, `npm run verify:preview`, `npm run verify:speech`, build, and lint green.
 
 Phase 1A investigation is complete with the calibrated-radiometry gate blocked:
 
@@ -85,8 +86,8 @@ Git history is the archive for removed product work. Do not copy it into an acti
 - **No new dependency without asking.** The foundation needs none.
 - **One bounded lane per agent.** Keep bridge, analysis, interface, and review work in separate contexts with disjoint file ownership.
 - **No drive-by reorganization.** Remove obsolete files during the pivot; after that, keep paths stable.
-- **Verification is not optional.** Run `npm run verify:replay`, `npm run verify:preview`, `npm run lint`, and `npm run build` after relevant changes.
-- **Commit after each working increment.** Use `codex/ember` as the shared integration branch; do not push directly to `main`.
+- **Verification is not optional.** Run `npm run verify:replay`, `npm run verify:preview`, `npm run verify:speech`, `npm run lint`, and `npm run build` after relevant changes.
+- **Commit after each working increment.** Branch from current `main`, push the short-lived branch, and integrate through a reviewed pull request; do not push feature work directly to `main`.
 - **Append one line to `docs/DECISIONS.md`** when a contract changes, a demo beat is cut, or hardware behavior surprises you.
 
 ### Optional agent tooling
@@ -154,7 +155,7 @@ Forbidden:
 
 ## Out of scope
 
-For the current hackathon build: radiometric bridge work, classification, temperature, hotspot analysis, speech, LLM calls, alerts, history persistence, cloud frame storage, screenshots/recording, canvas extraction, palette analysis, and physical actions.
+For the current hackathon build: radiometric bridge work, classification, temperature, hotspot analysis, warning/assessment speech, LLM calls, alerts, history persistence, cloud frame storage, screenshots/recording, canvas extraction, palette analysis, and physical actions. Source-status speech is allowed only through the implemented no-frame/no-assessment boundary.
 
 For the hackathon MVP: smart plugs or relays, remote third-party monitoring, cloud frame storage, diagnosis, medical claims, identity, billing, settings, dark mode, multi-tenancy, and autonomous physical actions.
 
