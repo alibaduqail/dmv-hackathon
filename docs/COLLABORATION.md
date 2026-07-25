@@ -52,11 +52,12 @@ The reported Node version must be 22.12 or newer. Builders who use `nvm` can run
 1. `AGENTS.md` — safety, vocabulary, current boundary.
 2. `mvp.md` — product, audience, claims, and scope.
 3. `docs/STATUS.md` — what is actually built and unproven.
-4. `docs/ARCHITECTURE.md` — file placement and seams.
-5. `docs/SCHEMA.md` — shared types and invariants.
-6. `docs/PLAN.md` — schedule and exit gates.
-7. `docs/DEMO.md` — the experience the team must demonstrate.
-8. `docs/AGENT-TOOLS.md` — optional agent tooling; do not install everything by default.
+4. `docs/REQUIREMENTS.md` — stable requirement IDs and phase acceptance.
+5. `docs/ARCHITECTURE.md` — trust boundaries, lifecycle, protocol, and placement.
+6. `docs/SCHEMA.md` — implemented types and invariants.
+7. `docs/PLAN.md` — schedule, lanes, and exit gates.
+8. `docs/DEMO.md` — the experience the team must demonstrate.
+9. `docs/AGENT-TOOLS.md` — optional agent tooling; do not install everything by default.
 
 If code and source-of-truth prose disagree, stop and make the code conform by default. A specification or contract change requires an explicit team decision, the designated documentation owner, and an entry in `docs/DECISIONS.md`; implementation drift cannot rewrite product truth.
 
@@ -97,8 +98,9 @@ Recommended lanes:
 
 | Lane | Primary owner | Owned paths | Coordinate before touching |
 |---|---|---|---|
-| PureThermal capture | Builder A | future native bridge, future `PureThermalSource` | `src/types.ts`, bridge protocol docs |
-| Deterministic analysis | Builder B | future validator and hotspot modules | `src/types.ts`, assessment UI |
+| PureThermal hardware/bridge | Builder A | future `native/purethermal-bridge/**` | shared types, protocol contract |
+| Browser live source/session | Builder B | future `PureThermalSource`, protocol client, session hook | shared types, scan UI |
+| Deterministic analysis | Builder B after bridge gate | future validator and assessment module | shared types, assessment UI |
 | Accessible interface | Builder B | `src/features/**`, `src/styles/**` | `src/App.tsx`, shared types |
 | Replay and verification | Builder A | `src/fixtures/**`, `public/replay/**`, `scripts/**` | manifest contracts |
 | Documentation and submission | designated writer | `docs/**`, `mvp.md`, root instructions | behavior claims from both builders |
@@ -236,6 +238,7 @@ Documentation is part of the increment, not cleanup for the end.
 
 | Change | Update |
 |---|---|
+| Requirement or acceptance change | `docs/REQUIREMENTS.md` and `docs/DECISIONS.md` |
 | Shared type, invariant, or callback | `docs/SCHEMA.md` and `docs/DECISIONS.md` |
 | New file, transport, or layer boundary | `docs/ARCHITECTURE.md` |
 | Install step, native prerequisite, or command | `docs/SETUP.md` |

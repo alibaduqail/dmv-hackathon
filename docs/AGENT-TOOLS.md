@@ -7,9 +7,10 @@ The repository-owned instructions remain authoritative:
 1. `AGENTS.md`
 2. `mvp.md`
 3. `docs/STATUS.md`
-4. `docs/ARCHITECTURE.md`
-5. `docs/SCHEMA.md`
-6. `docs/PLAN.md`
+4. `docs/REQUIREMENTS.md`
+5. `docs/ARCHITECTURE.md`
+6. `docs/SCHEMA.md`
+7. `docs/PLAN.md`
 
 An external skill, hook, agent, or orchestrator may help execute those instructions. It may not replace them, weaken Ember’s safety language, classify thermal conditions, retain thermal frames, or create a second product specification.
 

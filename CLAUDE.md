@@ -2,7 +2,7 @@
 
 **Read `AGENTS.md` first — it is the source of truth.** This file adds Claude Code specifics only.
 
-Cold start: `docs/STATUS.md`. Contracts: `docs/SCHEMA.md`. File map and landmines: `docs/ARCHITECTURE.md`. Schedule: `docs/PLAN.md`. Demo: `docs/DEMO.md`.
+Cold start: `docs/STATUS.md`. Atomic acceptance: `docs/REQUIREMENTS.md`. Boundaries and landmines: `docs/ARCHITECTURE.md`. Implemented contracts: `docs/SCHEMA.md`. Schedule: `docs/PLAN.md`. Demo: `docs/DEMO.md`.
 
 For collaboration, invoke `.claude/skills/ember-collaboration/SKILL.md`, which links to the canonical `.agents/skills/ember-collaboration` skill, and follow `docs/COLLABORATION.md`. Read `docs/AGENT-TOOLS.md` before enabling a third-party plugin, skill, or orchestrator.
 
@@ -13,7 +13,7 @@ Two builders, hard 17:30 feature freeze.
 - `/clear` between tasks. Do not carry native-bridge context into interface work.
 - Take one bounded surface at a time and name the `docs/DEMO.md` beat it improves.
 - Claim owned and off-limits files before delegating or starting parallel work.
-- Read `docs/SCHEMA.md` before changing a thermal shape. Do not redeclare shared types.
+- Read `docs/REQUIREMENTS.md` and `docs/SCHEMA.md` before changing a thermal shape. Do not redeclare shared types.
 - Do not add a dependency or change a public contract without announcing it.
 - Append the outcome or surprise to `docs/DECISIONS.md`.
 - Use only one orchestrator for a worktree; require specialist agents to return a factual handoff.

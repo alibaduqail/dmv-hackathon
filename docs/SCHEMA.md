@@ -1,6 +1,6 @@
 # SCHEMA.md — the source contract
 
-**The interface between both builders.** Read this instead of redeclaring a thermal shape. Change a field here and in `src/types.ts` together, announce it, and append the reason to `docs/DECISIONS.md`.
+**The implemented interface between both builders.** Read this instead of redeclaring a thermal shape. Change a field here and in `src/types.ts` together, announce it, and append the reason to `docs/DECISIONS.md`. Planned hardening and phase gates live in `docs/ARCHITECTURE.md` and `docs/REQUIREMENTS.md`; do not copy a target shape here before code implements it.
 
 There is no database schema in the foundation. All state is local and frames are ephemeral.
 
@@ -62,7 +62,7 @@ export type ThermalProvenance =
 | `isLive` | `false` | `true` |
 | required label | `Demo replay — not live` | explicit connected-device label |
 
-The UI renders `provenance.label`; it does not derive copy from `kind`. Replay provenance stays visible whenever replay content is visible.
+Phase 0 renders the replay manifest label plus an exact overlay string. Phase 1B’s source-generic view must render the active frame/source `provenance.label` rather than hard-code or derive copy from `kind`. Replay provenance stays visible whenever replay content is visible.
 
 ---
 
@@ -79,7 +79,7 @@ export interface ThermalFrame {
   radiometricValuesC?: Float32Array;
   minC: number;
   maxC: number;
-  provenance: Extract<ThermalProvenance, { kind: 'simulated-replay' }>;
+  provenance: ThermalProvenance;
 }
 ```
 
@@ -91,10 +91,12 @@ export interface ThermalFrame {
 | `width`, `height` | Positive integers; Lepton 3.5 target is 160 × 120 |
 | `displayUrl` | Renderable display image; never reverse-engineered into radiometry |
 | `radiometricValuesC` | Optional row-major Celsius grid; when present, length is `width * height` and every value is finite |
-| `minC`, `maxC` | Finite source metadata with `maxC > minC` |
+| `minC`, `maxC` | Finite source metadata with `maxC >= minC`; a uniform live frame may have equal values |
 | `provenance` | Truth about this frame’s source |
 
 Replay frames intentionally omit `radiometricValuesC`. Their `minC` / `maxC` values are simulated fixture metadata and cannot drive a warning or accuracy claim.
+
+The foundation interface intentionally leaves radiometry optional because the live producer does not exist yet. It is therefore not an analysis input type. Before Phase 1 analysis, introduce the discriminated live/replay variants and validated-radiometric boundary specified in `docs/ARCHITECTURE.md`; deterministic analysis must never accept this loose shape directly.
 
 ---
 
@@ -116,7 +118,7 @@ export interface ThermalSource {
 }
 ```
 
-The UI depends only on this interface. `ReplayThermalSource` exists now; `PureThermalSource` enters through the same boundary next phase.
+Replay delivery uses this interface now, but Phase 0 `ScanView` still constructs `ReplayThermalSource` and reads the manifest directly. Phase 1B introduces the session/composition boundary so the view depends only on a generic snapshot and actions. `PureThermalSource` enters through that boundary.
 
 Callbacks are push-only. The source does not own React state, classification, speech, history, or persistence.
 
@@ -140,7 +142,10 @@ export interface ReplayManifest {
   width: number;
   height: number;
   intervalMs: number;
-  provenance: ThermalProvenance;
+  provenance: Extract<
+    ThermalProvenance,
+    { kind: 'simulated-replay' }
+  >;
   frames: readonly ReplayFrameMetadata[];
 }
 ```

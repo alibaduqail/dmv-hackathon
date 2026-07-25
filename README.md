@@ -60,6 +60,7 @@ The shared integration branch is `codex/ember`. Use short-lived branches for par
 - [Repo-local collaboration skill](.agents/skills/ember-collaboration/SKILL.md)
 - [Optional agent-tool guide](docs/AGENT-TOOLS.md)
 - [Current build status](docs/STATUS.md)
+- [Phased requirements and acceptance](docs/REQUIREMENTS.md)
 - [Architecture and file ownership](docs/ARCHITECTURE.md)
 - [Shared contracts](docs/SCHEMA.md)
 - [Build schedule](docs/PLAN.md)
@@ -70,6 +71,6 @@ Ponytail, Ruflo, Impeccable, Emil Design Engineering, and any other agent tools 
 
 ## Next proof
 
-The next milestone is to identify the exact PureThermal hardware and firmware, capture one real 160 × 120 Y16 frame outside React, preserve radiometric values through a local bridge, and implement deterministic hotspot analysis behind the existing source interface.
+The next milestone is deliberately gated: first identify the exact PureThermal hardware and prove calibrated 160 × 120 radiometry outside React; then add the local bridge and source/session lifecycle; only then implement deterministic hotspot analysis. The detailed dependency order is in [the phased requirements](docs/REQUIREMENTS.md).
 
 If Y16 capture cannot be proven, the team will submit the labelled replay honestly instead of deriving fake temperatures from display colors.

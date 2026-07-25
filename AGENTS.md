@@ -5,7 +5,7 @@ Source of truth for every coding agent on this repo — Claude Code, Codex, Chat
 **Project:** Ember — a handheld thermal companion for blind and low-vision people.
 **Track:** 02, Health Tech & Accessibility. **Feature freeze 17:30. Submit 19:00.** Product spec: `mvp.md`.
 
-**Picking this up cold? Read `docs/STATUS.md` first.** Then read `docs/ARCHITECTURE.md` (file tree, contracts, landmines), `docs/SCHEMA.md` (shared shapes), and `docs/PLAN.md` (the only schedule).
+**Picking this up cold? Read `docs/STATUS.md` first.** Then read `docs/REQUIREMENTS.md` (atomic acceptance), `docs/ARCHITECTURE.md` (boundaries and placement), `docs/SCHEMA.md` (implemented shapes), and `docs/PLAN.md` (schedule authority).
 
 **Working with a person or another agent?** Use `.agents/skills/ember-collaboration/SKILL.md`, then follow `docs/COLLABORATION.md`. Claude Code discovers the same canonical skill through `.claude/skills/ember-collaboration`. Verified identities and setup notes for optional agent tools live in `docs/AGENT-TOOLS.md`.
 
@@ -41,19 +41,20 @@ Phase 0 is complete and verified:
 - `#scan` as the default route.
 - `#history` as an honest empty state.
 - A six-frame 160 × 120 simulated PNG replay.
-- Start, pause, restart, and stop controls.
+- Start, pause, resume, restart, and stop controls.
 - Source status in text, not color alone.
 - Shared `ThermalSource` contracts and `ReplayThermalSource`.
 - `npm run verify:replay`, build, and lint green.
 
-Phase 1 is the active implementation milestone. It authorizes only:
+Phase 1A is the next implementation milestone. The later Phase 1 work is dependency-gated:
 
 - Identifying the exact PureThermal board and firmware.
-- Proving one 160 × 120 Y16 frame outside React.
-- Adding the smallest local bridge and `PureThermalSource` behind the existing transport seam.
-- Validating radiometric frames and implementing pure, deterministic hotspot analysis after a real frame is proven.
+- Proving one 160 × 120 Y16 frame outside React **and separately proving calibrated radiometry**.
+- Adding the smallest local bridge, versioned loopback protocol, and `PureThermalSource` only after that proof.
+- Adding a source/session controller before Live enters `ScanView`.
+- Validating live radiometric frames and implementing deterministic hotspot analysis only after the bridge gate.
 
-Replay pixels still cannot be classified. Do **not** add speech, an LLM endpoint, notifications, persistent history, cloud frame storage, or physical actions in Phase 1. Follow the hardware gate and exit criteria in `docs/PLAN.md`.
+Replay pixels still cannot be classified. Do **not** add speech, an LLM endpoint, notifications, persistent history, cloud frame storage, or physical actions in Phase 1. Follow requirement IDs and gates in `docs/REQUIREMENTS.md` and timing in `docs/PLAN.md`.
 
 ---
 
@@ -98,7 +99,7 @@ Git history is the archive for removed product work. Do not copy it into an acti
 
 The interface is a high-contrast safety instrument, not a decorative heat map.
 
-- Status and warnings use **word + symbol + color**, in that order.
+- Status and warnings require **word + symbol**. Color may reinforce them but cannot carry meaning by itself.
 - Visible focus must survive every theme color.
 - Do not place essential text inside the thermal image.
 - Preserve the thermal asset’s palette. Do not recolor replay or live frames for branding.
@@ -115,11 +116,11 @@ Exact terms in code, UI, and commits.
 | Term | Means | Do not say |
 |---|---|---|
 | source | An implementation that emits thermal frames | camera, when it may be replay |
-| replay | Simulated, ordered PNG frames | live feed, scan |
+| replay | Simulated, ordered PNG frames | live feed, or “scan” when describing replay data |
 | live source | Frames arriving from the native PureThermal bridge | direct browser camera |
 | frame | One thermal image plus metadata | reading, assessment |
 | radiometric values | Per-pixel Celsius data supplied by the live bridge | temperatures inferred from a PNG |
-| assessment | Deterministic output derived from radiometric values | AI opinion |
+| assessment | Deterministic output derived from validated live radiometric values | AI opinion |
 | warning | Redundant text, symbol, color, and later speech | guarantee |
 | lower heat observed | A comparative thermal observation | safe to touch |
 
@@ -146,7 +147,7 @@ Forbidden:
 
 ## Out of scope
 
-For active Phase 1: speech, LLM calls, alerts, history persistence, cloud frame storage, and physical actions. The native bridge and pure deterministic hotspot analysis are in scope only behind the hardware and validation gates above.
+For active Phase 1: speech, LLM calls, alerts, history persistence, cloud frame storage, and physical actions. The native bridge and deterministic hotspot analysis are in scope only behind the hardware, transport, and validation gates above.
 
 For the hackathon MVP: smart plugs or relays, remote third-party monitoring, cloud frame storage, diagnosis, medical claims, identity, billing, settings, dark mode, multi-tenancy, and autonomous physical actions.
 

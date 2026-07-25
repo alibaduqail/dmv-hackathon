@@ -4,7 +4,7 @@
 
 **One line:** Ember gives blind and low-vision people a non-contact way to locate higher-heat areas before reaching toward them.
 
-**MVP form:** a handheld Lepton 3.5 thermal camera on a PureThermal USB board, paired with a local web interface. On-screen guidance ships first; spoken guidance follows.
+**MVP form:** a handheld Lepton 3.5 thermal camera on a PureThermal USB board, paired with a local web interface. On-screen guidance ships first; spoken guidance follows. Atomic acceptance and dependency gates live in `docs/REQUIREMENTS.md`; mutable phase timing lives in `docs/PLAN.md`.
 
 ---
 
@@ -71,7 +71,7 @@ This repository reset builds the seam before the hardware path.
 - High-contrast thermal viewport.
 - Six ordered, simulated 160 × 120 PNG frames.
 - Visible provenance: **“Demo replay — not live”**
-- Start, pause, restart, and stop controls.
+- Start, pause, resume, restart, and stop controls.
 - Text source status.
 - `ThermalSource` interface independent of transport.
 - `ReplayThermalSource` with deterministic timing and cleanup.
@@ -99,11 +99,11 @@ Both transports implement the same contract:
 
 ```
 ReplayThermalSource ─┐
-                     ├── ThermalSource callbacks ── Scan UI
+                     ├── ThermalSource lifecycle ── session controller ── Scan UI
 PureThermalSource ───┘
 ```
 
-The React surface never knows whether a frame came from a timer and PNG manifest or a native process. Provenance does.
+The React surface knows the operator-selected source and renders its truthful provenance. It does not know whether a timer, USB capture path, or bridge protocol produced the frame.
 
 ### Live bridge
 
@@ -145,7 +145,7 @@ Speech repeats the structured assessment. It never outruns or replaces visible t
 - Thermal viewport preserving the source aspect ratio.
 - Persistent provenance beside the viewport.
 - Current frame metadata.
-- Start, pause, restart, and stop controls.
+- Start, pause, resume, restart, and stop controls.
 - Live region for source changes.
 - Future assessment panel beneath the viewport.
 
@@ -190,22 +190,15 @@ No API, database, authentication, cloud storage, model endpoint, or persistence 
 
 ---
 
-## 7. Schedule — backwards from 19:00
+## 7. Delivery gates
 
-| Phase | Window | Exit gate |
-|---|---|---|
-| Repository reset + replay foundation | 12:50–14:00 | Replay lifecycle works; build, lint, verifier green |
-| PureThermal bridge + hotspot analysis | 14:00–15:30 | Valid live radiometric frame reaches deterministic analysis |
-| Spoken interaction | 15:30–16:15 | Screen and speech express the same assessment |
-| Demo flow + accessibility QA | 16:15–17:00 | Keyboard and screen-reader pass; full pitch rehearsed |
-| Offline hardening | 17:00–17:30 | Live path plus labeled replay fallback each run twice |
-| **Hard feature freeze** | **17:30** | No more product code |
-| Package | 17:30–18:30 | README, captioned recording, submission form |
-| Buffer | 18:30–19:00 | Submit; do not build |
+`docs/PLAN.md` is the phase-schedule authority. Its live path is split into three ordered gates:
 
-**Cut order:** LLM explanation → history persistence → polished temperature charts → multiple hotspot narration.
+1. Prove exact hardware, orientation, and calibrated radiometry.
+2. Carry a live frame through a local versioned bridge and transport-neutral session.
+3. Apply a hardware-validated deterministic policy.
 
-**Never cut:** deterministic classification, redundant warning output, replay provenance, or the offline fallback.
+If the first gate fails by the hardware cutoff, the team follows the labelled replay-only branch. Deterministic classification remains mandatory for **any live warning claim**; it is not fabricated to make a replay-only submission look complete.
 
 ---
 
@@ -221,15 +214,22 @@ No API, database, authentication, cloud storage, model endpoint, or persistence 
 - `#history` truthfully states that nothing is stored.
 - `npm run verify:replay`, `npm run lint`, and `npm run build` pass.
 
-### Final hackathon MVP
+### Target final hackathon MVP — only when its phase gates pass
 
-- A live radiometric frame crosses the native bridge.
+- A calibrated live radiometric frame crosses the native bridge.
 - Deterministic analysis creates one spatial assessment.
 - Visible and spoken outputs match.
 - Stale frames never produce a current warning.
 - Disconnecting the camera produces an explicit error state.
-- Replay remains a fully offline, plainly labelled fallback.
-- The three-minute demo runs twice without a reload.
+- Replay remains a plainly labelled fallback and passes the disconnected-network gate.
+- Every claimed demo path runs twice before freeze.
+
+### Honest fallback
+
+- The accessible replay lifecycle is self-contained and local; offline behavior is claimed only after the Phase 4 disconnected-network rehearsal.
+- Exact simulated provenance remains visible.
+- No replay assessment or temperature-accuracy claim appears.
+- Live bridge and assessment are described as planned when their gates are blocked.
 
 ---
 
@@ -248,4 +248,4 @@ The product acts by warning the person. It does not act on the physical environm
 - **“Does the AI decide what is hot?”** No. Deterministic code produces the assessment. Language generation can only explain that object.
 - **“Are frames uploaded?”** No. The MVP processes them locally and treats them as ephemeral.
 - **“Why not use a normal webcam?”** RGB describes visible appearance. Ember’s core input is radiometric thermal data.
-- **“What happens if the hardware fails on stage?”** The team switches to the labelled offline replay without changing the interface.
+- **“What happens if the hardware fails on stage?”** The team switches explicitly to the labelled local replay; it is called offline only after the disconnected-network gate passes.

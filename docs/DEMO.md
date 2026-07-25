@@ -4,6 +4,8 @@ Acceptance criteria for the repo. If a change does not improve a beat below or p
 
 Use a heating pad, reusable hand warmer, or warm mug. No exposed burner and no invitation for a judge to touch a heated object.
 
+Run the live sequence only if Phases 1C and 2 have passed and `docs/STATUS.md` records the evidence. Otherwise run the foundation/fallback sequence and use the replay-only pitch. Never narrate a planned capability as present.
+
 | Time | Beat | Depends on |
 |---|---|---|
 | 0:00–0:25 | Hold up the ordinary-looking object. “Residual heat has no reliable sound. Finding it by contact means finding it too late.” | object, pitch |
@@ -24,7 +26,7 @@ Before the native bridge exists, rehearse beats 0:00–0:45 and then start the s
 
 Say:
 
-> “This is our offline interface fixture. It is simulated, not camera data, and it does not produce a safety assessment.”
+> “This is our self-contained interface fixture. It is simulated, not camera data, and it does not produce a safety assessment.”
 
 The viewport must display **“Demo replay — not live”** for the entire sequence. Demonstrate start, pause, resume, restart, and stop. Do not narrate PNG colors as temperatures.
 
@@ -34,7 +36,7 @@ The viewport must display **“Demo replay — not live”** for the entire sequ
 
 If live capture fails on stage:
 
-1. Say, “The device source is unavailable, so I’m switching to our labelled offline replay.”
+1. Say, “The device source is unavailable, so I’m switching to our labelled local replay.”
 2. Start replay.
 3. Keep the provenance label on screen.
 4. Demonstrate interface lifecycle and accessibility.
@@ -58,7 +60,7 @@ Then: problem, target user, one architecture diagram, accessible output, privacy
 
 ---
 
-## The 60-second pitch
+## The 60-second live pitch — only after live assessment and speech pass
 
 > A hot pan and a cold pan can make the same sound. For someone who is blind or has low vision, checking by contact can mean finding the danger too late.
 >
@@ -66,11 +68,27 @@ Then: problem, target user, one architecture diagram, accessible output, privacy
 >
 > The important part is what the AI does not do. A deterministic rules engine analyzes the radiometric frame. Language only explains that structured result. Ember never claims something is safe to touch, and it never needs to upload the thermal image.
 >
-> Today we are using a Lepton 3.5 thermal camera through PureThermal USB. If the hardware drops, the same interface has a clearly labelled offline replay—because an accessibility tool needs a fallback people can trust.
+> Today we are using a Lepton 3.5 thermal camera through PureThermal USB. If the hardware drops, the same interface has a clearly labelled local replay—because an accessibility tool needs a fallback people can trust.
 >
 > Ember gives people a thermal sense before contact.
 
 Land on the last line and stop.
+
+## The 60-second replay-only pitch — when a live gate is blocked
+
+> A hot pan and a cold pan can make the same sound. For someone who is blind or has low vision, checking by contact can mean finding the danger too late.
+>
+> Ember is our concept for a handheld thermal companion that would locate higher heat and express the result through visible, non-color guidance and matching speech.
+>
+> What you see today is the accessible application and source-lifecycle foundation. This six-frame sequence is simulated, clearly labelled “Demo replay — not live,” and it never creates a thermal assessment.
+>
+> The safety boundary is already locked: only deterministic rules over validated live radiometric data may classify heat. Ember will never infer temperature from a colored image or claim an object is safe to touch.
+>
+> Our next gate is proving calibrated radiometry from this exact PureThermal hardware, then carrying it through the local source adapter already represented by this interface.
+>
+> We chose a truthful fallback because accessibility starts with knowing what the system can and cannot perceive.
+
+Land on the visible replay provenance and stop.
 
 ---
 

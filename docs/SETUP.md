@@ -38,11 +38,11 @@ npm run build
 For manual replay verification:
 
 1. Open `#scan`.
-2. Confirm status is `Idle`.
+2. Confirm the visible heading says **“Replay ready”** and the detail says **“Start the simulated sequence when you are ready.”**
 3. Start and let all six frames finish.
 4. Restart, pause after frame two, wait longer than one interval, and confirm the frame does not advance.
 5. Resume and confirm the next frame is frame three.
-6. Stop and confirm status returns to idle.
+6. Stop and confirm the heading returns to **“Replay ready”** and the displayed frame clears.
 7. Start again, navigate to `#history`, wait, then return; no old timer or frame may advance in the background.
 8. Confirm **“Demo replay — not live”** stays adjacent to the viewport whenever a replay frame is displayed.
 
@@ -62,6 +62,15 @@ public/replay/ember-frame-06.png
 ```
 
 All are simulated, 160 × 120, and ordered by `src/fixtures/replay.ts`.
+
+If the fixtures intentionally change:
+
+```sh
+node scripts/generate-replay-assets.mjs
+npm run verify:replay
+```
+
+Review all six generated PNGs, the manifest order/metadata, and the exact provenance before committing. The generator writes fixtures; the application never runs it.
 
 Do not:
 
@@ -86,8 +95,10 @@ Before writing bridge code:
    ```
 
 5. Prove one 160 × 120 Y16 frame outside React.
-6. Record whether the device supplies radiometric values and which calibration mode is active.
-7. Only then implement the local bridge and `PureThermalSource`.
+6. Separately prove whether its values are calibrated radiometry convertible to Celsius; Y16 shape alone is insufficient.
+7. Verify display and radiometric orientation with left/right and upper/lower placement.
+8. Record calibration mode, conversion, encoding, byte order, and timestamp source without saving a live frame.
+9. Only then select the bridge implementation and begin `PureThermalSource`.
 
 Direct browser UVC radiometry is not assumed. The live path needs a local native bridge that preserves Y16 analysis data and creates a separate display image.
 
@@ -105,7 +116,7 @@ Before 17:30:
 4. Confirm no API, font, image, or route requires the network.
 5. If the live bridge exists, unplug the camera mid-stream and confirm the UI enters `error` without retaining a current assessment.
 
-The offline fallback is the committed replay, not a cached live frame.
+The Phase 4 offline-fallback candidate is the committed replay, not a cached live frame. Claim disconnected-network verification only after this rehearsal passes.
 
 ---
 

@@ -10,7 +10,7 @@ Coordinate humans and agents around one product truth. Keep each task bounded, i
 ## Start every task
 
 1. Read `AGENTS.md` completely.
-2. Read `docs/STATUS.md`, then the documents it routes to for the task.
+2. Read `docs/STATUS.md`, then `docs/REQUIREMENTS.md` and the task-specific documents it routes to.
 3. Inspect the current branch, worktree status, and recent commits.
 4. State one outcome, one owner, an explicit file list, and acceptance checks.
 5. Claim the lane before editing. Announce any necessary cross-lane file first.
@@ -34,7 +34,9 @@ Prefer parallel work only when owners have disjoint files.
 
 | Lane | Typical paths | Required context |
 |---|---|---|
-| Thermal contracts and source | `src/types.ts`, `src/lib/**`, native bridge files | `docs/SCHEMA.md`, `docs/ARCHITECTURE.md` |
+| Hardware and native bridge | `native/purethermal-bridge/**` | Phase 1A/1B requirements, bridge section in `docs/ARCHITECTURE.md` |
+| Browser source and session | `src/types.ts`, future live adapter/protocol/session files | `docs/REQUIREMENTS.md`, `docs/SCHEMA.md`, `docs/ARCHITECTURE.md` |
+| Deterministic assessment | future assessment/presentation modules and verifier | Phase 1C policy and acceptance; no replay pixels |
 | Interface and design | `src/features/**`, `src/styles/**`, `src/App.tsx` | `docs/DEMO.md`, accessibility rules in `AGENTS.md` |
 | Replay and verification | `src/fixtures/**`, `public/replay/**`, `scripts/**` | provenance rules and `docs/SETUP.md` |
 | Documentation and pitch | `docs/**`, `mvp.md`, root instructions | current code plus verification evidence |
@@ -57,6 +59,7 @@ Do not let two agents edit the same high-conflict file concurrently. Give a subc
 3. Change the smallest coherent surface that reaches the stated exit gate.
 4. Update the owning documentation in the same increment:
    - contract change → `docs/SCHEMA.md` and `docs/DECISIONS.md`
+   - requirement/acceptance change → `docs/REQUIREMENTS.md` and `docs/DECISIONS.md`
    - file or boundary change → `docs/ARCHITECTURE.md`
    - setup change → `docs/SETUP.md`
    - completed or blocked work → `docs/STATUS.md`
