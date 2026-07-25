@@ -2,9 +2,9 @@
 
 # Ember
 
-Ember is a hackathon prototype for Track 02, Health Tech & Accessibility. The intended product pairs a FLIR Lepton 3.5 on a PureThermal USB board with redundant on-screen and spoken guidance.
+Ember is a hackathon prototype for Track 02, Health Tech & Accessibility. The product concept pairs a FLIR Lepton 3.5 on a PureThermal USB board with redundant on-screen and spoken heat guidance.
 
-The current repository is an accessible application foundation with a clearly labelled simulated thermal replay. It does **not** yet claim live camera capture, calibrated temperature accuracy, hotspot classification, or that any object is safe to touch.
+The current repository is an accessible application foundation with a clearly labelled simulated thermal replay. Phase 1A hardware investigation is complete, but calibrated radiometry is unavailable through the selected laptop path. The repository does **not** claim live browser playback, temperature accuracy, hotspot classification, directional warning, assessment speech, or that any object is safe to touch.
 
 ## What works now
 
@@ -15,6 +15,7 @@ The current repository is an accessible application foundation with a clearly la
 - Status uses visible words and a non-color symbol.
 - `#history` truthfully explains that frames and incidents are not stored.
 - Replay verification, lint, and production build are green.
+- macOS identifies the attached GroupGets `PureThermal (fw:v1.3.0)` USB/UVC interfaces; the privacy-safe no-go evidence is documented.
 
 ## Run it
 
@@ -42,12 +43,12 @@ npm run build
 
 ## Safety boundary
 
-Ember can report an observed thermal condition. It cannot account for every material, reflection, distance, exposure time, calibration state, or person-specific sensitivity.
+The future calibrated Ember product may report an observed thermal condition. It still cannot account for every material, reflection, distance, exposure time, calibration state, or person-specific sensitivity. The current build makes no thermal assessment.
 
 - Never promise that an object is safe to touch.
 - Deterministic code—not a language model—must classify thermal conditions.
 - Every warning needs visible text plus a non-color cue. Speech and color are additive.
-- Thermal frames are ephemeral by default.
+- Live media and radiometric arrays are ephemeral by default; committed replay PNGs are simulated fixtures, not user captures.
 - Simulated replay must never look or sound live.
 
 Read [AGENTS.md](AGENTS.md) before changing code or copy.
@@ -66,11 +67,18 @@ The shared integration branch is `codex/ember`. Use short-lived branches for par
 - [Build schedule](docs/PLAN.md)
 - [Demo acceptance](docs/DEMO.md)
 - [Local and hardware setup](docs/SETUP.md)
+- [Phase 1A hardware evidence](docs/HARDWARE-PROBE.md)
 
 Ponytail, Ruflo, Impeccable, Emil Design Engineering, and any other agent tools are contributor-only. They are not required to run the app and do not belong in Ember’s runtime dependencies.
 
-## Next proof
+## Hardware result and next milestone
 
-The next milestone is deliberately gated: first identify the exact PureThermal hardware and prove calibrated 160 × 120 radiometry outside React; then add the local bridge and source/session lifecycle; only then implement deterministic hotspot analysis. The detailed dependency order is in [the phased requirements](docs/REQUIREMENTS.md).
+Phase 1A is **complete as an investigation and blocked as a calibrated-radiometry pass gate**. macOS sees PureThermal firmware `v1.3.0` and its UVC interfaces, but Ember obtained no Y16 frame, calibrated conversion, frame orientation, or temperature evidence. Radiometric bridge, hotspot assessment, and assessment speech remain future work.
 
-If Y16 capture cannot be proven, the team will submit the labelled replay honestly instead of deriving fake temperatures from display colors.
+Phase 1D is the next bounded milestone: prove that the exact intended PureThermal input plays through browser MediaDevices, then add a local display-only preview with complete permission, failure, accessibility, and media-track cleanup. It must persist:
+
+- **“Live thermal preview — non-radiometric”**
+- **“Display-only colorized video. No temperature or safety assessment.”**
+- **“No current assessment”**
+
+The preview may demonstrate live local video transport. It does not yet deliver Ember’s directional accessibility feature and its display pixels may never be converted into temperature or warnings. If browser playback is unavailable, the submission remains the labelled replay.

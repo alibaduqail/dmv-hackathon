@@ -1,6 +1,6 @@
 # REQUIREMENTS.md — what Ember must prove
 
-**Status:** Phase 0 is implemented; Phases 1–5 are planned and gated.
+**Status:** Phase 0 is implemented. Phase 1A investigation is complete with the calibrated-radiometry gate blocked. Phase 1D is the planned display-only branch; radiometric Phases 1B, 1C, and assessment speech are blocked.
 
 This is the atomic, testable requirements source for Ember. It says **what** must be true and how the team accepts it. `mvp.md` owns the product claim and scope, `docs/SCHEMA.md` documents implemented contracts, `docs/ARCHITECTURE.md` owns boundaries and target placement, `docs/PLAN.md` owns timing and lane assignment, and `docs/STATUS.md` owns current evidence.
 
@@ -10,7 +10,9 @@ If a requirement conflicts with Ember’s safety rules, the safety rule wins. Re
 
 ## 1. Product outcome and actors
 
-Ember is a handheld thermal companion for blind and low-vision people. A user points a Lepton 3.5 and PureThermal assembly toward a nearby surface. Ember reports an observable higher-heat region through redundant visible guidance and, after Phase 2, matching speech.
+Ember’s product target is a handheld thermal companion for blind and low-vision people. A user points a Lepton 3.5 and PureThermal assembly toward a nearby surface, and a future radiometric build reports an observable higher-heat region through redundant visible guidance and matching speech.
+
+The current hackathon path does not have calibrated radiometry. It may add a live, local, colorized UVC preview for transport and lifecycle demonstration, but that preview cannot deliver temperature, hotspot, direction, safety guidance, or the core blind-user warning.
 
 Primary actors:
 
@@ -40,6 +42,7 @@ EMB-P0-*      replay foundation
 EMB-P1A-*     hardware and radiometry proof
 EMB-P1B-*     local bridge and source integration
 EMB-P1C-*     deterministic assessment
+EMB-P1D-*     display-only UVC preview
 EMB-P2-*      spoken interaction
 EMB-P3-*      accessibility and demo QA
 EMB-P4-*      offline and failure hardening
@@ -61,8 +64,9 @@ These requirements apply to every implementation, test fixture, screenshot, reco
 | `EMB-X-ACC-001` | Every warning must include visible text and a non-color symbol. Color and speech may reinforce the warning but cannot be essential. |
 | `EMB-X-PRV-001` | Every frame and assessment must retain truthful source provenance. Replay content must visibly display exactly **“Demo replay — not live”**. |
 | `EMB-X-PRV-002` | Replay pixels and simulated replay min/max metadata must never enter validation, hotspot extraction, classification, threshold tuning, or warning generation. |
-| `EMB-X-PRI-001` | Live per-frame display payloads and radiometric arrays must remain local and ephemeral: no runtime upload, persistence, browser storage, incident insertion, analytics, or per-frame logging. Privacy-safe aggregate hardware/policy evidence is allowed; the only pixel-persistence exception is the reviewed staged non-personal Phase 5 media artifact. |
-| `EMB-X-LIF-001` | Stop, error, route change, source switch, restart, unmount, frame timeout, and assessment expiry must invalidate all now-stale frames, assessments, pending speech, callbacks, timers, and display resources owned by that run. |
+| `EMB-X-PRV-003` | Colorized UVC display pixels must never enter temperature conversion, hotspot extraction, direction, severity, guidance, warning, or speech. A live preview must persistently say **“Live thermal preview — non-radiometric”** and **“Display-only colorized video. No temperature or safety assessment.”** |
+| `EMB-X-PRI-001` | Live `MediaStream`s, tracks, per-frame display payloads, and radiometric arrays must remain local and ephemeral: no in-app/runtime recording, upload, persistence, browser storage, incident insertion, analytics, or per-frame logging. Privacy-safe aggregate hardware/policy evidence is allowed. A reviewed external recording of a staged non-personal Phase 5 demo is the only media exception; it does not authorize capture code in Ember. |
+| `EMB-X-LIF-001` | Stop, error, route change, source switch, restart, hidden visibility, `pagehide`, unmount, frame timeout, and assessment expiry must invalidate all now-stale frames, streams, assessments, pending speech, callbacks, timers, tracks, and display resources owned by that run. |
 | `EMB-X-SCP-001` | No diagnosis, object recognition, medical claim, notification, remote monitoring, cloud frame store, relay, smart plug, or autonomous physical action enters the MVP. |
 | `EMB-X-VER-001` | Preserve the lightweight verification style. New deterministic logic must have plain Node verification in addition to replay verification, lint, and build. |
 | `EMB-X-TRU-001` | Documentation and presentation may claim only behavior supported by a completed phase gate. Planned and simulated behavior must be labelled as such. |
@@ -72,21 +76,24 @@ These requirements apply to every implementation, test fixture, screenshot, reco
 ## 4. Phase dependency and fallback
 
 ```text
-P0 replay source + accessible shell ───────────────────────────────┐
-                                                                  │
-P1A exact device + calibrated radiometry proof                     │
-  └─ P1B versioned local bridge + live source                      │
-       └─ P1C validated frame + deterministic assessment           │
-            └─ P2 matching visible and spoken output               │
-                 └─ P3 live accessibility/demo acceptance          │
-                                                                  │
-P0 labelled replay ────────────────> P3 replay QA ─> P4 ─> P5 fallback
+P0 replay source + accessible shell ──────────────────────────────────────┐
+                                                                         │
+P1A hardware/radiometry probe — COMPLETE, CALIBRATED GATE BLOCKED         │
+  ├─ radiometry proven ─> P1B bridge ─> P1C assessment ─> P2 speech       │
+  │                       BLOCKED         BLOCKED          BLOCKED         │
+  └─ radiometry unavailable ─> P1D display-only UVC preview ──────────┐   │
+                                                                     │   │
+P0 labelled replay ───────────────────────────────────────────────────┴──> P3 QA
+                                                                              │
+                                                                              v
+                                                                         P4 ─> P5
 ```
 
 - A downstream live phase starts only after its predecessor passes.
-- If calibrated radiometry is not proven by the Phase 1 hardware cutoff, stop live implementation.
+- Because calibrated radiometry was not proven by the Phase 1 hardware cutoff, stop the radiometric bridge, assessment, and assessment-speech path.
+- Phase 1D may render a local colorized UVC stream only through its separate no-analysis acceptance gate.
 - A replay-only submission remains valid, but it must not display or speak a fabricated thermal assessment.
-- Phase 2 may verify a pure formatter against synthetic **structured assessment data**. It may not present that fixture as a camera result.
+- Phase 2 is future-only while Phase 1C is blocked; do not use synthetic assessment data to imply hackathon speech progress.
 - Phase 4 hardens only the capabilities that actually passed.
 - Phase 5 describes failed gates as future work, not partial success.
 
@@ -106,10 +113,10 @@ P0 labelled replay ────────────────> P3 replay Q
 | `EMB-P0-FR-004` | Functional | Keep exact replay provenance adjacent to the viewport and over every displayed replay frame. | Code + manual browser check |
 | `EMB-P0-FR-005` | Functional | Expose Start, Pause, Resume, Restart, and Stop with state-appropriate availability. | Code + manual browser check |
 | `EMB-P0-FR-006` | Functional | Report source lifecycle through visible words and a non-color symbol. | Code + manual browser check |
-| `EMB-P0-FR-007` | Functional | Replay always produces “No current assessment.” | Code review |
+| `EMB-P0-FR-007` | Functional | Replay always produces “No current assessment”. | Code review |
 | `EMB-P0-FR-008` | Functional | `#history` truthfully reports that no frames or incidents are stored. | Code + manual browser check |
 | `EMB-P0-DR-001` | Data | Manifest/frame metadata is finite, ordered, uniquely identified, correctly dimensioned, and truthfully provenanced. | `verify:replay` |
-| `EMB-P0-IR-001` | Integration | Replay implements `ThermalSource` and emits frames/status through its callbacks. Phase 0 `ScanView` still composes Replay and reads its manifest directly; Phase 1B removes that known dependency. | Typecheck/build + code review |
+| `EMB-P0-IR-001` | Integration | Replay implements `ThermalSource` and emits frames/status through its callbacks. Phase 0 `ScanView` still composes Replay and reads its manifest directly; Phase 1D removes that known dependency. | Typecheck/build + code review |
 | `EMB-P0-NFR-001` | Accessibility | Controls are keyboard operable, named, visibly focused, and at least 44 × 44 CSS pixels. | Manual browser check |
 | `EMB-P0-NFR-002` | Reliability | No pending replay work survives stop or route cleanup. | Source-level automated check + manual route check |
 | `EMB-P0-NFR-003` | Verification | Replay verification, lint, and production build pass. | Named commands |
@@ -129,6 +136,8 @@ P0 labelled replay ────────────────> P3 replay Q
 
 **Purpose:** remove hardware uncertainty before the app or policy depends on it. This work happens outside React and does not create a product warning.
 
+**State:** investigation complete; pass gate blocked. Privacy-safe evidence is in `docs/HARDWARE-PROBE.md`.
+
 ### Requirements
 
 | ID | Type | Requirement |
@@ -140,8 +149,8 @@ P0 labelled replay ────────────────> P3 replay Q
 | `EMB-P1A-DR-001` | Data | The probe must establish width, height, pixel count, numeric encoding, byte order, capture timestamp source, and min/max derivation. |
 | `EMB-P1A-DR-002` | Data | Produce a privacy-safe proof bundle containing exact probe commit/command; device/firmware/mode/host; calibration source; aggregate pixel/finite counts, min/max, and one-way checksum; orientation challenge result; and second-builder pass/fail review. |
 | `EMB-P1A-NFR-001` | Privacy | Probe output may log device metadata and aggregate counts only; it must not write raw frames, radiometric arrays, or identifiable scenes to the repository or telemetry. |
-| `EMB-P1A-NFR-002` | Truthfulness | If calibration cannot be proven, mark Phase 1 blocked. Do not infer Celsius from palette colors or raw counts. |
-| `EMB-P1A-NFR-003` | Decision | Record the probe result and selected bridge approach in `docs/DECISIONS.md` before Phase 1B. |
+| `EMB-P1A-NFR-002` | Truthfulness | If calibration cannot be proven, block radiometric Phase 1B, deterministic Phase 1C, and assessment speech. A separately gated Phase 1D display preview may continue, but it cannot infer Celsius from palette colors or raw counts. |
+| `EMB-P1A-NFR-003` | Decision | Record the probe result and either the selected calibrated bridge approach after a pass or an explicit no-bridge fallback after a failure in `docs/DECISIONS.md`. |
 
 ### Acceptance scenarios
 
@@ -150,15 +159,65 @@ P0 labelled replay ────────────────> P3 replay Q
 - `EMB-P1A-AC-003` — **Given** unproven calibration at the cutoff, **when** the team chooses the fallback, **then** no bridge, validator, UI copy, or presentation claims live temperature assessment.
 - `EMB-P1A-AC-004` — **Given** the proof bundle, **when** the second builder reproduces it or completes the required evidence checklist, **then** dimensions, encoding, calibration, finiteness, and both orientation challenges each have an explicit pass; any missing or failed field blocks Phase 1B.
 
+### Recorded result — 2026-07-25
+
+| Acceptance | Result | Reason |
+|---|---|---|
+| `AC-001` | Failed | macOS identified GroupGets PureThermal firmware `v1.3.0` and UVC interfaces, but exact board revision, capture mode, dimensions, and encoding were not exposed |
+| `AC-002` | Failed | No 160 × 120 Y16 buffer or authoritative calibrated-Celsius conversion was obtained |
+| `AC-003` | Passed | The team selected the no-radiometry branch and removed temperature, assessment, warning, and assessment-speech claims |
+| `AC-004` | Failed | Calibration, frame aggregate, checksum, and orientation evidence are absent, so the radiometric Phase 1B gate remains blocked |
+
 ### Exit gate
 
-Phase 1B is authorized only when calibrated 160 × 120 radiometry is reproducible locally and the complete privacy-safe proof bundle passes second-builder review. Otherwise follow the replay branch.
+Phase 1A work is closed, but Phase 1B is not authorized. Calibrated 160 × 120 radiometry was not reproduced and the complete pass bundle does not exist. The team follows the labelled replay plus Phase 1D display-only branch.
 
 ---
 
-## 7. Phase 1B — local bridge and transport-neutral live source
+## 7. Phase 1D — non-radiometric live preview
+
+**Purpose:** prove that the attached UVC device can supply a local, display-only browser preview while keeping source truth, permission, accessibility, privacy, and cleanup explicit.
+
+**State:** planned. The USB/UVC interfaces are present, but an actual AVFoundation or browser video device was not proven by Phase 1A.
+
+### Requirements
+
+| ID | Type | Requirement |
+|---|---|---|
+| `EMB-P1D-IR-001` | Integration | Use `navigator.mediaDevices` with `audio: false` through a distinct `UvcPreviewSource` or equivalent preview adapter. Do not call it `PureThermalSource` and do not fabricate a `ThermalFrame`. |
+| `EMB-P1D-IR-002` | Integration | Model the viewport as a discriminated replay-frame or live-`MediaStream` surface. A `MediaStream` cannot acquire fake `minC`, `maxC`, `radiometricValuesC`, or replay metadata to fit the Phase 0 frame contract. |
+| `EMB-P1D-FR-001` | Functional | Demo replay remains visibly selected after load/reload. Camera access begins only after the operator explicitly selects Live preview and activates an **Authorize cameras** action; Replay Start never requests camera access. |
+| `EMB-P1D-FR-002` | Functional | Before authorization, explain that the browser may briefly activate its default video input solely to unlock labels. Authorize with a temporary `audio: false, video: true` stream, never attach it to the viewport, and stop all of its tracks immediately. Then enumerate inputs, require the operator to choose the intended PureThermal-labelled input, and keep its `deviceId` in memory for this session only. |
+| `EMB-P1D-FR-003` | Functional | Start opens only the operator-selected session `deviceId`, verifies the active track’s `getSettings().deviceId` matches before attachment, and enters `streaming` only after the current-generation stream plays. Display the selected track label plus **“Live thermal preview — non-radiometric”**, **“Display-only colorized video. No temperature or safety assessment.”**, and **“No current assessment”** beside the viewport. |
+| `EMB-P1D-FR-004` | Functional | Pause stops every current track, clears `video.srcObject`, and enters `paused`; Resume explicitly reacquires the session-selected input. A paused stale image cannot remain in the viewport. |
+| `EMB-P1D-FR-005` | Functional | Stop, Restart, source switch, route change, `visibilitychange` to hidden, `pagehide`, unmount, permission failure, playback failure, and device disconnect stop all tracks, clear the element, remove listeners, and reject late permission/stream results with a generation token. |
+| `EMB-P1D-FR-006` | Functional | Permission denied, no matching device, device in use, unsupported context, playback failure, and disconnect produce visible text plus a non-color status symbol and an explicit Retry action. Failure never silently starts Replay. |
+| `EMB-P1D-DR-001` | Data | Only the browser-reported selected track label and sanitized display settings may appear. Width, height, and frame rate may be shown only after the selected stream reports them; never display or log `deviceId`/`groupId`, Celsius, calibration, thermal extrema, or radiometric arrays. |
+| `EMB-P1D-NFR-001` | Privacy | Keep device choice session-only. Do not use local storage, analytics, screenshots, canvas extraction, `ImageCapture`, `MediaRecorder`, upload, frame logging, or persistence. |
+| `EMB-P1D-NFR-002` | Safety | The preview has no edge into frame validation, palette interpretation, hotspot extraction, assessment, guidance, warnings, or speech. The assessment value is always absent. |
+| `EMB-P1D-NFR-003` | Accessibility | Source selection, controls, status, provenance, error, and Retry are keyboard operable, visibly focused, named, and at least 44 × 44 CSS pixels; meaning remains complete without color or audio. |
+| `EMB-P1D-NFR-004` | Verification | A dependency-injected plain Node check covers authorize/discover cleanup, exact selected-device matching, late `getUserMedia` resolution, pause/reacquire, disconnect, restart, source switching, route cleanup, hidden/pagehide cleanup, and track cleanup; manual evidence verifies the selected camera label and camera indicator closes. |
+
+### Acceptance scenarios
+
+- `EMB-P1D-AC-001` — **Given** Demo replay is selected, **when** the app loads or Start runs, **then** it requests no camera permission and exact replay provenance remains visible.
+- `EMB-P1D-AC-002` — **Given** Live preview is explicitly selected, **when** the operator authorizes camera discovery, **then** the temporary stream is never attached and stops immediately; the operator selects the intended labelled input; Start opens that exact session-only `deviceId`; the active track identity matches; and only then do the label, both non-radiometric statements, playing preview, and `streaming` status appear.
+- `EMB-P1D-AC-003` — **Given** an authorization or preview request resolves after Stop, Restart, source switch, route change, hidden visibility, or `pagehide`, **then** every returned track is stopped and the late result cannot update current status or the viewport.
+- `EMB-P1D-AC-004` — **Given** a playing preview, **when** Pause, Stop, disconnect, hidden visibility, `pagehide`, or unmount occurs, **then** no stale image remains, all tracks stop, `srcObject` clears, and a visible non-color status explains the state when the page remains active.
+- `EMB-P1D-AC-005` — **Given** permission denial, no uniquely selected matching device, active-track identity mismatch, device-in-use, unsupported context, or playback failure, **then** no stream is retained or attached, the assessment remains absent, and Retry is explicit.
+- `EMB-P1D-AC-006` — **Given** any live preview, **then** code and presentation contain no snapshot/recording/palette-analysis path and no temperature, hotspot, direction, severity, guidance, warning, or speech derived from display pixels.
+
+### Exit gate
+
+The actual intended UVC device plays locally twice; source truth remains visible; failure and all lifecycle invalidations release tracks; the focused verifier, replay verifier, lint, and build pass; and the submission describes the preview as display-only.
+
+---
+
+## 8. Phase 1B — local bridge and transport-neutral live source
 
 **Purpose:** carry one truthful live frame from the native device boundary into the existing source lifecycle without exposing transport mechanics to the view.
+
+**State:** blocked by the recorded Phase 1A result. These stable requirements are retained for a future reopened calibrated path and are not hackathon implementation scope.
 
 ### Requirements
 
@@ -208,9 +267,11 @@ One live frame reaches the scan surface through `PureThermalSource`; all `EMB-P1
 
 ---
 
-## 8. Phase 1C — validated deterministic assessment
+## 9. Phase 1C — validated deterministic assessment
 
 **Purpose:** derive current directional guidance only from validated, calibrated, live radiometric input.
+
+**State:** blocked by Phases 1A and 1B. Phase 1D display pixels cannot satisfy or bypass this gate.
 
 ### Requirements
 
@@ -266,9 +327,11 @@ A controlled non-personal warm object produces a stable structured live assessme
 
 ---
 
-## 9. Phase 2 — matching visible and spoken output
+## 10. Phase 2 — matching visible and spoken output
 
 **Purpose:** add speech as a renderer of the same structured assessment, never as a decision system.
+
+**State:** product assessment speech is blocked by Phase 1C. Phase 1D may expose accessible source status through the existing live region, but it cannot speak heat guidance.
 
 ### Requirements
 
@@ -287,7 +350,7 @@ A controlled non-personal warm object produces a stable structured live assessme
 
 ### Acceptance scenarios
 
-- `EMB-P2-AC-001` — **Given** one current validated live assessment—or a clearly synthetic structured unit fixture when Phase 1C is blocked—**when** formatting runs, **then** visible and speech-ready canonical guidance match; only the live case may be claimed as product speech.
+- `EMB-P2-AC-001` — **Given** one current validated live assessment from a future passed Phase 1C, **when** formatting runs, **then** visible and speech-ready canonical guidance match.
 - `EMB-P2-AC-002` — **Given** repeated equivalent assessments, **when** frames continue, **then** duplicate utterances are suppressed.
 - `EMB-P2-AC-003` — **Given** a direction change while old speech is queued, **then** stale speech is cancelled and only current guidance may play.
 - `EMB-P2-AC-004` — **Given** Mute or unavailable TTS, **then** visible text, symbol, and understandable source state remain complete.
@@ -295,11 +358,11 @@ A controlled non-personal warm object produces a stable structured live assessme
 
 ### Exit gate
 
-If Phase 1C passed, one validated live assessment produces matching visible and spoken copy once, and Phase 2 may pass. If Phase 1C is blocked, the formatter may be recorded as **verified against synthetic structured data**, while product speech remains **blocked/not claimed**. In both branches, mute and TTS failure leave visible output complete.
+Only a future passed Phase 1C may authorize this phase. One validated live assessment must produce matching visible and spoken copy once; mute and TTS failure leave visible output complete. While Phase 1C is blocked, no formatter or product-speech progress is claimed for the hackathon.
 
 ---
 
-## 10. Phase 3 — accessibility and demo QA
+## 11. Phase 3 — accessibility and demo QA
 
 ### Requirements
 
@@ -314,6 +377,7 @@ If Phase 1C passed, one validated live assessment produces matching visible and 
 | `EMB-P3-FR-007` | Demo | Use only a heating pad, reusable hand warmer, or warm mug; never invite contact with a heated object. |
 | `EMB-P3-FR-008` | Demo | Both builders can independently execute the three-minute live or truthful fallback flow from `docs/DEMO.md`. |
 | `EMB-P3-DR-001` | Evidence | Record browser, OS, assistive-technology version, viewport, zoom, result, and limitation for each manual check. |
+| `EMB-P3-DR-002` | Evidence | If Phase 1D passed, record the exact browser-reported selected input, stream settings, persistent non-radiometric copy, and camera-indicator/track cleanup result without storing a frame or device ID. |
 
 ### Acceptance scenarios
 
@@ -322,35 +386,40 @@ If Phase 1C passed, one validated live assessment produces matching visible and 
 - `EMB-P3-AC-003` — **Given** 200% zoom and a 320–390px viewport, **then** essential copy and controls reflow without loss.
 - `EMB-P3-AC-004` — **Given** color is unavailable and speech is muted, **then** provenance and source state remain understandable; if Phase 1C passed, direction, level wording, and guidance also remain understandable.
 - `EMB-P3-AC-005` — **Given** either builder follows the demo script, **then** the chosen live or replay path completes without undocumented intervention.
+- `EMB-P3-AC-006` — **Given** Phase 1D passed, **when** color and audio are unavailable, **then** selected-device identity, live non-radiometric provenance, no-assessment state, Stop, and Retry remain understandable and operable.
 
 ### Exit gate
 
-The common replay/status manual QA record is complete for the locked browser/VoiceOver matrix and both builders can run the truthful fallback. Live warning and app-speech rows are required only when their upstream gates passed, and the record marks each conditional row passed, blocked, or not applicable.
+The common replay/status manual QA record is complete for the locked browser/VoiceOver matrix and both builders can run the truthful fallback. Phase 1D preview rows apply only if its gate passed. Live warning and assessment-speech rows remain blocked/not applicable, and the record labels every conditional row.
 
 ---
 
-## 11. Phase 4 — offline and failure hardening
+## 12. Phase 4 — offline and failure hardening
 
 ### Requirements
 
 | ID | Type | Requirement |
 |---|---|---|
 | `EMB-P4-FR-001` | Offline | With network disconnected, run the production build’s labelled replay twice with a reload between runs. |
+| `EMB-P4-FR-006` | Offline | If Phase 1D passed, run the display-only UVC preview twice without network and verify no remote resource is required. |
 | `EMB-P4-FR-002` | Offline | If Phase 1B passed, run the live source path twice using only loopback bridge resources; require assessment behavior only if Phase 1C also passed. |
+| `EMB-P4-FR-007` | Failure | If Phase 1D passed, deny permission and unplug the selected UVC device mid-preview; clear the video, stop remaining tracks, ignore late results, and recover explicitly. |
 | `EMB-P4-FR-003` | Failure | If Phase 1B passed, unplug the device mid-stream; enter `error`, clear current output, ignore late data, and recover explicitly. |
 | `EMB-P4-FR-004` | Routing | Reload `#scan` and `#history` offline. |
 | `EMB-P4-FR-005` | Fallback | If Phase 1B passed, deliberately switch from failed Live to labelled Replay without retaining live frame, provenance, assessment, or speech. |
-| `EMB-P4-NFR-001` | Resources | Across five applicable lifecycle cycles, resource-spy counts return to zero after stop for timers, sockets, listeners, object URLs, borrowed radiometric buffers, retained captures, credits, assessment expiry, and queued speech; streaming retains only the documented bounded current resources. |
+| `EMB-P4-NFR-001` | Resources | Across five applicable lifecycle cycles, resource-spy counts return to zero after stop for replay timers, preview tracks/listeners/element attachments, and any future sockets, object URLs, radiometric buffers, retained captures, credits, assessment expiry, or speech; active streaming retains only documented bounded resources. |
 | `EMB-P4-NFR-002` | Verification | Replay, live-frame/analysis checks that exist, lint, and build all pass from a clean checkout. |
 | `EMB-P4-NFR-003` | Schedule | Freeze product code at 17:30; unresolved polish becomes a documented limitation. |
 
 ### Acceptance scenarios
 
 - `EMB-P4-AC-001` — **Given** the network is disconnected, **when** the production build loads and Replay runs twice, **then** no asset, API, font, or route request needs the network.
+- `EMB-P4-AC-006` — **Given** Phase 1D passed and the network is disconnected, **when** the intended UVC input runs twice, **then** permission, selected-device display, preview, stop, and Retry require no remote resource.
 - `EMB-P4-AC-002` — **Given** Phase 1B passed and Live is streaming, **when** USB disconnects, **then** no stale warning remains and explicit Restart or Replay selection is available.
 - `EMB-P4-AC-003` — **Given** Phase 1B passed and five Live / Replay switch cycles run, **then** provenance always matches the active source, no callback crosses runs, and stopped resource-spy counts return to zero.
 - `EMB-P4-AC-004` — **Given** all checks required by completed phases, **when** run at freeze, **then** they pass from a clean checkout.
 - `EMB-P4-AC-005` — **Given** Phase 2 passed, **when** the production-like build runs without network, **then** the selected speech voice works locally or app speech is explicitly marked unavailable while the complete visual path remains.
+- `EMB-P4-AC-007` — **Given** Phase 1D passed and five Replay / Live preview switch cycles run, **then** source truth always matches, no late permission result crosses generations, and every stopped preview has zero tracks/listeners and no `srcObject`.
 
 ### Exit gate
 
@@ -358,7 +427,7 @@ Replay runs twice offline. Each passed live/speech capability also passes its co
 
 ---
 
-## 12. Phase 5 — truthful submission package
+## 13. Phase 5 — truthful submission package
 
 ### Requirements
 
@@ -369,7 +438,7 @@ Replay runs twice offline. Each passed live/speech capability also passes its co
 | `EMB-P5-FR-003` | Evidence | Include only screenshots supported by completed gates; replay provenance remains visible. |
 | `EMB-P5-FR-004` | Media | Produce a 90-second captioned recording. Captions identify replay as simulated whenever it appears. |
 | `EMB-P5-FR-005` | Submission | Complete the event form by 19:00 and reserve 18:30–19:00 for submission only. |
-| `EMB-P5-NFR-001` | Truthfulness | Do not claim live radiometry, assessment, speech, offline behavior, or accessibility results unless its gate passed. |
+| `EMB-P5-NFR-001` | Truthfulness | Do not claim live preview, radiometry, assessment, speech, offline behavior, or accessibility results unless its gate passed. Any Phase 1D footage must visibly say it is non-radiometric and has no temperature or safety assessment. |
 | `EMB-P5-NFR-002` | Privacy | Prefer frame-free live status evidence. If a staged non-personal thermal scene is recorded, document consent, purpose, and the narrow media exception; never record a person. |
 | `EMB-P5-NFR-003` | Freeze | Package documentation and media must describe the frozen commit; no product-code change occurs after 17:30. |
 
@@ -386,12 +455,17 @@ All `EMB-P5-AC-*` scenarios pass, the package names the frozen commit, submissio
 
 ---
 
-## 13. Edge and failure cases
+## 14. Edge and failure cases
 
 Every applicable implementation phase must handle these explicitly:
 
 | Case | Required result |
 |---|---|
+| Browser cannot list the intended PureThermal input | Block Phase 1D; do not use a built-in or ambiguous camera |
+| Camera permission denied or secure context unavailable | Clear preview state, stop returned tracks, show text + symbol error and explicit Retry |
+| `getUserMedia` resolves after invalidation | Stop every returned track immediately; generation guard prevents UI update |
+| Pause with a live `MediaStream` | Stop tracks and clear `video.srcObject`; Resume explicitly reacquires the selected input |
+| UVC stream uses RGB-formatted display pixels | Render only; do not call it an RGB sensor or infer radiometry |
 | Wrong dimensions or pixel count | Reject the frame; clear current assessment; surface a recoverable source error where appropriate |
 | Missing, non-finite, or uncalibrated radiometry | Fail closed with no assessment |
 | Duplicate, old, or out-of-order sequence | Ignore it; never rewind current state |
@@ -403,44 +477,50 @@ Every applicable implementation phase must handle these explicitly:
 | Stream becomes silent after a valid warning | Source watchdog enters `frame-timeout`; controller clears assessment before error copy |
 | Device disconnects mid-frame | Release partial data, clear output, enter `error`, ignore late callbacks |
 | Rapid start/restart/stop/source switch | Only the newest generation may update UI or speech |
-| Pause with a visible frame | Label paused; invalidate assessment; never imply the retained image is current |
+| Pause with a visible replay frame | Label paused; keep exact replay provenance; never imply the retained image is live |
 | Route leaves `#scan` | Stop the source and clear timers, connections, buffers, display URLs, assessment, and speech |
 | Two equal candidate regions | Apply the locked deterministic tie-break |
 | Region crosses a directional boundary | Apply exact documented inclusive/exclusive coordinate rules |
 | TTS unavailable or denied | Keep complete visible text + symbol behavior |
 | Network unavailable | Replay and any proven local live path continue without remote resources |
-| Hardware gate fails | Follow replay-only branch; do not fabricate live or assessment behavior |
+| Calibrated hardware gate fails | Radiometric path stays blocked; Phase 1D may show only a separately gated display preview |
 | Submission recording persists pixels | Use a staged non-personal scene under the explicit Phase 5 exception or avoid frame capture |
 
 ---
 
-## 14. Integration contracts and trust gates
+## 15. Integration contracts and trust gates
 
-Data crosses these gates in order:
+The active Phase 1D path crosses these gates:
 
-1. **Device → native bridge:** untrusted raw capture becomes calibrated device data only after the Phase 1A proof.
-2. **Bridge → browser client:** every protocol message is versioned, locally sourced, flow-controlled, size-bounded, and structurally validated into a decoded live frame.
-3. **Decoded live frame → validated radiometric frame:** assessment-owned validation checks provenance, dimensions, length, finiteness, sequence, calibration, clocks, and freshness to narrow the type.
-4. **Validated frame sequence → assessment:** deterministic policy and explicit reducer state produce one current result.
-5. **Assessment → renderers:** visual and speech renderers consume canonical structured state and cannot change classification.
-6. **Replay → viewport only:** replay follows the source lifecycle but has no path into gates 3–5.
+1. **USB/UVC → browser MediaDevices:** macOS UVC presence is not enough; explicit permission and browser-reported label must identify the intended input.
+2. **MediaDevices → `UvcPreviewSource`:** the adapter accepts a current-generation `MediaStream`, owns tracks/listeners, and exposes status/errors without extracting pixels.
+3. **Preview source → session/viewport:** the controller accepts only the current generation, attaches the stream to `<video>`, and keeps exact non-radiometric truth visible.
+4. **Preview → assessment:** no edge exists. Temperature, hotspot, direction, guidance, warning, and speech are unreachable.
+5. **Replay → viewport:** replay follows `ThermalSource`, retains exact simulated provenance, and has no assessment edge.
+
+The blocked future radiometric path remains ordered:
+
+1. **Device → native bridge:** untrusted raw capture becomes calibrated device data only after a new Phase 1A pass.
+2. **Bridge → browser client:** each protocol message is locally sourced, bounded, versioned, flow-controlled, and structurally validated.
+3. **Decoded live frame → validated radiometric frame:** assessment-owned validation narrows calibrated current data.
+4. **Validated sequence → assessment → renderers:** deterministic policy produces one result; renderers cannot change classification.
 
 Detailed placement and lifecycle ownership live in `docs/ARCHITECTURE.md`. Implemented shapes live in `docs/SCHEMA.md`.
 
 ---
 
-## 15. Open decisions
+## 16. Open decisions
 
 These are decisions, not permission to invent values. The named phase must resolve each before its exit gate.
 
 | Decision | Due | Owner/evidence |
 |---|---|---|
-| Exact board, firmware, USB mode, calibrated conversion | Phase 1A | Hardware probe + decision log |
-| Bridge implementation language/library | Phase 1A | Smallest reproduced capture path |
-| WebSocket port/origin allowlist, frame timeout, clock skew, and extrema-integrity tolerance | Phase 1B | Protocol fixtures + demo-laptop measurement |
-| Assessment policy values and tie-break | Phase 1C | Controlled device evidence + deterministic fixtures |
-| Capture-to-assessment freshness/latency budget | Phase 1C | Demo-laptop measurement |
-| Speech engine, dedupe key, interval, Repeat empty state | Phase 2 | Formatter checks + browser evidence |
+| Exact browser-reported PureThermal input label and stream settings | Phase 1D preflight | Browser evidence; do not persist device ID |
+| Preview viewport/session contract and structured error codes | Before Phase 1D code | `src/types.ts` + `docs/SCHEMA.md` + decision |
+| WebSocket port/origin allowlist, frame timeout, clock skew, and extrema-integrity tolerance | Future reopened Phase 1B | Protocol fixtures + demo-laptop measurement |
+| Assessment policy values and tie-break | Future reopened Phase 1C | Controlled calibrated device evidence + deterministic fixtures |
+| Capture-to-assessment freshness/latency budget | Future reopened Phase 1C | Demo-laptop measurement |
+| Speech engine, dedupe key, interval, Repeat empty state | Future reopened Phase 2 | Formatter checks + browser evidence |
 | Browser/VoiceOver versions and WCAG target | Before Phase 3 | QA matrix |
 | Production-like offline launch command | Before Phase 4 | Clean-checkout rehearsal |
 | Live media privacy exception, if needed | Before Phase 5 | Written staged-scene decision |

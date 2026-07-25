@@ -13,7 +13,7 @@ Source of truth for every coding agent on this repo — Claude Code, Codex, Chat
 
 ## The one thing to understand
 
-Ember can report a thermal condition. It cannot know every material, reflection, distance, exposure time, or personal sensitivity that determines whether touching something will cause harm.
+A future calibrated Ember build may report a thermal condition. Even then, it cannot know every material, reflection, distance, exposure time, or personal sensitivity that determines whether touching something will cause harm. The current build makes no thermal assessment.
 
 > **Never promise that an object is safe to touch.**
 
@@ -25,12 +25,13 @@ Use directional, observable language: *“Higher heat is present in the upper-ri
 
 1. **Deterministic code classifies heat.** An LLM may explain an existing assessment. It never selects thresholds, creates a classification, or authorizes an action.
 2. **Every warning is redundant.** Visible text + a non-color symbol are required. Color may reinforce meaning. Speech is additive and never the only output.
-3. **Thermal frames are ephemeral by default.** Do not upload, persist, log, or place live frames in history unless the product scope explicitly changes.
+3. **Live media is ephemeral by default.** Do not record, upload, persist, log, or place live streams, tracks, frames, or radiometric arrays in history. A reviewed external recording of a staged non-personal Phase 5 demo does not authorize capture code in Ember.
 4. **Replay provenance never disappears.** Every replay surface says exactly **“Demo replay — not live”** while replay content is displayed.
 5. **Never mix source truth.** A replay frame cannot carry live provenance. A live source cannot use replay metadata.
-6. **Replay does not classify.** Phase 0 replay proves the source seam and accessible controls only. Phase 1 analysis may consume validated live radiometric values; never infer warnings from the six PNGs.
-7. **Controls work without precision pointing.** Keyboard operable, visible focus, accessible names, and at least 44 × 44 CSS pixels.
-8. **Clean up the source lifecycle.** Leaving `#scan`, restarting, stopping, or unmounting must clear pending replay timers.
+6. **Replay does not classify.** Phase 0 replay proves the source seam and accessible controls only. Only a future reopened radiometric phase may consume validated live radiometric values; never infer warnings from the six PNGs.
+7. **A colorized UVC preview does not classify.** Display pixels may never produce temperature, hotspot, direction, severity, guidance, warning, or speech. Keep **“Live thermal preview — non-radiometric”** and **“Display-only colorized video. No temperature or safety assessment.”** visible beside any live preview.
+8. **Controls work without precision pointing.** Keyboard operable, visible focus, accessible names, and at least 44 × 44 CSS pixels.
+9. **Clean up the source lifecycle.** Leaving `#scan`, restarting, stopping, switching, hiding/unloading the page, or unmounting must clear pending replay timers and stop every live media track.
 
 ---
 
@@ -46,15 +47,17 @@ Phase 0 is complete and verified:
 - Shared `ThermalSource` contracts and `ReplayThermalSource`.
 - `npm run verify:replay`, build, and lint green.
 
-Phase 1A is the next implementation milestone. The later Phase 1 work is dependency-gated:
+Phase 1A investigation is complete with the calibrated-radiometry gate blocked:
 
-- Identifying the exact PureThermal board and firmware.
-- Proving one 160 × 120 Y16 frame outside React **and separately proving calibrated radiometry**.
-- Adding the smallest local bridge, versioned loopback protocol, and `PureThermalSource` only after that proof.
-- Adding a source/session controller before Live enters `ScanView`.
-- Validating live radiometric frames and implementing deterministic hotspot analysis only after the bridge gate.
+- macOS 26.5.2 arm64 sees GroupGets `PureThermal (fw:v1.3.0)`, vendor/product `0x1e4e/0x0100`.
+- macOS attaches UVC control and streaming interfaces through `UVCAssistant`.
+- This shell did not enumerate an AVFoundation video device or capture mode.
+- No Y16 frame, calibrated Celsius mapping, checksum, or orientation result was obtained.
+- The exact board revision remains unknown. See `docs/HARDWARE-PROBE.md`.
 
-Replay pixels still cannot be classified. Do **not** add speech, an LLM endpoint, notifications, persistent history, cloud frame storage, or physical actions in Phase 1. Follow requirement IDs and gates in `docs/REQUIREMENTS.md` and timing in `docs/PLAN.md`.
+Phase 1D is the active implementation milestone: explicitly select the intended UVC input, obtain browser permission, and—only if that exact input plays—add a local display-only preview with persistent non-radiometric truth and complete media-track cleanup.
+
+Radiometric Phase 1B, deterministic assessment Phase 1C, and assessment speech Phase 2 are blocked for this hackathon build. Do **not** add `PureThermalSource`, a native radiometric bridge, hotspot analysis, temperature copy, palette analysis, warning speech, an LLM endpoint, notifications, persistent history, cloud frame storage, or physical actions. Follow requirement IDs and gates in `docs/REQUIREMENTS.md` and timing in `docs/PLAN.md`.
 
 ---
 
@@ -115,9 +118,10 @@ Exact terms in code, UI, and commits.
 
 | Term | Means | Do not say |
 |---|---|---|
-| source | An implementation that emits thermal frames | camera, when it may be replay |
+| source | A lifecycle owner for replay frames or a live preview stream | camera, when it may be replay |
 | replay | Simulated, ordered PNG frames | live feed, or “scan” when describing replay data |
-| live source | Frames arriving from the native PureThermal bridge | direct browser camera |
+| live preview | A local, colorized PureThermal UVC `MediaStream` displayed without analysis | RGB sensor, radiometric source, temperature feed |
+| radiometric live source | Future calibrated frames arriving from a native PureThermal bridge | current capability, webcam preview |
 | frame | One thermal image plus metadata | reading, assessment |
 | radiometric values | Per-pixel Celsius data supplied by the live bridge | temperatures inferred from a PNG |
 | assessment | Deterministic output derived from validated live radiometric values | AI opinion |
@@ -133,7 +137,7 @@ Allowed:
 - “Higher heat observed in the center area.”
 - “Keep your hand away and verify another way.”
 - “Thermal source paused.”
-- “No current assessment.”
+- “No current assessment”
 
 Forbidden:
 
@@ -142,12 +146,13 @@ Forbidden:
 - “No burn risk.”
 - A Celsius value when the frame has no radiometric data.
 - Any warning generated from replay pixels.
+- Any temperature, hotspot, direction, warning, or speech generated from colorized UVC display pixels.
 
 ---
 
 ## Out of scope
 
-For active Phase 1: speech, LLM calls, alerts, history persistence, cloud frame storage, and physical actions. The native bridge and deterministic hotspot analysis are in scope only behind the hardware, transport, and validation gates above.
+For active Phase 1D: radiometric bridge work, classification, temperature, hotspot analysis, speech, LLM calls, alerts, history persistence, cloud frame storage, screenshots/recording, canvas extraction, palette analysis, and physical actions.
 
 For the hackathon MVP: smart plugs or relays, remote third-party monitoring, cloud frame storage, diagnosis, medical claims, identity, billing, settings, dark mode, multi-tenancy, and autonomous physical actions.
 

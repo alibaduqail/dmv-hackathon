@@ -81,28 +81,100 @@ Do not:
 
 ---
 
-## PureThermal hardware — next phase, not foundation setup
+## PureThermal hardware — Phase 1A result
 
-Before writing bridge code:
+Phase 1A is complete with the calibrated-radiometry gate blocked. The full privacy-safe record is `docs/HARDWARE-PROBE.md`.
 
-1. Identify the exact PureThermal board revision and firmware.
-2. Seat the Lepton 3.5 with power disconnected.
-3. Use a USB data cable, not a charge-only cable.
-4. Confirm the device enumerates:
+Observed on this laptop:
 
-   ```sh
-   system_profiler SPUSBDataType
-   ```
+```text
+Host                 macOS 26.5.2 (25F84), arm64
+USB product          PureThermal (fw:v1.3.0)
+USB vendor           GroupGets
+USB vendor/product   0x1e4e / 0x0100
+UVC interfaces       class 14, subclasses 1 and 2
+macOS owner          UVCAssistant
+AVFoundation list    no video devices shown in this Codex shell
+Y16/calibration      not obtained
+```
 
-5. Prove one 160 × 120 Y16 frame outside React.
-6. Separately prove whether its values are calibrated radiometry convertible to Celsius; Y16 shape alone is insufficient.
-7. Verify display and radiometric orientation with left/right and upper/lower placement.
-8. Record calibration mode, conversion, encoding, byte order, and timestamp source without saving a live frame.
-9. Only then select the bridge implementation and begin `PureThermalSource`.
+No frame or scene was captured. Exact board revision, capture mode, dimensions, encoding, byte order, calibration source, timestamp source, extrema, checksum, and orientation remain unknown. Do not begin `PureThermalSource`, native bridge, temperature, hotspot, direction, or warning work from this result.
 
-Direct browser UVC radiometry is not assumed. The live path needs a local native bridge that preserves Y16 analysis data and creates a separate display image.
+Re-run the metadata-only probe:
 
-The GroupGets repositories in `docs/REFERENCES.md` are examples and feasibility evidence, not guaranteed working software. `GetThermal` currently labels itself non-working. Do not make it the demo dependency.
+```sh
+sw_vers
+uname -m
+ioreg -p IOUSB -r -n 'PureThermal (fw:v1.3.0)' -l -w 0
+ioreg -r -c IOUSBHostInterface -l -w 0 \
+  | rg -i -C 8 'PureThermal|GroupGets|bInterfaceClass|bInterfaceSubClass|UsbExclusiveOwner|CameraBundleIDPublished'
+ffmpeg -hide_banner -f avfoundation -list_devices true -i ""
+```
+
+The final FFmpeg command exits non-zero because it opens no input. In the recorded run it also listed no video device. That means browser playback is unproven, not impossible.
+
+---
+
+## Phase 1D browser-preview preflight
+
+Do this before implementing the preview adapter:
+
+1. Confirm the PureThermal device still appears in the metadata probe.
+2. Start Vite with `npm run dev` and open the local origin in the browser used for the demo.
+3. In a deliberate **authorize/discover** action, acknowledge that the browser may briefly activate its default video input, request video permission without audio, never attach the temporary stream, unlock input labels, and immediately stop every temporary track.
+4. Enumerate labels in memory and have the operator choose the intended PureThermal input. Do not auto-select the first or default camera.
+5. Open that exact session-only `deviceId`, verify the active track reports the same `deviceId`, record only its label and sanitized width/height/frame-rate settings, then stop every track.
+6. If the intended label is absent or playback fails, mark Phase 1D blocked. Do not silently use the built-in webcam.
+
+Privacy-safe DevTools preflight:
+
+```js
+const permissionStream = await navigator.mediaDevices.getUserMedia({
+  video: true,
+  audio: false,
+});
+permissionStream.getTracks().forEach((track) => track.stop());
+
+const videoInputs = (await navigator.mediaDevices.enumerateDevices())
+  .filter((device) => device.kind === 'videoinput');
+console.table(videoInputs.map((device) => ({ label: device.label })));
+
+const intendedLabel = window.prompt(
+  'Enter the exact PureThermal input label shown above'
+);
+const pureThermalInput = videoInputs.find(
+  (device) => device.label === intendedLabel
+);
+if (!pureThermalInput) throw new Error('PureThermal video input not found');
+
+const previewStream = await navigator.mediaDevices.getUserMedia({
+  video: { deviceId: { exact: pureThermalInput.deviceId } },
+  audio: false,
+});
+const previewTrack = previewStream.getVideoTracks()[0];
+const previewSettings = previewTrack.getSettings();
+if (previewSettings.deviceId !== pureThermalInput.deviceId) {
+  previewStream.getTracks().forEach((track) => track.stop());
+  throw new Error('Selected and active video inputs do not match');
+}
+console.log({
+  label: previewTrack.label,
+  width: previewSettings.width,
+  height: previewSettings.height,
+  frameRate: previewSettings.frameRate,
+});
+previewStream.getTracks().forEach((track) => track.stop());
+```
+
+Do not print, copy, or persist a `deviceId` or `groupId`. Do not add a canvas, screenshot, `ImageCapture`, `MediaRecorder`, upload, or palette-analysis step. Even when the video uses RGB-formatted display pixels, the Lepton is not a visible-light RGB sensor and the stream is not calibrated radiometry.
+
+The Phase 1D UI must persist:
+
+- **“Live thermal preview — non-radiometric”**
+- **“Display-only colorized video. No temperature or safety assessment.”**
+- **“No current assessment”**
+
+The GroupGets repositories in `docs/REFERENCES.md` remain prior art, not runtime dependencies. The native radiometric bridge is future work only after a new calibrated hardware proof.
 
 ---
 
@@ -114,9 +186,9 @@ Before 17:30:
 2. Run the complete replay twice.
 3. Reload `#scan` between runs.
 4. Confirm no API, font, image, or route requires the network.
-5. If the live bridge exists, unplug the camera mid-stream and confirm the UI enters `error` without retaining a current assessment.
+5. If Phase 1D passed, run the exact intended UVC preview twice, then unplug it mid-stream and confirm the video clears, every track stops, and an explicit error/Retry appears.
 
-The Phase 4 offline-fallback candidate is the committed replay, not a cached live frame. Claim disconnected-network verification only after this rehearsal passes.
+The Phase 4 offline-fallback candidate is the committed replay, not a cached or paused preview frame. Claim disconnected-network verification only after this rehearsal passes.
 
 ---
 

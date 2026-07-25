@@ -4,19 +4,20 @@ Acceptance criteria for the repo. If a change does not improve a beat below or p
 
 Use a heating pad, reusable hand warmer, or warm mug. No exposed burner and no invitation for a judge to touch a heated object.
 
-Run the live sequence only if Phases 1C and 2 have passed and `docs/STATUS.md` records the evidence. Otherwise run the foundation/fallback sequence and use the replay-only pitch. Never narrate a planned capability as present.
+The radiometric assessment sequence is blocked by Phase 1A and must not be used for this hackathon build. If Phase 1D passes, run the display-only sequence below. Otherwise run the foundation/replay sequence. Never narrate a planned capability as present.
 
 | Time | Beat | Depends on |
 |---|---|---|
 | 0:00–0:25 | Hold up the ordinary-looking object. “Residual heat has no reliable sound. Finding it by contact means finding it too late.” | object, pitch |
-| 0:25–0:45 | Open `#scan`. “Ember is a handheld thermal companion for blind and low-vision people.” Source status is visible and announced. | accessible shell |
-| 0:45–1:15 | Start the PureThermal source and point it toward the object. The thermal frame appears. | native bridge |
-| 1:15–1:50 | Directional assessment appears as text + symbol + color and is spoken once: “Higher heat observed in the upper-right area. Keep your hand away and verify another way.” | deterministic analysis, speech |
-| 1:50–2:15 | Reposition the camera. The direction updates without repeating stale speech. “The language model does not decide this. Deterministic radiometric rules do.” | persistence, formatter |
-| 2:15–2:35 | Stop the source. Show that frames disappear from current state and nothing was saved in `#history`. | lifecycle, privacy |
-| 2:35–3:00 | “RGB can tell you what an object looks like. Ember tells you where higher heat is—without making contact.” Land on the accessible assessment panel. | — |
+| 0:25–0:45 | Open `#scan`. Explain that Ember is the accessible interface foundation for a handheld thermal companion. Source status is visible and announced. | accessible shell |
+| 0:45–1:10 | Explicitly select Live preview, activate **Authorize cameras**, choose the intended PureThermal-labelled input, then Start. Show its active track label and **“Live thermal preview — non-radiometric”**. | Phase 1D only |
+| 1:10–1:35 | Point to **“Display-only colorized video. No temperature or safety assessment.”** and **“No current assessment”**. Say that Ember does not convert palette colors into warnings. | source truth |
+| 1:35–1:55 | Stop the preview. Show that the image clears and the camera indicator closes. | lifecycle, privacy |
+| 1:55–2:25 | Explicitly select/start the replay. Demonstrate pause/resume with **“Demo replay — not live”** visible. | replay |
+| 2:25–2:45 | Open `#history`. Show that no video, frames, or incidents are stored. | privacy |
+| 2:45–3:00 | “The live preview proves local capture; the labelled replay proves the accessible lifecycle. Calibrated directional guidance remains the next hardware milestone.” | honest close |
 
-The closing comparison is product positioning, not a guarantee of temperature accuracy or touch safety.
+If Phase 1D has not passed, skip its three beats and spend that time on keyboard controls, source truth, cleanup, and the product concept. The close is a limitation statement, not a guarantee of temperature accuracy or touch safety.
 
 ---
 
@@ -32,15 +33,15 @@ The viewport must display **“Demo replay — not live”** for the entire sequ
 
 ---
 
-## Hardware fallback
+## Live-preview fallback
 
-If live capture fails on stage:
+If browser preview is implemented but unavailable on stage:
 
-1. Say, “The device source is unavailable, so I’m switching to our labelled local replay.”
+1. Say, “The live preview is unavailable, so I’m switching to our labelled local replay.”
 2. Start replay.
 3. Keep the provenance label on screen.
 4. Demonstrate interface lifecycle and accessibility.
-5. Describe—not simulate—the deterministic assessment phase.
+5. Describe—not simulate—the future radiometric assessment phase.
 
 Never hide the source switch, reuse a stale live assessment, or call replay a scan.
 
@@ -60,7 +61,7 @@ Then: problem, target user, one architecture diagram, accessible output, privacy
 
 ---
 
-## The 60-second live pitch — only after live assessment and speech pass
+## Future radiometric pitch — not authorized for the current build
 
 > A hot pan and a cold pan can make the same sound. For someone who is blind or has low vision, checking by contact can mean finding the danger too late.
 >
@@ -70,9 +71,25 @@ Then: problem, target user, one architecture diagram, accessible output, privacy
 >
 > Today we are using a Lepton 3.5 thermal camera through PureThermal USB. If the hardware drops, the same interface has a clearly labelled local replay—because an accessibility tool needs a fallback people can trust.
 >
-> Ember gives people a thermal sense before contact.
+> A calibrated Ember build would give people a thermal sense before contact.
 
-Land on the last line and stop.
+This copy describes the product target. Do not use it as the current-build pitch unless a future calibrated Phase 1A, Phase 1B, Phase 1C, and Phase 2 all pass.
+
+## The 60-second display-only pitch — only after Phase 1D passes
+
+> A hot pan and a cold pan can make the same sound. For someone who is blind or has low vision, checking by contact can mean finding the danger too late.
+>
+> Ember is our concept for a handheld thermal companion that would locate higher heat and express the result through visible, non-color guidance and matching speech.
+>
+> Today, the attached Lepton and PureThermal board are available as a local colorized UVC preview. The source is live, but it is explicitly labelled “Live thermal preview — non-radiometric”. We do not have calibrated per-pixel temperatures through this path.
+>
+> That is why the interface deliberately says “No current assessment”. We do not infer temperature, direction, or a warning from palette colors. Stopping the source closes every camera track, and no video or incident is stored.
+>
+> The same interface includes a clearly labelled simulated replay for accessible lifecycle testing. Our next hardware milestone is a capture path with validated radiometry; only then can deterministic guidance be enabled.
+>
+> Ember’s strongest design decision is knowing what the sensor data can—and cannot—support.
+
+Land on the live non-radiometric label and **“No current assessment”**.
 
 ## The 60-second replay-only pitch — when a live gate is blocked
 
@@ -84,7 +101,7 @@ Land on the last line and stop.
 >
 > The safety boundary is already locked: only deterministic rules over validated live radiometric data may classify heat. Ember will never infer temperature from a colored image or claim an object is safe to touch.
 >
-> Our next gate is proving calibrated radiometry from this exact PureThermal hardware, then carrying it through the local source adapter already represented by this interface.
+> Our Phase 1A probe found the PureThermal USB/UVC interfaces, but not a Y16 frame or calibrated temperature mapping. The radiometric warning path is blocked, and the display-only browser preview is also omitted from this demo unless its separate gate passes.
 >
 > We chose a truthful fallback because accessibility starts with knowing what the system can and cannot perceive.
 
@@ -94,9 +111,10 @@ Land on the visible replay provenance and stop.
 
 ## Questions to answer
 
-- **“Can it guarantee I will not be burned?”** No. Ember reports higher heat and direction; it cannot account for every material, reflection, distance, exposure, or person.
-- **“Does AI decide what is dangerous?”** No. Deterministic code creates the assessment. Generated language may only explain it.
-- **“Are you storing video?”** No. Frames are local and ephemeral in the MVP. `#history` is intentionally empty.
+- **“Can it guarantee I will not be burned?”** No. The current build makes no heat assessment. A future calibrated build may report observed higher heat and direction, but it still cannot account for every material, reflection, distance, exposure, or person.
+- **“Does AI decide what is dangerous?”** No. The current build makes no assessment. A future assessment must come from deterministic rules over validated radiometry; generated language could only explain it.
+- **“Are you storing video?”** Live video is not implemented yet. If Phase 1D passes, the app keeps its stream local, never records it, and stops all tracks on cleanup. A reviewed submission recording may externally capture only a staged non-personal demo. The replay PNGs are committed simulated fixtures, and `#history` stores nothing.
 - **“Is the replay real camera output?”** No. It is a simulated interface fixture labelled on screen at all times.
-- **“Why thermal instead of RGB?”** The task is locating thermal concentration, not identifying visible objects.
-- **“Why no smart plug?”** The MVP warns the person; it does not autonomously control the physical environment.
+- **“Is the preview RGB?”** It may be carried as RGB-formatted display video, but the Lepton is a thermal sensor. Those colors are not calibrated temperature values.
+- **“Does the preview locate higher heat?”** No. It is display-only. Temperature, hotspot, direction, warning, and speech remain disabled.
+- **“Why no smart plug?”** The current build makes no warning and never controls the physical environment. A future radiometric product would warn the person rather than actuate an appliance.

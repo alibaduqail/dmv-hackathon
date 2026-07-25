@@ -2,7 +2,7 @@
 
 **The implemented interface between both builders.** Read this instead of redeclaring a thermal shape. Change a field here and in `src/types.ts` together, announce it, and append the reason to `docs/DECISIONS.md`. Planned hardening and phase gates live in `docs/ARCHITECTURE.md` and `docs/REQUIREMENTS.md`; do not copy a target shape here before code implements it.
 
-There is no database schema in the foundation. All state is local and frames are ephemeral.
+There is no database schema in the foundation. All runtime state is local and current frames are ephemeral. The six committed replay PNGs are static simulated fixtures, not user captures.
 
 ---
 
@@ -62,7 +62,9 @@ export type ThermalProvenance =
 | `isLive` | `false` | `true` |
 | required label | `Demo replay — not live` | explicit connected-device label |
 
-Phase 0 renders the replay manifest label plus an exact overlay string. Phase 1B’s source-generic view must render the active frame/source `provenance.label` rather than hard-code or derive copy from `kind`. Replay provenance stays visible whenever replay content is visible.
+Phase 0 renders the replay manifest label plus an exact overlay string. `live-purethermal` is reserved for a future calibrated radiometric source and is blocked by the Phase 1A result. It must not be reused for Phase 1D’s non-radiometric `MediaStream`.
+
+Phase 1D’s source-generic viewport must render exact source truth rather than derive copy from a generic live flag. Replay provenance stays visible whenever replay content is visible.
 
 ---
 
@@ -96,7 +98,9 @@ export interface ThermalFrame {
 
 Replay frames intentionally omit `radiometricValuesC`. Their `minC` / `maxC` values are simulated fixture metadata and cannot drive a warning or accuracy claim.
 
-The foundation interface intentionally leaves radiometry optional because the live producer does not exist yet. It is therefore not an analysis input type. Before Phase 1 analysis, introduce the discriminated live/replay variants and validated-radiometric boundary specified in `docs/ARCHITECTURE.md`; deterministic analysis must never accept this loose shape directly.
+The foundation interface intentionally leaves radiometry optional because the live producer does not exist yet. It is therefore not an analysis input type. Before any future radiometric analysis, introduce the discriminated live/replay variants and validated-radiometric boundary specified in `docs/ARCHITECTURE.md`; deterministic analysis must never accept this loose shape directly.
+
+A display-only UVC `MediaStream` is not a `ThermalFrame`. Phase 1D must model the viewport as a replay-frame or live-stream union instead of inventing `minC`, `maxC`, `capturedAtMs`, or `radiometricValuesC`. Add that contract here only in the same increment that implements it in `src/types.ts`.
 
 ---
 
@@ -118,7 +122,7 @@ export interface ThermalSource {
 }
 ```
 
-Replay delivery uses this interface now, but Phase 0 `ScanView` still constructs `ReplayThermalSource` and reads the manifest directly. Phase 1B introduces the session/composition boundary so the view depends only on a generic snapshot and actions. `PureThermalSource` enters through that boundary.
+Replay delivery uses this interface now, but Phase 0 `ScanView` still constructs `ReplayThermalSource` and reads the manifest directly. Phase 1D introduces a session/composition boundary for replay frames versus a display-only stream. A future `PureThermalSource` may enter only after a new calibrated Phase 1A pass.
 
 Callbacks are push-only. The source does not own React state, classification, speech, history, or persistence.
 

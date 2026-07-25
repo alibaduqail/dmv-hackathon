@@ -22,8 +22,9 @@ Use `docs/COLLABORATION.md` for the human workflow and handoff template. Use `do
 - Never promise that an object is safe to touch.
 - Keep thermal classification deterministic. Do not delegate thresholds, severity, or physical guidance to a language or design model.
 - Require visible text plus a non-color symbol for every warning. Treat speech and color as reinforcement.
-- Keep thermal frames ephemeral unless an explicit, documented privacy decision changes that rule.
+- Keep live streams, tracks, frames, and radiometric arrays ephemeral. Committed simulated replay fixtures are not user captures. A reviewed external staged Phase 5 recording does not authorize capture code in Ember.
 - Keep **“Demo replay — not live”** visible wherever replay content appears.
+- Treat every colorized UVC stream as display-only unless a separate calibrated-radiometry gate passes. Keep **“Live thermal preview — non-radiometric”** and **“Display-only colorized video. No temperature or safety assessment.”** visible; never derive temperature, hotspot, direction, severity, guidance, warning, or speech from its pixels. Stop temporary discovery streams and all current tracks on pause, stop, switch, route change, hidden/pagehide, and unmount.
 - Reject design output that makes replay resemble live capture or hides status, provenance, focus, or essential copy.
 
 Stop and escalate when a request conflicts with these rules, `mvp.md`, or the current phase exit gate.
@@ -34,10 +35,11 @@ Prefer parallel work only when owners have disjoint files.
 
 | Lane | Typical paths | Required context |
 |---|---|---|
-| Hardware and native bridge | `native/purethermal-bridge/**` | Phase 1A/1B requirements, bridge section in `docs/ARCHITECTURE.md` |
-| Browser source and session | `src/types.ts`, future live adapter/protocol/session files | `docs/REQUIREMENTS.md`, `docs/SCHEMA.md`, `docs/ARCHITECTURE.md` |
-| Deterministic assessment | future assessment/presentation modules and verifier | Phase 1C policy and acceptance; no replay pixels |
-| Interface and design | `src/features/**`, `src/styles/**`, `src/App.tsx` | `docs/DEMO.md`, accessibility rules in `AGENTS.md` |
+| UVC preview and lifecycle | future preview adapter, session files, focused verifier | Phase 1D requirements, `docs/HARDWARE-PROBE.md`; no screenshots or pixel analysis |
+| Accessible preview interface | `src/features/**`, `src/styles/**`, shared preview contract after handoff | Exact preview/replay truth, permission/failure copy, track cleanup |
+| Future radiometric bridge | `native/purethermal-bridge/**` | Blocked Phase 1B architecture; do not start without a new calibrated Phase 1A proof |
+| Future deterministic assessment | future assessment/presentation modules and verifier | Blocked Phase 1C; validated radiometry only, never replay or UVC display pixels |
+| Design/accessibility review | findings and handoff only; no implementation paths | `docs/DEMO.md`, accessibility rules in `AGENTS.md`; coordinate proposed UI changes with the preview-interface owner |
 | Replay and verification | `src/fixtures/**`, `public/replay/**`, `scripts/**` | provenance rules and `docs/SETUP.md` |
 | Documentation and pitch | `docs/**`, `mvp.md`, root instructions | current code plus verification evidence |
 

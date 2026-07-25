@@ -203,8 +203,9 @@ export default function ScanView() {
               <div>
                 <h2 id="assessment-title" className="text-xl font-bold">No current assessment</h2>
                 <p className="mt-2 leading-6 text-muted">
-                  PNG colors are for replaying the interface only. A future deterministic pipeline
-                  will assess radiometric values from the PureThermal bridge.
+                  Replay pixels are interface fixtures and are never assessed. Separately, the
+                  attached hardware path did not pass calibrated radiometry, so live temperatures
+                  and warnings remain blocked.
                 </p>
               </div>
             </div>
