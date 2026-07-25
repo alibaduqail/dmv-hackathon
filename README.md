@@ -44,7 +44,7 @@ Known and unfixed: pressing Start disables the Start button, so keyboard focus d
 
 ## Frozen build
 
-Feature freeze was 17:30. The frozen commit is `7e0fe3a` on `main`. Every claim above describes that commit, and no product code changed afterwards.
+Feature freeze was 17:30, and the team reopened it once at 17:43 for a visual pass that changed no copy, contract, or behavior. The frozen commit is `1da0a19` on `main`. Every claim above describes that commit, and no product code changed afterwards.
 
 ## Run it
 
