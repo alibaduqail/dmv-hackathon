@@ -1,120 +1,109 @@
 # STATUS.md — where the build actually is
 
-**As of 11:30, hackathon day.** Phases 0, 1 and 2 shipped. Phase 2 closed an hour early against a 12:30 window.
+**Current baseline:** Phase 0 is committed on the Ember integration branch. The repository is an Ember-only Vite application with a verified replay-source foundation; disconnected-network behavior remains a Phase 4 rehearsal. The next work is separated into hardware proof, live transport, and deterministic assessment gates.
 
-This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule) or `docs/DECISIONS.md` (the running log) — it says what exists, what's next, and what is known to be wrong or unproven.
+This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule) or `docs/DECISIONS.md` (the running log). It says what exists, what is next, and what remains unproven.
 
 ---
 
 ## 1. Done
 
-| Phase | Result | Commit |
-|---|---|---|
-| **0 · Scaffold & seam** | Vite + React 19 + TS + Tailwind v4, tokens, types, store, derive, hash routing, verify script, `/api` stub | `c2ee4a6` |
-| **1 · Fixtures** | 7 sessions, 32 historical events, session-7 transcript, `001_init.sql`. **FROZEN 10:13** | `1994617` |
-| **2 · Extraction** | `api/prompt.ts`, `api/extract.ts` with all 10 validation rules, offline cache. Plus `record/` trends and the `outputs/` shell | `ce3b26a`, `ec7fb89` |
+| Area | Result |
+|---|---|
+| Repository pivot | Obsolete API, database, fixtures, feature views, dependencies, and product language removed; Git history is the archive |
+| Source contract | `SourceStatus`, provenance, frame, manifest, callbacks, and `ThermalSource` live in `src/types.ts` |
+| Replay fixture | Six committed simulated PNGs, 160 × 120, with ordered finite metadata and exact non-live provenance |
+| Replay runtime | `ReplayThermalSource` supports start, pause, resume, stop, restart-by-start, deterministic completion, and timer cleanup |
+| Scan shell | `#scan` is default; high-contrast viewport, text status, source symbol, progress, and five controls |
+| Privacy shell | `#history` truthfully states that no frames or incidents are stored |
+| Accessibility foundation | Skip link, semantic landmarks, live status, text + symbol status, visible focus, 44px-or-larger controls, reduced-motion support |
+| Browser QA | Scan/history reload, replay controls, route cleanup, 390px layout, accessible names, control sizing, and console errors were manually checked; environment details must be recorded when rerun in Phase 3 |
+| Documentation | Product, atomic phased requirements, safety boundary, implemented schema, target architecture, schedule, demo, setup, references, and decisions describe Ember |
+| Collaboration | Repo-local `ember-collaboration` skill, partner onboarding, lane ownership, handoff template, and verified optional agent-tool guide |
 
-**Verification actually run, not assumed:**
+**Verification actually run:**
 
+```text
+npm run verify:replay  →  green
+npm run lint           →  green
+npm run build          →  green
 ```
-npm run verify:fixtures   →  14/14 green
-npx tsc -b                →  clean
-npm run build             →  clean, 213 kB / 67 kB gzip
-USE_CACHED_EXTRACTION=1   →  source: cached, count: 8
-```
 
-`verify:fixtures` covers the seven invariants from `.claude/skills/seed-fixtures/SKILL.md`, three that guard the demo itself (the opening accuracy numbers `20,25,30,30,35,30`, the deliberately non-monotonic cue trend, and **the flip** — streak 3→0 and `isResolved` false→true on approve), and four added in Phase 2 that guard the offline path: every cached evidence span verbatim in the transcript, the cache surviving validation as 6–8 events, exactly one card under 0.7, and `SCREENING_FLAG` rejected from the extractor even when its evidence is valid. The check count is derived now, so adding one can't leave the tail message stale.
+Production build: 20 modules, 203.78 kB JavaScript / 63.67 kB gzip, 15.20 kB CSS / 4.04 kB gzip.
 
-### What runs today
+### What runs now
 
-`npm run dev` → `#record` renders Maya's six-week history off the fixtures: accuracy `20,25,30,30,35,30` and the cue trend as inline SVG (no chart library), with `unresolvedStreak === 3` visible before any review. `#outputs` is four tabs with honest empty states, reading through `confirmed()`. `#review` and `#thermal` are still placeholders.
+`npm run dev` starts Vite. Opening the printed URL with an empty or unknown hash renders the default `#scan` surface.
 
-`vercel dev` → `POST /api/extract` returns `{count, events, source}`. Untested over HTTP — see Open #1.
+- Idle starts with no frame in memory.
+- Start clears old state, emits six replay frames, and ends.
+- Pause holds the current frame; Resume continues from the next frame.
+- Restart begins from frame one.
+- Stop cancels pending work, returns idle, and clears the visible frame.
+- The viewport and frame alt text both identify the sequence as simulated.
+- **“Demo replay — not live”** appears above the viewport and again over every displayed frame.
+- The assessment panel always says **“No current assessment.”** PNG pixels do not create warnings.
+
+`#history` renders an empty state and explains the local, ephemeral frame policy.
 
 ---
 
 ## 2. Next
 
-**Phase 3 · Review UI · 12:30 → 15:00.** The highest-value surface in the product; everything downstream reads from it. Full task list in `docs/PLAN.md`.
+**Phase 1A · hardware and calibrated-radiometry proof.**
 
-The shape of it:
+Start outside React:
 
-- `EventCard` — proposed cards render soft grey, hairline dashed, confidence shown. Approve snaps to full ink and grows a **red rule down the left edge**. That is the only animation in the app.
-- Edit requires a `clinician_edit`, sets status `edited`, renders red. Reject recedes and is excluded from everything downstream.
-- `TranscriptPane` scroll-sync is `String.indexOf` on the verbatim `evidence` span, then `scrollIntoView`. Extraction already guarantees the span matches — validation drops anything that doesn't.
-- `StreakBanner` reads `unresolvedStreak` / `isResolved` from `derive.ts`. **No second implementation.**
-- On last confirm, fire all 5 `/api/generate` calls in parallel. There is ~15s of stage talk between the last approve and the artifacts beat; spend it generating.
+1. Identify the exact PureThermal board and firmware.
+2. Confirm USB enumeration with a data cable.
+3. Prove one 160 × 120 Y16 frame.
+4. Separately prove whether its values are calibrated radiometry convertible to Celsius.
+5. Verify display/grid orientation and record encoding, byte order, timestamp, and calibration mode.
+6. Only after that gate, build the smallest local bridge and source/session lifecycle.
+7. Only after the transport gate, lock hardware-derived policy and add deterministic assessment.
 
-The eight proposed cards the review will receive, in order — approve 5–6, edit 1, reject 1:
+The UI must not gain transport-specific code. Replay remains the self-contained local fallback and cannot tune or exercise classification.
 
-| t | Type | Conf |
-|---|---|---|
-| 65 | `CUE` visual | 0.92 |
-| 157 | `CUE` verbal | 0.89 |
-| 316 | `ERROR_PATTERN` | 0.81 |
-| **452** | **`INDEPENDENT_PRODUCTION`** — the payoff | 0.94 |
-| **628** | **`ATTEMPT`** — client self-report, **the one to reject** | **0.58** |
-| 742 | `ATTEMPT` 14/20 | 0.93 |
-| 845 | `QUESTION_UNRESOLVED` on `/r/ blends` | 0.90 |
-| 920 | `HOME_PROGRAM_ASSIGNED` | 0.91 |
-
-`t=628` is the one that matters. It is wrong for a reason a clinician can say out loud — the speaker is the client reporting on her own production, not the clinician observing it. That is what makes the review step read as necessary rather than ceremonial.
-
-Then: **thermal gate at 15:00**, artifacts 15:00–16:00, and the 16:00–17:00 offline hardening block.
+**15:00 hardware gate:** if calibrated radiometry is not proven, stop debugging the bridge. Finish the replay-only submission honestly instead of converting palette colors or raw counts into fake temperatures.
 
 ---
 
-## 3. Issues found
+## 3. Open risks
 
-### Resolved
-
-| # | Issue | Resolution |
+| # | Risk | Owner / response |
 |---|---|---|
-| 1 | Docs sat in `tally-docs/`, so `AGENTS.md` was invisible to Codex/GPT, which only auto-loads it from the repo root | Moved everything to root |
-| 2 | **`unresolvedStreak` specified two incompatible ways.** `SCHEMA.md` says "consecutive sessions with no `INDEPENDENT_PRODUCTION`" — literally that returns **6**, but `seed-fixtures` requires **3** | Implemented as *consecutive recent sessions carrying an open `QUESTION_UNRESOLVED`*, matching the arc's "Unresolved (2)/(3)" labels. Fixtures place one on `/r/ initial` in sessions 4–6. Rationale in the docstring, guarded by check 1 |
-| 3 | **`AGENTS.md` #6 was unachievable as written.** "Runs with the network unplugged" contradicts a stack where Supabase serves every read and artifacts are 5 LLM calls | Supabase is **write-only at runtime**. No render path awaits the network. Also removes stage spinners |
-| 4 | `mvp.md`'s schedule left the second dev with nothing to own until 16:00 — their first block depended on `derive.ts`, which landed later | Phase 0 ships the seam (`types` / `store` / `derive`) first |
-| 5 | 5 artifact LLM calls will not fit the 35-second `1:40–2:15` demo beat sequentially | Parallel calls, fired on review-complete rather than tab-open. **Not built yet — Phase 3** |
-| 6 | Thermal is confirmed at `2:15`, after artifacts already rendered at `1:40` | Referral line is a deterministic template append from the confirmed `SCREENING_FLAG`, never an LLM re-run. **Not built yet — Phase 6** |
-| 7 | `verify:fixtures` couldn't run — Node ESM needs explicit import extensions | Relative imports in `src/` carry `.ts` / `.tsx`. `allowImportingTsExtensions` was already on, so this cost no dependency. Keep the convention |
-| 8 | Two schedules (`ARCHITECTURE` §6 and `PLAN.md`) would drift, and one would be on screen | `PLAN.md` is the only schedule |
-| 9 | `npm create vite` in a non-empty directory offers to wipe it — would have taken the docs | Scaffolded in a temp dir, copied in |
-| 10 | **`api/` was in no tsconfig at all.** `tsconfig.app.json` includes `src`, `tsconfig.node.json` included only `vite.config.ts` — so `npx tsc -b` was silently skipping every file that runs on stage | `tsconfig.node.json` now includes `api`. Caught during Phase 2 |
-
-### Open
-
-| # | Risk | Owner |
-|---|---|---|
-| 1 | **`vercel dev` is still unproven, and worse than at 10:15: the `vercel` CLI is not installed on this laptop.** `POST /api/extract` has never been served over HTTP. `npm run dev` does *not* serve `/api` — Vite knows nothing about Vercel functions, so it 404s and reads as a code bug | **D — blocking, do before 12:30** |
-| 2 | **No `.env`, no `.vercel`, no `ANTHROPIC_API_KEY`.** Phase 2 shipped around this by falling back to the cache, but the **live** extraction path has never executed once.  `PLAN.md`'s Phase 2 exit gate is half-met | **D — blocking** |
-| 3 | **`api/cached-extraction.ts` is hand-built, not from a live run.** Eight events tuned to the four documented transcript plants; every span asserted verbatim by check 11. **Refresh from a known-good live run the moment the key lands, and again if `prompt.ts` changes** — a stale cache that disagrees with live is worse than none | L, when key lands |
-| 4 | `cached-artifacts.json` does not exist. Half the offline path is still missing | L, Phase 3 |
-| 5 | Thermal frames not captured. **Capture at lunch, not at 17:00** — the 5-minute version at lunch is the whole difference between the beat existing and not | D |
-| 6 | Documentation-time number for the README not gathered. Interview replies take hours; needed by 15:00. **Do not invent a statistic** | D |
-| 7 | Supabase not seeded, deliberately — nothing reads it. Say so if a populated table is wanted for a README screenshot (~20 lines) | — |
-| 8 | **Two background agents sharing one working tree raced.** `ec7fb89` is a two-lane commit: the record-view files were staged by one agent when the extraction lane ran `git commit`, so they landed under the extraction message. Content is correct and both `DECISIONS.md` lines survived; it was not rebased apart. Phase 3 should give the lanes separate branches or run them one at a time | both |
-
-### Not an issue, but worth knowing
-
-`001_init.sql` uses plain `text` where `SCHEMA.md` names an enum. Validation lives at the API boundary, where untrusted model output actually enters; a `CHECK` here would be a second thing to keep in sync and would surface as a 500 instead of a silently dropped event.
-
-`api/extract.ts` never returns 4xx or 5xx to the UI. No key, bad JSON, a refusal, an upstream 500, or fewer than 5 events surviving all serve the cache. The contract's `source` field (`'live'` / `'cached'`) is rendered nowhere — it exists so you can tell in devtools which path you're on.
+| 1 | Exact PureThermal board revision and firmware are not documented | L — identify before installing native tooling |
+| 2 | USB enumeration and Y16 capture have not been proven on this laptop | L — blocking gate for live work |
+| 3 | Bridge protocol, `PureThermalSource`, and source/session controller do not exist | L/D — Phase 1B after hardware gate |
+| 4 | No validated-radiometric type, frame validator, hotspot implementation, persistence rule, or device-calibrated policy exists | D — Phase 1C after transport gate |
+| 5 | Speech is not implemented | both — Phase 2; screen must remain complete without it |
+| 6 | 200% zoom and VoiceOver remain unproven; browser route reload, controls, source cleanup, and mobile layout are verified | D — Phase 3 |
+| 7 | `error` and `live-purethermal` are reserved contracts with no current producer | expected until Phase 1 |
+| 8 | Replay min/max values are simulated metadata | never display them as evidence or use them for classification |
+| 9 | Current `ScanView` composes Replay directly and status copy is replay-specific | expected Phase 0 shortcut; Phase 1B adds source selection/session ownership before Live |
+| 10 | Current assessment seam lacks run identity, direction, provenance, and expiry | revise `src/types.ts` and `docs/SCHEMA.md` together before Phase 1C |
+| 11 | Automated replay checks do not cover restart, route cleanup, or DOM accessibility | extend source checks; record the Phase 3 manual environment and results |
 
 ---
 
-## 4. Deviations from spec
+## 4. Known behavior and boundaries
 
-Six, all logged in `DECISIONS.md` with reasoning:
+- `ReplayThermalSource.start()` is also the restart primitive. The UI exposes separate Start and Restart labels around the same fresh-run behavior.
+- The source uses one timeout. Stop and unmount call `source.stop()`; the verifier proves stop cleanup at source level.
+- Replay timestamps are logical fixture timestamps: `startedAtMs + capturedAtOffsetMs`. Pausing delays delivery but does not rewrite capture offsets.
+- `ScanView` state is intentionally local in Phase 0. A focused session hook—not a global store—is planned when the second source exists.
+- No API, model endpoint, database, local storage, analytics, or cloud frame path exists.
+- No live frame, assessment, warning, speech, history record, notification, smart plug, or relay is claimed.
+- Display images and radiometric values are separate by contract. Replay has only the display side.
 
-1. `src/store.ts` is **`src/store.tsx`** — it contains JSX.
-2. `derive.ts` shipped with **real bodies instead of Phase-0 stubs**. They're pure functions over arrays; stubs would have been code written twice.
-3. `verify:fixtures` asserts **14 checks, not 7**. Three guard the demo's opening numbers and its payoff; four guard the offline extraction path.
-4. The offline cache is **`api/cached-extraction.ts`**, not the `cached-extraction.json` named in `ARCHITECTURE.md` §3. A module needs no `resolveJsonModule`, no `with { type: 'json' }`, and no bet on how Vercel's bundler treats a JSON import — and `tsc` checks it. It holds **raw model output** and runs through the same `validate()` as the live path, so a cache that drifts out of contract fails `verify:fixtures` instead of failing on stage.
-5. **No `@anthropic-ai/sdk`.** `api/extract.ts` calls `/v1/messages` with raw `fetch`, ~15 lines, because `AGENTS.md` freezes `package.json` without asking. Swap it if the dependency is wanted.
-6. `tsconfig.node.json` now includes `api/` — see Resolved #10.
+---
 
-## 5. Dependencies added
+## 5. Dependencies
 
-`tailwindcss`, `@tailwindcss/vite`, `@supabase/supabase-js`. **Nothing added in Phase 2.**
+Runtime: React 19, React DOM, Tailwind v4.
 
-No router (hash switch, ~12 lines in `App.tsx`), no state library (React Context), no test framework, no chart library (inline SVG), no Anthropic SDK (raw `fetch`), no `ts-node`/`tsx` (`verify:fixtures` runs on `node --experimental-strip-types`).
+Build: TypeScript, Vite, React Vite plugin, oxlint, type packages.
+
+No router, state library, chart library, test framework, model SDK, database client, camera SDK, native USB dependency, or agent runtime is installed. Contributor agent tools are optional workstation tooling documented in `docs/AGENT-TOOLS.md`; they do not enter Ember’s application dependency graph.
+
+See `docs/REQUIREMENTS.md` for stable acceptance IDs and `docs/PLAN.md` for the two-builder phase order.

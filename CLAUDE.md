@@ -2,38 +2,38 @@
 
 **Read `AGENTS.md` first — it is the source of truth.** This file adds Claude Code specifics only.
 
-File map + contracts: `docs/ARCHITECTURE.md`. Spec: `mvp.md`. Demo: `docs/DEMO.md`. Data contract: `docs/SCHEMA.md`. Prior art: `docs/REFERENCES.md`.
+Cold start: `docs/STATUS.md`. Atomic acceptance: `docs/REQUIREMENTS.md`. Boundaries and landmines: `docs/ARCHITECTURE.md`. Implemented contracts: `docs/SCHEMA.md`. Schedule: `docs/PLAN.md`. Demo: `docs/DEMO.md`.
+
+For collaboration, invoke `.claude/skills/ember-collaboration/SKILL.md`, which links to the canonical `.agents/skills/ember-collaboration` skill, and follow `docs/COLLABORATION.md`. Read `docs/AGENT-TOOLS.md` before enabling a third-party plugin, skill, or orchestrator.
 
 ## Session discipline
 
-Pro plan, 5-hour session budget, hard 5:30 freeze. Budget is scarcer than time.
+Two builders, hard 17:30 feature freeze.
 
-- `/clear` between every task. Don't carry schema context into UI work.
-- Batch: take a whole feature spec in one turn, not eight follow-ups.
-- Don't re-read the repo. `docs/SCHEMA.md` is the data contract — read that instead of grepping `src/`.
-- Don't paste stack traces here. Those go to the second model; bring back the fix.
+- `/clear` between tasks. Do not carry native-bridge context into interface work.
+- Take one bounded surface at a time and name the `docs/DEMO.md` beat it improves.
+- Claim owned and off-limits files before delegating or starting parallel work.
+- Read `docs/REQUIREMENTS.md` and `docs/SCHEMA.md` before changing a thermal shape. Do not redeclare shared types.
+- Do not add a dependency or change a public contract without announcing it.
+- Append the outcome or surprise to `docs/DECISIONS.md`.
+- Use only one orchestrator for a worktree; require specialist agents to return a factual handoff.
 
-## Project skills
-
-- `.claude/skills/seed-fixtures/` — before touching fixture data
-- `.claude/skills/extraction-contract/` — before touching `api/extract.ts` or the prompt
-- `.claude/skills/thermal-panel/` — before touching `src/features/thermal/`
-
-## Escalate, don't guess
+## Escalate, do not guess
 
 Stop and ask when:
 
-- A fixture would change after 11:00
-- Extraction returns fewer than 5 or more than 10 events for the demo transcript
-- A design token doesn't cover a case
-- You're about to add a dependency
-- `mvp.md` contradicts something here
-- It's past 3:00 PM and thermal isn't started — that's a cut, not a question
+- The hardware is not confirmed to be Lepton 3.5 on a PureThermal USB board.
+- A change would make replay look live or sourced from the connected camera.
+- A model is about to classify heat or authorize a safety action.
+- UI copy implies that an object is safe to touch.
+- A warning is understandable only through color or speech.
+- A dependency, native runtime, or persistent data store is being added.
+- `mvp.md` contradicts `AGENTS.md`.
 
-## Clinical safety
+## Safety
 
-This product never diagnoses, rules on, or recommends care. If a prompt, a generated artifact, or UI copy asserts a clinical conclusion rather than proposing evidence for a clinician to confirm, that's a bug — fix it and flag it.
+Ember reports observed thermal conditions; it never guarantees touch safety. Deterministic code owns classification. Language models may explain an already-computed assessment, never create one. Speech repeats visible status and warnings; it is not the only output.
 
 ## Commits
 
-Conventional commits, one line, no body, no co-author trailer. `feat: review card approve state`. Commit after every working increment.
+Conventional commits, one line, no body, no co-author trailer. Commit after each working increment. `codex/ember` is the integration branch; do not push directly to `main`, rewrite shared history, or let a subagent push unless it is the assigned integration owner.

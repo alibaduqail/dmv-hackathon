@@ -1,17 +1,19 @@
 {
-  "name": "tally",
+  "name": "ember",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "verify:fixtures": "node --experimental-strip-types scripts/verify-fixtures.ts"
+    "verify:replay": "node --experimental-strip-types scripts/verify-replay.ts"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.110.8",
     "@tailwindcss/vite": "^4.3.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

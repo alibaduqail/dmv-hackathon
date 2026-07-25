@@ -1,47 +1,81 @@
 import { useEffect, useState } from 'react';
-import { StoreProvider } from './store.tsx';
-import RecordView from './features/record/RecordView.tsx';
-import ReviewView from './features/review/ReviewView.tsx';
-import OutputsView from './features/outputs/OutputsView.tsx';
-import ThermalView from './features/thermal/ThermalView.tsx';
+import HistoryView from './features/history/HistoryView.tsx';
+import ScanView from './features/scan/ScanView.tsx';
 
-// ponytail: hash routing instead of react-router. Four views, no deep links.
-// Survives a reload and you can type #thermal if something goes sideways on stage.
 const VIEWS = {
-  record: RecordView,
-  review: ReviewView,
-  outputs: OutputsView,
-  thermal: ThermalView,
+  scan: ScanView,
+  history: HistoryView,
 } as const;
 
 type ViewName = keyof typeof VIEWS;
 
-const current = (): ViewName => {
-  const h = location.hash.slice(1) as ViewName;
-  return h in VIEWS ? h : 'record';   // the demo opens on the record
+const currentView = (): ViewName => {
+  const candidate = location.hash.slice(1);
+  return candidate === 'scan' || candidate === 'history' ? candidate : 'scan';
 };
 
 export default function App() {
-  const [view, setView] = useState(current);
+  const [view, setView] = useState(currentView);
 
   useEffect(() => {
-    const onHash = () => setView(current());
-    addEventListener('hashchange', onHash);
-    return () => removeEventListener('hashchange', onHash);
+    const onHashChange = () => setView(currentView());
+    addEventListener('hashchange', onHashChange);
+    return () => removeEventListener('hashchange', onHashChange);
   }, []);
 
   const View = VIEWS[view];
 
   return (
-    <StoreProvider>
-      <nav className="flex gap-5 border-b border-hairline px-8 py-3 font-mono text-xs lowercase text-grey">
-        {(Object.keys(VIEWS) as ViewName[]).map(name => (
-          <a key={name} href={`#${name}`} className={view === name ? 'text-ink' : ''}>
-            {name}
+    <div className="min-h-screen bg-canvas text-text">
+      <button
+        type="button"
+        onClick={() => document.getElementById('main')?.focus()}
+        className="fixed left-4 top-4 z-50 -translate-y-24 rounded-md bg-focus px-4 py-3 font-semibold text-canvas transition-transform focus:translate-y-0"
+      >
+        Skip to main content
+      </button>
+
+      <header className="border-b border-line bg-panel">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-4 md:px-8">
+          <a
+            href="#scan"
+            className="flex min-h-11 items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
+            aria-label="Ember scan home"
+          >
+            <span
+              aria-hidden="true"
+              className="grid size-10 place-items-center rounded-full border-2 border-accent text-xl text-accent"
+            >
+              ◉
+            </span>
+            <span>
+              <span className="block text-xl font-bold tracking-tight">Ember</span>
+              <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                Thermal guidance
+              </span>
+            </span>
           </a>
-        ))}
-      </nav>
+
+          <nav aria-label="Primary navigation" className="flex items-center gap-2">
+            {(Object.keys(VIEWS) as ViewName[]).map(name => (
+              <a
+                key={name}
+                href={`#${name}`}
+                aria-current={view === name ? 'page' : undefined}
+                className={`inline-flex min-h-11 items-center rounded-md px-4 text-sm font-bold capitalize outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                  view === name
+                    ? 'bg-text text-canvas'
+                    : 'text-muted hover:bg-panel-strong hover:text-text'
+                }`}
+              >
+                {name}
+              </a>
+            ))}
+          </nav>
+        </div>
+      </header>
+
       <View />
-    </StoreProvider>
+    </div>
   );
 }

@@ -3,3 +3,11 @@ node_modules
 .env*
 .vercel
 dist
+
+# Local Ruflo runtime state; project truth stays in committed Markdown.
+.swarm/
+.claude-flow/
+.claude/memory.db*
+.claude/proven-config.json
+.claude/.proven-config-version
+ruvector.db*

@@ -2,119 +2,153 @@
 
 Source of truth for every coding agent on this repo — Claude Code, Codex, ChatGPT. `CLAUDE.md` points here. Read completely before your first edit.
 
-**Project:** Tally — turns a therapy session into clinician-confirmed data that keeps a child's care authorized.
-**Track:** 02, Health Tech & Accessibility. **Submit 7:00 PM.** Product spec: `mvp.md`.
+**Project:** Ember — a handheld thermal companion for blind and low-vision people.
+**Track:** 02, Health Tech & Accessibility. **Feature freeze 17:30. Submit 19:00.** Product spec: `mvp.md`.
 
-**Picking this up cold? Read `docs/STATUS.md`** — what's built, what's next, what's known broken.
+**Picking this up cold? Read `docs/STATUS.md` first.** Then read `docs/REQUIREMENTS.md` (atomic acceptance), `docs/ARCHITECTURE.md` (boundaries and placement), `docs/SCHEMA.md` (implemented shapes), and `docs/PLAN.md` (schedule authority).
 
-Then **`docs/ARCHITECTURE.md`** (file tree, exported signatures, landmines) and **`docs/PLAN.md`** (phases, owners, gates — the only schedule). This file says how we work; those say where things go and what happens next.
+**Working with a person or another agent?** Use `.agents/skills/ember-collaboration/SKILL.md`, then follow `docs/COLLABORATION.md`. Claude Code discovers the same canonical skill through `.claude/skills/ember-collaboration`. Verified identities and setup notes for optional agent tools live in `docs/AGENT-TOOLS.md`.
 
 ---
 
 ## The one thing to understand
 
-**Feature freeze is 5:30 PM.** The last ninety minutes are the submission package. Judging criteria 01–04 are scored on what gets uploaded, unnarrated — only criterion 05 is live. A perfect build that isn't packaged scores nothing.
+Ember can report a thermal condition. It cannot know every material, reflection, distance, exposure time, or personal sensitivity that determines whether touching something will cause harm.
 
-The only measure of a change is whether it improves a beat in `docs/DEMO.md`. If you can't name the beat, stop and ask.
+> **Never promise that an object is safe to touch.**
+
+Use directional, observable language: *“Higher heat is present in the upper-right area. Keep your hand away and verify another way.”* Never say *“It is safe now.”*
 
 ---
 
 ## Non-negotiables
 
-1. **Seed fixtures before UI.** Six weeks of history is the demo's payload. Frozen at 11:00.
-2. **No audio, no ASR.** Pipeline starts at a hand-written transcript fixture. Do not suggest Whisper.
-3. **Thermal frames are pre-captured PNGs.** No camera code, no live capture, no device drivers. Ever.
-4. **We produce a data structure, not a note.** If output reads like prose an ambient scribe would emit, it's wrong.
-5. **Extraction output is validated, never trusted.** Parse, enum-check, drop on failure.
-6. **`USE_CACHED_EXTRACTION=1` must run the full demo with the network unplugged.** Tested at 4:00, not 5:25.
-7. **The clinician is the authority.** Nothing in this product diagnoses, rules, or recommends care. It proposes evidence for a human to confirm.
+1. **Deterministic code classifies heat.** An LLM may explain an existing assessment. It never selects thresholds, creates a classification, or authorizes an action.
+2. **Every warning is redundant.** Visible text + a non-color symbol are required. Color may reinforce meaning. Speech is additive and never the only output.
+3. **Thermal frames are ephemeral by default.** Do not upload, persist, log, or place live frames in history unless the product scope explicitly changes.
+4. **Replay provenance never disappears.** Every replay surface says exactly **“Demo replay — not live”** while replay content is displayed.
+5. **Never mix source truth.** A replay frame cannot carry live provenance. A live source cannot use replay metadata.
+6. **Replay does not classify.** Phase 0 replay proves the source seam and accessible controls only. Phase 1 analysis may consume validated live radiometric values; never infer warnings from the six PNGs.
+7. **Controls work without precision pointing.** Keyboard operable, visible focus, accessible names, and at least 44 × 44 CSS pixels.
+8. **Clean up the source lifecycle.** Leaving `#scan`, restarting, stopping, or unmounting must clear pending replay timers.
+
+---
+
+## Current baseline and active milestone
+
+Phase 0 is complete and verified:
+
+- `#scan` as the default route.
+- `#history` as an honest empty state.
+- A six-frame 160 × 120 simulated PNG replay.
+- Start, pause, resume, restart, and stop controls.
+- Source status in text, not color alone.
+- Shared `ThermalSource` contracts and `ReplayThermalSource`.
+- `npm run verify:replay`, build, and lint green.
+
+Phase 1A is the next implementation milestone. The later Phase 1 work is dependency-gated:
+
+- Identifying the exact PureThermal board and firmware.
+- Proving one 160 × 120 Y16 frame outside React **and separately proving calibrated radiometry**.
+- Adding the smallest local bridge, versioned loopback protocol, and `PureThermalSource` only after that proof.
+- Adding a source/session controller before Live enters `ScanView`.
+- Validating live radiometric frames and implementing deterministic hotspot analysis only after the bridge gate.
+
+Replay pixels still cannot be classified. Do **not** add speech, an LLM endpoint, notifications, persistent history, cloud frame storage, or physical actions in Phase 1. Follow requirement IDs and gates in `docs/REQUIREMENTS.md` and timing in `docs/PLAN.md`.
 
 ---
 
 ## Lane ownership
 
-One owner per path. Need to change something outside your lane, say so in chat first.
+One owner per path at a time. Claim the exact files and acceptance checks using `docs/COLLABORATION.md`. Announce cross-lane edits before touching them.
 
-| Path | Owner |
+| Path | Default lane |
 |---|---|
-| `src/fixtures/**` | Build lead — **frozen 11:00** |
-| `api/**`, `src/lib/extract*` | Build lead |
-| `src/features/review/**` | Build lead — the product, highest-value surface |
-| `src/features/outputs/**` | Second dev |
-| `src/features/record/**` | Second dev |
-| `src/features/thermal/**` | Second dev — gated, see below |
-| `src/styles/tokens.css` | Build lead — do not add colors |
+| `src/types.ts`, `src/lib/**` | Thermal contracts and source |
+| `src/fixtures/**`, `public/replay/**`, `scripts/**` | Replay and verification |
+| `src/features/**`, `src/App.tsx` | Accessible interface |
+| `src/styles/**`, `src/index.css` | Interface design |
+| `docs/**`, `AGENTS.md`, `CLAUDE.md`, `mvp.md` | One designated writer |
 
-Two people on the repo: separate branches, merge at 12:30 and 4:00 only. Never merge after 5:00.
-
----
-
-## The 3:00 PM gate
-
-Thermal is the only optional feature. At 3:00 PM, check: is the review UI done end-to-end and the record view underway?
-
-- **Yes** → thermal gets 5:00–5:30, standalone route, wired to nothing.
-- **No** → thermal is cut. Delete the branch, remove it from the demo script, never mention it.
-
-Do not negotiate this at 4:30. It is a checkpoint, not a preference.
+Git history is the archive for removed product work. Do not copy it into an active legacy folder.
 
 ---
 
 ## Working agreement
 
-- **Smallest change that works.** No abstractions before the third repetition. No wrapper components. No new dependency without asking.
-- **One task per session.** `/clear` between tasks — session budget is the scarce resource, not time.
-- **Don't reorganize.** No renames, no restructures, no drive-by cleanups.
-- **No tests.** Manual verification against `docs/DEMO.md` is the test.
-- **Commit after every working increment.** A broken uncommitted repo at 5:15 is how teams lose.
-- **Read `docs/REFERENCES.md` before building anything that looks solved.** Steal the shape; don't install the library.
+- **Smallest change that proves the beat.** No abstraction before a concrete second source needs the seam.
+- **No new dependency without asking.** The foundation needs none.
+- **One bounded lane per agent.** Keep bridge, analysis, interface, and review work in separate contexts with disjoint file ownership.
+- **No drive-by reorganization.** Remove obsolete files during the pivot; after that, keep paths stable.
+- **Verification is not optional.** Run `npm run verify:replay`, `npm run lint`, and `npm run build` after relevant changes.
+- **Commit after each working increment.** Use `codex/ember` as the shared integration branch; do not push directly to `main`.
+- **Append one line to `docs/DECISIONS.md`** when a contract changes, a demo beat is cut, or hardware behavior surprises you.
 
-## When you finish a task
+### Optional agent tooling
 
-Append one line to `docs/DECISIONS.md`. It's the only handoff mechanism — nobody has time for a standup.
+- Agent tooling is contributor infrastructure, not an Ember runtime dependency.
+- Choose the minimum specialist that closes a concrete gap. Do not run overlapping orchestrators against the same worktree.
+- Give every agent explicit owned files, off-limits files, acceptance checks, and a required handoff.
+- A design agent cannot weaken safety copy, hide replay provenance, or make color or speech essential.
+- A subagent cannot merge, push, or change a shared contract unless the integration owner explicitly assigns that authority. Hardware claims always require reproduced evidence and a documented check, regardless of who is authorized.
+- Read `docs/AGENT-TOOLS.md` before installing or enabling Ponytail, Ruflo, Impeccable, Emil Design Engineering, or another tool.
 
 ---
 
 ## Design
 
-Concept is **marginalia** — the interface is a page a clinician marks up. The rule that carries the product:
+The interface is a high-contrast safety instrument, not a decorative heat map.
 
-> **Red means a human touched it.**
-
-AI proposals render soft grey, low-contrast, hairline-dashed. On approve, the card snaps to full ink and grows a red rule down its left edge. Downstream artifacts only render red-marked content. That's the thesis made visible without a word of explanation.
-
-Tokens in `src/styles/tokens.css`. **Use only what's there.** No gradients, no shadows, no border-radius above 2px, no icon library. The approve interaction is the only animation.
-
-Type: Instrument Serif (display), Karla (body), JetBrains Mono (timestamps, trial counts, confidence, temperatures).
-
-Thermal frames render at their native palette. Do not recolor them to match the design system — a false-color thermal image is a clinical artifact, and prettifying it undermines the claim.
+- Status and warnings require **word + symbol**. Color may reinforce them but cannot carry meaning by itself.
+- Visible focus must survive every theme color.
+- Do not place essential text inside the thermal image.
+- Preserve the thermal asset’s palette. Do not recolor replay or live frames for branding.
+- Keep source status and replay provenance adjacent to the viewport.
+- Use an `aria-live` status region. Future urgent warnings use an assertive region; routine source updates remain polite.
+- Never animate in a way that prevents pause or hides provenance.
 
 ---
 
 ## Vocabulary
 
-Exact terms in code, UI copy, and commits.
+Exact terms in code, UI, and commits.
 
-| Term | Means | Don't say |
+| Term | Means | Do not say |
 |---|---|---|
-| client | the child receiving therapy | patient, student, user |
-| clinician | the SLP | teacher, therapist, provider |
-| caregiver | parent or guardian | parent, family |
-| trial | one scored production attempt | attempt, rep |
-| cue level | how much support was needed | prompt, hint, help |
-| target | the sound and position, e.g. `/r/ initial` | goal, skill |
-| learning event → **clinical event** | one extracted moment | insight, item, finding |
-| proposed / approved / edited / rejected | the four event states | pending, confirmed |
-| evidence | the transcript span or thermal frame | quote, excerpt, image |
-| artifact | a generated output document | summary, report |
-| screening | what the thermal module does | test, measurement, diagnosis |
+| source | An implementation that emits thermal frames | camera, when it may be replay |
+| replay | Simulated, ordered PNG frames | live feed, or “scan” when describing replay data |
+| live source | Frames arriving from the native PureThermal bridge | direct browser camera |
+| frame | One thermal image plus metadata | reading, assessment |
+| radiometric values | Per-pixel Celsius data supplied by the live bridge | temperatures inferred from a PNG |
+| assessment | Deterministic output derived from validated live radiometric values | AI opinion |
+| warning | Redundant text, symbol, color, and later speech | guarantee |
+| lower heat observed | A comparative thermal observation | safe to touch |
 
-**Never write "diagnose," "detect," or "measure" about the thermal module.** It screens and prompts a referral.
+---
+
+## Safety copy
+
+Allowed:
+
+- “Higher heat observed in the center area.”
+- “Keep your hand away and verify another way.”
+- “Thermal source paused.”
+- “No current assessment.”
+
+Forbidden:
+
+- “Safe,” “all clear,” or “safe to touch.”
+- “The AI decided this is hot.”
+- “No burn risk.”
+- A Celsius value when the frame has no radiometric data.
+- Any warning generated from replay pixels.
 
 ---
 
 ## Out of scope
 
-Auth. Billing. Audio capture. ASR. Live thermal capture. Camera drivers. Real-time streaming. EHR/FHIR integration. Mobile app. Settings. Dark mode. Landing page. Multi-tenancy. Tests. CI.
+For active Phase 1: speech, LLM calls, alerts, history persistence, cloud frame storage, and physical actions. The native bridge and deterministic hotspot analysis are in scope only behind the hardware, transport, and validation gates above.
 
-If asked to build something on this list, refuse and point here.
+For the hackathon MVP: smart plugs or relays, remote third-party monitoring, cloud frame storage, diagnosis, medical claims, identity, billing, settings, dark mode, multi-tenancy, and autonomous physical actions.
+
+If asked to add one, stop and re-scope it against `docs/DEMO.md` and the 17:30 freeze.

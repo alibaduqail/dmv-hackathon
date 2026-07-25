@@ -1,66 +1,100 @@
-// Mirrors docs/SCHEMA.md. Import from here — never redeclare a union.
+// Shared contracts for every thermal source and consumer. Import; do not redeclare.
 
-export type EventType =
-  | 'ATTEMPT' | 'CUE' | 'RETRY' | 'INDEPENDENT_PRODUCTION'
-  | 'GENERALIZATION' | 'ERROR_PATTERN' | 'HOME_PROGRAM_ASSIGNED'
-  | 'QUESTION_UNRESOLVED' | 'REINFORCEMENT' | 'SCREENING_FLAG';
+export type SourceStatus =
+  | 'idle'
+  | 'connecting'
+  | 'streaming'
+  | 'paused'
+  | 'ended'
+  | 'error';
 
-export type CueLevel = 'independent' | 'verbal_cue' | 'visual_cue' | 'tactile_cue' | 'model';
+export type ThermalProvenance =
+  | {
+      kind: 'simulated-replay';
+      label: 'Demo replay — not live';
+      isLive: false;
+    }
+  | {
+      kind: 'live-purethermal';
+      label: string;
+      isLive: true;
+    };
 
-export type Domain =
-  | 'articulation' | 'phonological_process' | 'fluency'
-  | 'prosody' | 'expressive_language' | 'receptive_language' | 'resonance';
-
-export type EventStatus = 'proposed' | 'approved' | 'edited' | 'rejected';
-export type EvidenceType = 'transcript' | 'thermal';
-export type ArtifactKind = 'soap_note' | 'home_program' | 'next_session_plan' | 'auth_summary';
-
-export interface ClinicalEvent {
+export interface ThermalFrame {
   id: string;
-  session_id: string;
-  event_type: EventType;
-  evidence_type: EvidenceType;
-  timestamp_sec: number | null;      // null for thermal
-  target: string | null;             // '/r/ initial'
-  domain: Domain | null;
-  trials_correct: number | null;     // ATTEMPT only
-  trials_total: number | null;       // ATTEMPT only
-  cue_level: CueLevel | null;
-  evidence: string;                  // VERBATIM transcript span, <25 words
-  thermal_capture_id: string | null; // set iff evidence_type === 'thermal'
-  ai_interpretation: string;
-  confidence: number;                // 0.00–1.00, shown only on unapproved cards
-  status: EventStatus;
-  clinician_edit: string | null;     // set only when status === 'edited'
-  reviewed_at: string | null;
+  sequence: number;
+  capturedAtMs: number;
+  width: number;
+  height: number;
+  displayUrl: string;
+  radiometricValuesC?: Float32Array;
+  minC: number;
+  maxC: number;
+  provenance: ThermalProvenance;
 }
 
-export interface Session {
-  id: string;
-  index: number;
-  date: string;                      // '2026-07-25'
-  status: 'complete' | 'pending';
-  transcript_id: string | null;      // only session 7
+export type ThermalFrameHandler = (frame: ThermalFrame) => void;
+export type SourceStatusHandler = (status: SourceStatus) => void;
+
+export interface ThermalSource {
+  readonly status: SourceStatus;
+  start(onFrame: ThermalFrameHandler, onStatus: SourceStatusHandler): void;
+  pause(): void;
+  resume(): void;
+  stop(): void;
 }
 
-export interface TranscriptLine {
-  t_sec: number;
-  speaker: 'clinician' | 'client';
+export interface ReplayFrameMetadata {
+  id: string;
+  sequence: number;
+  capturedAtOffsetMs: number;
+  displayUrl: string;
+  minC: number;
+  maxC: number;
+}
+
+export interface ReplayManifest {
+  id: string;
+  label: string;
+  width: number;
+  height: number;
+  intervalMs: number;
+  provenance: Extract<ThermalProvenance, { kind: 'simulated-replay' }>;
+  frames: readonly ReplayFrameMetadata[];
+}
+
+// Future seams. The foundation defines the boundary but does not produce these.
+export interface Hotspot {
+  id: string;
+  frameId: string;
+  bounds: { x: number; y: number; width: number; height: number };
+  peakC: number;
+}
+
+export type AssessmentLevel =
+  | 'no-assessment'
+  | 'lower-heat-observed'
+  | 'elevated-heat-observed'
+  | 'higher-heat-observed';
+
+export interface ThermalAssessment {
+  frameId: string;
+  level: AssessmentLevel;
+  summary: string;
+  guidance: string;
+  hotspots: Hotspot[];
+}
+
+export interface AgentMessage {
+  id: string;
+  role: 'user' | 'ember';
   text: string;
+  createdAtMs: number;
 }
 
-export interface ThermalCapture {
+export interface SafetyAction {
   id: string;
-  session_id: string;
-  stimulus: '/m/ sustained' | '/s/ sustained';
-  image_path: string;
-  nasal_roi_peak_c: number;
-  baseline_c: number;
-  captured_at: string;
-}
-
-export interface Artifact {
-  kind: ArtifactKind;
-  lang: 'en' | 'es';
-  body: string;
+  type: 'visual-warning' | 'speak';
+  message: string;
+  createdAtMs: number;
 }
