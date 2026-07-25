@@ -40,7 +40,7 @@ npm run lint           →  green
 npm run build          →  green
 ```
 
-Production build: 24 modules, 225.22 kB JavaScript / 69.16 kB gzip, 16.15 kB CSS / 4.25 kB gzip.
+Production build: 24 modules, 225.39 kB JavaScript / 69.28 kB gzip, 16.67 kB CSS / 4.39 kB gzip.
 
 ### What runs now
 
@@ -53,6 +53,7 @@ Production build: 24 modules, 225.22 kB JavaScript / 69.16 kB gzip, 16.15 kB CSS
 - Stop cancels pending work, returns idle, and clears the visible frame.
 - The viewport and frame alt text both identify the sequence as simulated.
 - **“Demo replay — not live”** appears above the viewport and again over every displayed frame.
+- The replay viewport frame is additionally hatched and amber-edged, and the live frame is clean and accent-edged, so provenance survives greyscale, color-blindness, and a photograph of the screen.
 - The assessment panel always says **“No current assessment”**. PNG pixels do not create warnings.
 - Demo replay remains selected after load, reload, and returning from `#history`; merely selecting Live preview requests no camera permission.
 - Live preview persistently shows **“Live thermal preview — non-radiometric”**, **“Display-only colorized video. No temperature or safety assessment.”**, and **“No current assessment”** before, during, and after a stream.
@@ -94,7 +95,7 @@ Known keyboard behavior, unfixed: pressing Start disables Start, so focus moves 
 | `EMB-P4-FR-004` reload `#scan` and `#history` offline | Manual browser with the network disconnected; served locally, `/`, the JavaScript and CSS bundles, a replay PNG, and the favicon all returned 200 | Partial — server evidence only, browser reload **not run** |
 | `EMB-P4-FR-002`, `EMB-P4-FR-003`, `EMB-P4-FR-005`, `EMB-P4-AC-002`, `EMB-P4-AC-003` | — | Not applicable; Phase 1B did not pass |
 | `EMB-P4-AC-005` offline speech | — | Not applicable; Phase 2 did not pass |
-| `EMB-P4-NFR-003` 17:30 freeze | Product code frozen at `7e0fe3a` on `main`; only documentation changed afterwards | Passed |
+| `EMB-P4-NFR-003` 17:30 freeze | Frozen at `7e0fe3a`, then deliberately reopened at 17:43 for a visual pass and refrozen at `1da0a19`. The reopened change altered no copy, claim, contract, or behavior; only documentation changed afterwards | Reopened once, then passed |
 
 The spy was mutation-checked: deleting `clearTimer()` from `ReplayThermalSource.stop()` fails the run with `Cycle 1 left 1 timers pending after stop.` The behavioral assertions alone did not catch that leak, because `emitNext` already refuses to emit while idle.
 
@@ -102,18 +103,18 @@ Demo constraint: `dist/index.html` references `/assets/...` absolutely, so the p
 
 ### Phase 5 package record (in progress)
 
-Frozen commit: `7e0fe3a`. Everything below is documentation or media; no product code may change.
+Frozen commit: `1da0a19`, after the freeze was reopened once at 17:43 for a visual pass. Everything below is documentation or media; no product code may change.
 
 | Requirement | Method | Result |
 |---|---|---|
 | `EMB-P5-FR-001` locked track-fit sentence and accurate capability | README opens with the locked sentence and states the Phase 1A no-go and blocked Phase 1D gate | Passed |
 | `EMB-P5-FR-002` truth table and boundaries | README gained a live-versus-simulated table covering replay, preview, radiometry, assessment, speech, offline, accessibility, and storage | Passed |
 | `EMB-P5-NFR-001` no unearned claim | Every blocked or unrun row is labelled not built, gate blocked, or not run; the unfixed Start-button focus drop is stated | Passed |
-| `EMB-P5-NFR-003` package describes the frozen commit | README names `7e0fe3a` | Passed |
+| `EMB-P5-NFR-003` package describes the frozen commit | README names `1da0a19` and states the single reopening | Passed |
 | `EMB-P5-FR-003` screenshots | None included; no completed gate supports a live screenshot | Not applicable |
 | `EMB-P5-FR-004` 90-second captioned recording | Operator | **Not run** |
 | `EMB-P5-FR-005` event form by 19:00 | Operator | **Not run** |
-| `EMB-P5-AC-004` links and commands work from the frozen commit | Fresh clone of `7e0fe3a` plus `npm ci`; `verify:replay`, `verify:preview`, `verify:speech`, `lint`, and `build` each exited 0. Every README link resolves, including the `docs/SETUP.md` Phase 1D anchor | Passed |
+| `EMB-P5-AC-004` links and commands work from the frozen commit | Fresh clone of `1da0a19` plus `npm ci`; `verify:replay`, `verify:preview`, `verify:speech`, `lint`, and `build` each exited 0. Every README link resolves, including the `docs/SETUP.md` Phase 1D anchor | Passed |
 
 ---
 
