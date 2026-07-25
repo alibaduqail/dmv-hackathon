@@ -14,6 +14,7 @@ Log when you: change a shape in `SCHEMA.md`, cut something from the demo, discov
 09:50 — claude — Docs moved from `tally-docs/` to repo root so Codex/GPT auto-loads `AGENTS.md`. Added `docs/ARCHITECTURE.md`: file tree, exported signatures, build order, landmines.
 09:50 — claude — Five architecture calls locked, rationale in ARCHITECTURE §4. Most load-bearing: **Supabase is write-only at runtime** — no render path reads it, which is the only way AGENTS non-negotiable #6 ("runs with the network unplugged") is actually true.
 09:50 — claude — Build order revised: `types.ts` + `store.ts` + `derive.ts` signatures ship BEFORE fixtures. mvp.md's schedule left the second dev with nothing to own until 4:00 PM; the seam unblocks them by 10:15.
+09:55 — claude — Added `docs/PLAN.md`: 8 phases with owners, checkboxes, exit gates. Moved the schedule out of ARCHITECTURE §6 so there is exactly one. Phase 5 (16:00–17:00) is offline hardening — it is the phase teams skip and then lose at 17:20.
 11:00 — ____ — FIXTURES FROZEN.
 15:00 — ____ — Thermal gate: GO / NO-GO → ____
 17:30 — ____ — FEATURE FREEZE.

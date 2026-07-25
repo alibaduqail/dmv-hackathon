@@ -312,23 +312,9 @@ POST /api/generate   { sessionId, kind: ArtifactKind, lang?: 'en' | 'es' }
 
 > **`types.ts` + `store.ts` + `derive.ts` are the seam.** Their *signatures* — even returning stubs — unblock every second-dev surface. Write them before fixtures, not after.
 
-| Time | Build lead | Second dev |
-|---|---|---|
-| →10:15 | scaffold, `types.ts`, `tokens.css`, `store.ts` + `derive.ts` **as stubs with real signatures**. Commit + push. | setup, thermal frames at lunch, interview texts out |
-| 10:15–11:00 | fixtures — all of `src/fixtures/**`, `001_init.sql`, `verify-fixtures.ts` | `record/` against stubbed `derive.ts` |
-| **11:00** | **FIXTURES FROZEN.** `derive.ts` real, `npm run verify:fixtures` green | |
-| 11:00–12:30 | `api/extract.ts`, `prompt.ts`, cache | `record/` done, `outputs/` shell |
-| **12:30** | **merge #1** | |
-| 12:30–15:00 | `review/` — cards, approve/edit/reject, scroll-sync, streak banner | `outputs/`, `api/generate.ts`, four voices |
-| **15:00** | **THERMAL GATE.** Review done end-to-end AND record view underway? → log GO/NO-GO in `DECISIONS.md` | |
-| 15:00–16:00 | review polish, the approve animation | record view detail |
-| 16:00–17:00 | **merge #2**, then end-to-end run × 2, **test both cache flags with wifi off** | artifact voice pass |
-| 17:00–17:30 | buffer | `thermal/` — only if GO |
-| **17:30** | **HARD FREEZE. No merges after 17:00.** | |
-| 17:30–18:30 | README + 90s captioned recording | submission form |
+**Phase-by-phase tasks, owners, and gates live in `docs/PLAN.md` — the only schedule.** Two schedules drift and one of them ends up on screen.
 
-Cut order if behind at 15:00: thermal → record view detail → `next_session_plan` → Spanish toggle.
-**Never cut** `auth_summary` or `home_program`.
+The architectural point that drives it: the seam ships in Phase 0, before fixtures. Signatures unblock; implementations can lag.
 
 ---
 
