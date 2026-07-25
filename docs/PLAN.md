@@ -31,16 +31,18 @@ Two people. **L** = build lead, **D** = second dev. Check boxes as you go. Log s
 
 **Why first:** `types.ts`, `store.ts`, and `derive.ts` are the seam between the two lanes. Their *signatures* unblock every second-dev surface. Ship them before fixtures — stubs are fine, the shapes are not negotiable.
 
-**L**
-- [ ] `npm create vite@latest . -- --template react-ts`, Tailwind, `vercel link`
-- [ ] Fonts: Instrument Serif, Karla, JetBrains Mono
-- [ ] `src/styles/tokens.css` — ink, paper, grey, the one red. **No other colors, ever**
-- [ ] `src/types.ts` — real and complete, copied from `ARCHITECTURE.md` §5
-- [ ] `src/lib/events.ts` — `confirmed()`. Two lines, real
-- [ ] `src/lib/derive.ts` — **real signatures, stub bodies** (`return []` / `return 0` / `return false`)
-- [ ] `src/store.ts` — Context + provider, real shape, fixture imports may be `[]`
-- [ ] `src/App.tsx` — hash switch, four empty view shells, `<StoreProvider>`
-- [ ] **commit + push**
+**L — done, commit `c2ee4a6`**
+- [x] Vite + React 19 + TS + Tailwind v4 (`@tailwindcss/vite`, no config file, no PostCSS)
+- [x] Fonts: Instrument Serif, Karla, JetBrains Mono
+- [x] `src/styles/tokens.css` — paper, ink, grey, hairline, the one red. **No other colors, ever**
+- [x] `src/types.ts` — real and complete
+- [x] `src/lib/events.ts` — `confirmed()`
+- [x] `src/lib/derive.ts` — **real bodies, not stubs.** Pure functions over arrays; stubs would be code written twice
+- [x] `src/lib/thermal.ts` — delta / ratio / threshold
+- [x] `src/store.tsx` — Context + provider. Fixtures wired, currently empty arrays
+- [x] `src/App.tsx` — hash switch, `<StoreProvider>`, four view files pre-created so nobody edits `App.tsx` later
+- [x] `scripts/verify-fixtures.ts` + `npm run verify:fixtures` — **already red, 6 of 7. That is Phase 1's target**
+- [x] `api/extract.ts` stub returning 200, so D can prove `vercel dev` now
 
 **D** — blocked on L until 10:15, so do the things nobody else can:
 - [ ] Supabase project created, connection string in `.env`
@@ -62,9 +64,9 @@ Read `.claude/skills/seed-fixtures/SKILL.md` first. Fixtures are not test data �
 - [ ] `src/fixtures/events.ts` — 32 historical events, **4/5/6/6/5/6** per session, all `approved` (two `edited`), `reviewed_at` non-null
 - [ ] `src/fixtures/session-07-transcript.ts` — the arc: `verbal_cue` → INDEPENDENT_PRODUCTION, 14/20
 - [ ] `supabase/migrations/001_init.sql` + seed. Tables only — no auth, no RLS, no policies
-- [ ] `scripts/verify-fixtures.ts` + `npm run verify:fixtures` — asserts all 7 invariants
-- [ ] `src/lib/derive.ts` — **real bodies now**
 - [ ] **commit + push**
+
+`derive.ts` and `verify:fixtures` already exist and are correct. Phase 1 is **pure data entry** — fill the four files in `src/fixtures/`, then make the script green. No wiring left to do.
 
 **D**
 - [ ] `src/features/record/` skeleton against stubbed `derive.ts` — chart shells, session list

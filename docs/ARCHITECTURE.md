@@ -82,16 +82,16 @@ api/                                       ← lead. ANTHROPIC_API_KEY server-si
   cached-artifacts.json            ⬜  offline fallback
 
 src/
-  types.ts                         ⬜  lead   ALL unions + interfaces. Import, never redeclare
-  store.ts                         ⬜  lead   React Context. The runtime source of truth
-  App.tsx                          ⬜  lead   hash view switch + StoreProvider
-  main.tsx  index.css              ⬜  lead
-  styles/tokens.css                ⬜  lead   DO NOT ADD COLORS
+  types.ts                         ✅  lead   ALL unions + interfaces. Import, never redeclare
+  store.tsx                        ✅  lead   React Context. The runtime source of truth
+  App.tsx                          ✅  lead   hash view switch + StoreProvider
+  main.tsx  index.css              ✅  lead
+  styles/tokens.css                ✅  lead   DO NOT ADD COLORS
 
   lib/
-    events.ts                      ⬜  lead   confirmed() — write once, import everywhere
-    derive.ts                      ⬜  lead   4 trend fns. Both banner and record view read here
-    thermal.ts                     ⬜  lead   delta + ratio + threshold constant
+    events.ts                      ✅  lead   confirmed() — write once, import everywhere
+    derive.ts                      ✅  lead   4 trend fns. Both banner and record view read here
+    thermal.ts                     ✅  lead   delta + ratio + threshold constant
     supabase.ts                    ⬜  lead   client + fire-and-forget writes
 
   fixtures/                        ⬜  lead   FROZEN 11:00
@@ -260,7 +260,7 @@ export function isResolved(
 > `unresolvedStreak(…, '/r/ initial') === 3` before review, `isResolved === true` after.
 > **That flip is the demo.** If a fixture change breaks it, the fixture is wrong — never patch `derive.ts` to make it pass.
 
-### `src/store.ts`
+### `src/store.tsx`
 
 ```ts
 export function useStore(): {
@@ -330,7 +330,8 @@ Each of these has cost a team an hour before.
 6. **Never recolor the thermal PNGs.** Native false-color palette or the clinical claim collapses.
 7. **Two `derive` implementations will drift and one of them will be on screen.** The streak banner and the record view import the same functions.
 8. **If the thermal frames are staged, the UI says "simulated example."** In the panel, the README, and out loud.
-9. **No commits yet at 09:47.** Commit after every working increment. A broken uncommitted repo at 17:15 is how teams lose.
+9. **Relative imports inside `src/` carry their file extension** — `'./events.ts'`, `'./store.tsx'`. `allowImportingTsExtensions` is on and Vite is fine with it; it's what lets `verify:fixtures` run on plain `node --experimental-strip-types` with no ts-node or tsx dependency. Drop an extension and only the script breaks, not the build — so you'd find out late.
+10. **Commit after every working increment.** A broken uncommitted repo at 17:15 is how teams lose.
 
 ---
 
