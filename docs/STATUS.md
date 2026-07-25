@@ -46,6 +46,25 @@ Production build: 20 modules, 203.78 kB JavaScript / 63.67 kB gzip, 15.20 kB CSS
 
 `#history` renders an empty state and explains the local, ephemeral frame policy.
 
+### Phase 3 QA record (in progress)
+
+Environment for every row below: macOS 15 (Darwin 25.5.0), repository build `npm run build` at 15:5x. Rows requiring a browser or assistive technology are **not run** — no operator has executed them in this session, and no result may be claimed until they are.
+
+| Requirement | Method | Result |
+|---|---|---|
+| `EMB-P3-FR-005` thermal image is not a focus target | Code check — the replay `<img>` carries no `tabindex` or handler and its `alt` repeats the frame number, provenance, and “no assessment” | Passed |
+| `EMB-P3-FR-004` status without color or speech | Code check — every status renders text plus a non-color symbol; the assessment panel is fixed text | Passed |
+| `EMB-P3-AC-002` route change is announced | Fixed this session — hash routing now moves focus to the new route’s `main`; previously focus stayed on the old page | Fixed, needs VoiceOver confirmation |
+| Replay restart runs clean | `npm run verify:replay` — restart mid-run replays six ordered frames and detaches the previous run | Passed |
+| `EMB-P3-FR-001` keyboard-only demo | Manual browser | **Not run** |
+| `EMB-P3-FR-002` focus and 44px targets at 200% zoom | Manual browser | **Not run** |
+| `EMB-P3-FR-003` VoiceOver names, state, provenance, status | Manual VoiceOver | **Not run** |
+| `EMB-P3-FR-006` 320–390px and 200% zoom reflow | Manual browser | **Not run** |
+| `EMB-P3-FR-008` both builders run the demo | Manual rehearsal | **Not run** |
+| Live warning and app-speech rows | — | Not applicable; Phases 1C and 2 did not pass |
+
+Known keyboard behavior, unfixed: pressing Start disables Start, so focus moves to the document body. Same for Pause and Resume. A keyboard operator must re-tab to reach the next control.
+
 ---
 
 ## 2. Next
@@ -82,7 +101,7 @@ The UI must not gain transport-specific code. Replay remains the self-contained 
 | 8 | Replay min/max values are simulated metadata | never display them as evidence or use them for classification |
 | 9 | Current `ScanView` composes Replay directly and status copy is replay-specific | expected Phase 0 shortcut; Phase 1B adds source selection/session ownership before Live |
 | 10 | Current assessment seam lacks run identity, direction, provenance, and expiry | revise `src/types.ts` and `docs/SCHEMA.md` together before Phase 1C |
-| 11 | Automated replay checks do not cover restart, route cleanup, or DOM accessibility | extend source checks; record the Phase 3 manual environment and results |
+| 11 | Automated replay checks now cover restart; route cleanup and DOM accessibility remain manual | no DOM test runner is installed; record the Phase 3 manual environment and results |
 
 ---
 

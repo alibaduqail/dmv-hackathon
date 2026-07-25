@@ -106,10 +106,28 @@ const verifyStopCleanup = async () => {
   assert(frames.length === 1, 'Stopped replay left a pending frame timer.');
 };
 
+const verifyRestart = async () => {
+  const firstRun: ThermalFrame[] = [];
+  const source = new ReplayThermalSource(testManifest);
+  source.start(frame => firstRun.push(frame), () => undefined);
+  await waitFor(() => firstRun.length === 2);
+
+  const secondRun: ThermalFrame[] = [];
+  const framesBeforeRestart = firstRun.length;
+  source.start(frame => secondRun.push(frame), () => undefined);
+  await waitFor(() => source.status === 'ended');
+  await wait(25);
+
+  assert(secondRun.length === 6, 'Restart did not replay every frame.');
+  assert(secondRun.every((frame, index) => frame.sequence === index), 'Restart did not begin at frame one in order.');
+  assert(firstRun.length === framesBeforeRestart, 'Restart left the previous run emitting frames.');
+};
+
 await verifyAssets();
 verifyProvenanceGuard();
 await verifyCompletion();
 await verifyPauseResume();
 await verifyStopCleanup();
+await verifyRestart();
 
-console.log('Replay verified: assets, order, completion, pause/resume, and cleanup.');
+console.log('Replay verified: assets, order, completion, pause/resume, cleanup, and restart.');

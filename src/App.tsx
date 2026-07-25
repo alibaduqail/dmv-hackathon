@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import HistoryView from './features/history/HistoryView.tsx';
 import ScanView from './features/scan/ScanView.tsx';
 
@@ -16,12 +16,23 @@ const currentView = (): ViewName => {
 
 export default function App() {
   const [view, setView] = useState(currentView);
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
     const onHashChange = () => setView(currentView());
     addEventListener('hashchange', onHashChange);
     return () => removeEventListener('hashchange', onHashChange);
   }, []);
+
+  // Hash routing swaps the view without moving focus, so a screen-reader or keyboard
+  // user stays on the old page position. Focus the new route's main content instead.
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    document.getElementById('main')?.focus();
+  }, [view]);
 
   const View = VIEWS[view];
 
