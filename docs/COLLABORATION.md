@@ -77,7 +77,7 @@ The committed foundation currently proves:
 - Keyboard-sized controls, visible focus, text status, and a non-color status symbol.
 - Phase 1A is closed with calibrated radiometry blocked; `docs/HARDWARE-PROBE.md` records the attached USB/UVC evidence and missing Y16/calibration proof.
 - The Phase 1D browser preview adapter, session, interface, and fake-MediaDevices verification are implemented; its attached-device gate is blocked after the intended input did not play by the 16:15 cutoff.
-- No hotspot classification, speech, model endpoint, notifications, or persisted history is implemented.
+- No hotspot classification, assessment speech, model endpoint, notifications, or persisted history is implemented. Optional source-status speech is implemented and accepts no frame or assessment input.
 
 Describe Phase 1D precisely: the local display-only path is implemented and its source lifecycle is verified with fakes, while the attached-device gate is blocked and Replay is the submission path. React source-switch and route cleanup remain code/manual evidence, not `verify:preview` coverage. The team may explicitly reopen the hardware gate only before the 17:30 freeze by completing two actual-browser playback/cleanup runs and recording the result. Neither path proves temperature accuracy, direction, warning behavior, or touch safety.
 

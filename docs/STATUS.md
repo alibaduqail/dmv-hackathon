@@ -28,7 +28,7 @@ This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule
 | Documentation | Product, atomic phased requirements, safety boundary, implemented schema, target architecture, schedule, demo, setup, references, and decisions describe Ember |
 | Collaboration | Repo-local `ember-collaboration` skill, partner onboarding, lane ownership, handoff template, and verified optional agent-tool guide |
 | Phase 1A probe | macOS 26.5.2 arm64 sees GroupGets `PureThermal (fw:v1.3.0)`, vendor/product `0x1e4e/0x0100`, with UVC control/streaming interfaces owned by `UVCAssistant`; exact board revision and capture mode remain unknown |
-| Phase 1A decision | No Y16 or calibrated-Celsius proof exists. Acceptance `AC-003` passes by choosing the no-radiometry branch; the other radiometric acceptance rows fail and block Phases 1B/1C/2 |
+| Phase 1A decision | No Y16 or calibrated-Celsius proof exists. Acceptance `AC-003` passes by choosing the no-radiometry branch; the other radiometric acceptance rows fail and block Phases 1B/1C and Phase 2 assessment speech |
 
 **Verification actually run:**
 
@@ -40,7 +40,7 @@ npm run lint           →  green
 npm run build          →  green
 ```
 
-Production build: 24 modules, 224.60 kB JavaScript / 68.93 kB gzip, 16.01 kB CSS / 4.19 kB gzip.
+Production build: 24 modules, 225.22 kB JavaScript / 69.16 kB gzip, 16.15 kB CSS / 4.25 kB gzip.
 
 ### What runs now
 

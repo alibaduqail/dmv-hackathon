@@ -39,7 +39,7 @@ npm run build
 
 `verify:preview` uses injected fake browser media objects. It checks that Replay requests no camera access; authorization stops its unattached temporary stream before enumeration; public choices hide device/group IDs; Start opens and verifies only the selected identity; `streaming` waits for playback; already-ended tracks and tracks ending during playback fail closed; pause/resume, restart, errors, late results, disconnect/devicechange, hidden visibility, `pagehide`, tracks, listeners, and a detached video ref clean up deterministically. It exercises the reusable source boundary and playback sink, not the React router. It does not prove that this laptop’s browser can enumerate or play the attached hardware.
 
-`verify:speech` uses injected speech and clock functions. It checks exact source provenance, dedupe, the 2.5-second minimum interval, stale replacement, cancellation, Mute, Repeat, and unavailable or throwing TTS. It does not claim assessment speech or prove a browser voice works offline.
+`verify:speech` uses injected browser speech and clock functions. It checks exact source provenance, the production 2.5-second interval, dedupe, stale replacement/callback rejection, pending mute/disable/cancel cleanup, Repeat, browser start/error/timeout delivery, and unavailable or throwing TTS. It does not claim assessment speech or prove a browser voice works offline.
 
 For manual replay verification:
 

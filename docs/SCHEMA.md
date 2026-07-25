@@ -311,7 +311,7 @@ export interface SpeechPresentation {
 
 `formatReplayStatus` always prefixes the exact **“Demo replay — not live”** provenance. `formatLivePreviewStatus` always prefixes **“Live thermal preview — non-radiometric”**. The controller defaults disabled, keeps the latest status only, deduplicates by `key`, enforces a 2.5-second minimum interval, and exposes `present`, `setEnabled`, `setMuted`, `repeat`, and `cancel`.
 
-The browser adapter returns `null` when Web Speech is unavailable and absorbs synthesis/cancellation errors. Speech state and utterances are runtime-only. No frame, stream, pixel, `ThermalAssessment`, temperature, direction, guidance, or warning is accepted by this contract.
+The browser adapter returns `null` when Web Speech is unavailable, reports start/failure, rejects stale callbacks by generation, and treats a three-second no-start as failure. The UI avoids duplicate routine output while app speech is enabled, then disables it and restores a polite fallback on failure. Speech state and utterances are runtime-only. No frame, stream, pixel, `ThermalAssessment`, temperature, direction, guidance, or warning is accepted by this contract.
 
 ---
 

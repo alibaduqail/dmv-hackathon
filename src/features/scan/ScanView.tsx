@@ -177,11 +177,27 @@ export default function ScanView() {
           : null,
       ].filter(Boolean).join(' · ')
     : '';
-  const speechController = useMemo(createBrowserSpeechController, []);
-  const speechSuspended = useRef(false);
   const [speechEnabled, setSpeechEnabled] = useState(false);
   const [speechMuted, setSpeechMuted] = useState(false);
+  const [speechFailureText, setSpeechFailureText] = useState<string | null>(null);
+  const speechController = useMemo(
+    () => createBrowserSpeechController(undefined, delivery => {
+      if (delivery.type === 'started') {
+        setSpeechFailureText(null);
+        return;
+      }
+      setSpeechFailureText(delivery.text);
+      setSpeechEnabled(false);
+    }),
+    [],
+  );
+  const speechSuspended = useRef(false);
   const speechAvailable = speechController !== null;
+
+  useEffect(() => {
+    speechController?.setMuted(speechMuted);
+    speechController?.setEnabled(speechEnabled);
+  }, [speechController, speechEnabled, speechMuted]);
 
   useEffect(() => {
     const statusKey = isReplay
@@ -396,7 +412,7 @@ export default function ScanView() {
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Source status</p>
             <div
               role="status"
-              aria-live="polite"
+              aria-live={speechEnabled && !speechMuted ? 'off' : 'polite'}
               aria-atomic="true"
               className="mt-4 flex items-start gap-4"
             >
@@ -414,7 +430,9 @@ export default function ScanView() {
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Optional audio</p>
             <h2 id="speech-title" className="mt-2 text-xl font-bold">Source speech</h2>
             <p className="mt-2 leading-6 text-muted">
-              {speechAvailable
+              {speechFailureText
+                ? 'Browser speech failed. Visible source status remains complete.'
+                : speechAvailable
                 ? speechEnabled
                   ? speechMuted
                     ? 'Speech is enabled and muted.'
@@ -429,7 +447,7 @@ export default function ScanView() {
                 disabled={!speechAvailable}
                 onClick={() => {
                   const nextEnabled = !speechEnabled;
-                  speechController?.setEnabled(nextEnabled);
+                  if (nextEnabled) setSpeechFailureText(null);
                   setSpeechEnabled(nextEnabled);
                 }}
                 className={CONTROL_CLASS}
@@ -442,7 +460,6 @@ export default function ScanView() {
                 disabled={!speechEnabled}
                 onClick={() => {
                   const nextMuted = !speechMuted;
-                  speechController?.setMuted(nextMuted);
                   setSpeechMuted(nextMuted);
                 }}
                 className={CONTROL_CLASS}
@@ -461,6 +478,11 @@ export default function ScanView() {
             <p className="mt-4 text-sm leading-6 text-muted">
               Speech never creates temperature, direction, guidance, or a safety assessment.
             </p>
+            {speechFailureText && (
+              <p role="status" aria-live="polite" className="sr-only">
+                Browser speech failed. {speechFailureText}
+              </p>
+            )}
           </section>
 
           <section aria-labelledby="controls-title" className="rounded-2xl border border-line bg-panel p-5 md:p-6">
