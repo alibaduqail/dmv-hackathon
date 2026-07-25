@@ -249,26 +249,24 @@ export default function ScanView() {
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-7xl px-5 py-8 outline-none md:px-8 md:py-12">
       <section aria-labelledby="scan-title">
-        <p className="text-sm font-bold uppercase tracking-[0.16em] text-accent">
-          Handheld thermal companion
-        </p>
-        <h1 id="scan-title" className="mt-3 max-w-4xl text-4xl font-bold tracking-tight md:text-6xl">
+        <h1 id="scan-title" className="text-2xl font-bold tracking-tight md:text-3xl">
           Point toward heat you cannot see.
         </h1>
-        <p className="mt-5 max-w-3xl text-lg leading-8 text-muted">
+        <p className="mt-3 max-w-2xl leading-7 text-muted">
           Ember can display a clearly labelled simulation or a local, non-radiometric PureThermal
           video preview. Neither display path produces temperature, direction, or a safety
           assessment.
         </p>
       </section>
 
-      <fieldset className="mt-8 rounded-2xl border border-line bg-panel p-4 md:p-5">
-        <legend className="px-2 text-sm font-bold uppercase tracking-[0.16em] text-muted">
+      <fieldset className="mt-7">
+        <legend className="text-xs font-bold uppercase tracking-[0.16em] text-muted">
           Choose source
         </legend>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 outline-none focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-focus ${
-            isReplay ? 'border-accent bg-panel-strong' : 'border-line'
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {/* The radio stays its natural size; the 44px target is the whole label. */}
+          <label className={`flex min-h-14 cursor-pointer items-center gap-4 rounded-xl border px-4 py-3 outline-none focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-focus ${
+            isReplay ? 'border-caution bg-panel-strong' : 'border-divider bg-panel'
           }`}>
             <input
               type="radio"
@@ -276,15 +274,15 @@ export default function ScanView() {
               value="replay"
               checked={isReplay}
               onChange={() => session.selectSource('replay')}
-              className="size-11 shrink-0 accent-accent"
+              className="size-5 shrink-0 accent-caution"
             />
-            <span>
+            <span className={isReplay ? 'sim-hatch -mx-1 rounded px-1' : undefined}>
               <span className="block font-bold">Demo replay</span>
-              <span className="mt-1 block text-sm text-muted">Simulated frames · no camera access</span>
+              <span className="mt-0.5 block text-sm text-muted">Simulated frames · no camera access</span>
             </span>
           </label>
-          <label className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 outline-none focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-focus ${
-            !isReplay ? 'border-accent bg-panel-strong' : 'border-line'
+          <label className={`flex min-h-14 cursor-pointer items-center gap-4 rounded-xl border px-4 py-3 outline-none focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-focus ${
+            !isReplay ? 'border-accent bg-panel-strong' : 'border-divider bg-panel'
           }`}>
             <input
               type="radio"
@@ -292,11 +290,11 @@ export default function ScanView() {
               value="live-preview"
               checked={!isReplay}
               onChange={() => session.selectSource('live-preview')}
-              className="size-11 shrink-0 accent-accent"
+              className="size-5 shrink-0 accent-accent"
             />
             <span>
               <span className="block font-bold">Live preview</span>
-              <span className="mt-1 block text-sm text-muted">Local display video · no analysis</span>
+              <span className="mt-0.5 block text-sm text-muted">Local display video · no analysis</span>
             </span>
           </label>
         </div>
@@ -304,8 +302,14 @@ export default function ScanView() {
 
       <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(20rem,0.75fr)]">
         <section aria-label={isReplay ? 'Demo replay viewport' : 'Live preview viewport'}>
-          <div className="overflow-hidden rounded-2xl border border-line bg-panel">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3 md:px-5">
+          {/* The frame itself carries the provenance: hatched and amber-edged while
+              simulated, clean and accent-edged while a real camera is attached. */}
+          <div className={`overflow-hidden rounded-2xl border-2 bg-panel ${
+            isReplay ? 'border-caution' : 'border-accent'
+          }`}>
+            <div className={`flex flex-wrap items-center justify-between gap-3 border-b border-divider px-4 py-3 md:px-5 ${
+              isReplay ? 'sim-hatch' : ''
+            }`}>
               <p className={`inline-flex min-h-11 items-center gap-3 font-bold ${
                 isReplay ? 'text-caution' : 'text-accent'
               }`}>
@@ -408,7 +412,9 @@ export default function ScanView() {
         </section>
 
         <aside className="space-y-5 lg:sticky lg:top-6">
-          <section aria-labelledby="source-status-title" className="rounded-2xl border border-line bg-panel p-5 md:p-6">
+          {/* Status is the one panel an operator must read, so it outweighs the rest
+              by surface, size, and space rather than sitting in an identical card. */}
+          <section aria-labelledby="source-status-title" className="rounded-2xl border border-line bg-panel-strong p-5 md:p-6">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Source status</p>
             <div
               role="status"
@@ -416,20 +422,26 @@ export default function ScanView() {
               aria-atomic="true"
               className="mt-4 flex items-start gap-4"
             >
-              <span aria-hidden="true" className={`text-3xl font-bold ${statusCopy.tone}`}>
+              <span aria-hidden="true" className={`text-4xl font-bold leading-none ${statusCopy.tone}`}>
                 {statusCopy.symbol}
               </span>
               <div>
-                <h2 id="source-status-title" className="text-xl font-bold">{statusTitle}</h2>
-                <p className="mt-1 leading-6 text-muted">{statusDetail}</p>
+                <h2 id="source-status-title" className="text-2xl font-bold tracking-tight">{statusTitle}</h2>
+                <p className="mt-2 leading-7 text-muted">{statusDetail}</p>
               </div>
             </div>
           </section>
 
-          <section aria-labelledby="speech-title" className="rounded-2xl border border-line bg-panel p-5 md:p-6">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Optional audio</p>
-            <h2 id="speech-title" className="mt-2 text-xl font-bold">Source speech</h2>
-            <p className="mt-2 leading-6 text-muted">
+          {/* Speech is off by default and optional, so it collapses. `details` gives the
+              disclosure, its keyboard behaviour, and its expanded state for free. */}
+          <details className="rounded-2xl border border-divider bg-panel px-5 py-4 md:px-6">
+            <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 font-bold outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus">
+              <h2 id="speech-title" className="text-xl font-bold">Source speech</h2>
+              <span className="text-sm font-bold text-muted">
+                {speechAvailable ? (speechEnabled ? (speechMuted ? 'Muted' : 'On') : 'Off') : 'Unavailable'}
+              </span>
+            </summary>
+            <p className="mt-4 leading-6 text-muted">
               {speechFailureText
                 ? 'Browser speech failed. Visible source status remains complete.'
                 : speechAvailable
@@ -483,15 +495,15 @@ export default function ScanView() {
                 Browser speech failed. {speechFailureText}
               </p>
             )}
-          </section>
+          </details>
 
-          <section aria-labelledby="controls-title" className="rounded-2xl border border-line bg-panel p-5 md:p-6">
+          <section aria-labelledby="controls-title" className="rounded-2xl border border-divider bg-panel p-5 md:p-6">
             <h2 id="controls-title" className="text-xl font-bold">
               {isReplay ? 'Replay controls' : 'Live preview controls'}
             </h2>
 
             {!isReplay && (
-              <div className="mt-5 rounded-xl border border-line bg-panel-strong p-4">
+              <div className="mt-5 rounded-xl border border-divider bg-panel-strong p-4">
                 <p className="leading-6 text-muted">
                   Authorizing cameras may briefly activate the browser’s default video input only
                   to reveal device names. That temporary stream is never displayed and is stopped
@@ -501,7 +513,7 @@ export default function ScanView() {
                   type="button"
                   onClick={session.authorize}
                   disabled={session.status === 'connecting' || session.status === 'streaming'}
-                  className="mt-4 min-h-12 w-full rounded-md bg-accent px-4 font-bold text-canvas outline-none hover:bg-text focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus disabled:bg-line disabled:text-muted"
+                  className="mt-4 min-h-12 w-full rounded-md bg-accent px-4 font-bold text-canvas outline-none hover:bg-text focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus disabled:bg-inert disabled:text-muted"
                 >
                   Authorize cameras
                 </button>
@@ -545,7 +557,7 @@ export default function ScanView() {
                   || session.status === 'paused'
                   || (!isReplay && !session.selectedOptionId)
                 }
-                className="min-h-12 rounded-md bg-accent px-4 font-bold text-canvas outline-none hover:bg-text focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus disabled:bg-line disabled:text-muted"
+                className="min-h-12 rounded-md bg-accent px-4 font-bold text-canvas outline-none hover:bg-text focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus disabled:bg-inert disabled:text-muted"
               >
                 Start
               </button>
@@ -608,7 +620,7 @@ export default function ScanView() {
             )}
           </section>
 
-          <section aria-labelledby="assessment-title" className="rounded-2xl border border-line bg-panel p-5 md:p-6">
+          <section aria-labelledby="assessment-title" className="rounded-2xl border border-divider bg-panel p-5 md:p-6">
             <div className="flex items-start gap-4">
               <span aria-hidden="true" className="text-3xl font-bold text-muted">—</span>
               <div>
