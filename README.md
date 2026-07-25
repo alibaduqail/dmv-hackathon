@@ -22,6 +22,30 @@ The current repository is an accessible application with a clearly labelled simu
 - Preview, replay, and source-speech verification, lint, and production build are green.
 - macOS identifies the attached GroupGets `PureThermal (fw:v1.3.0)` USB/UVC interfaces; the privacy-safe no-go evidence is documented.
 
+## Live versus simulated
+
+Read this table before believing any other sentence in this repository.
+
+| Capability | State in the frozen build | Evidence |
+|---|---|---|
+| Replay playback — start, pause, resume, restart, stop, completion | **Working, and simulated** | `npm run verify:replay`; six committed PNGs |
+| Replay is labelled as not live | **Working** | The verifier asserts the exact string “Demo replay — not live”, and it renders above the viewport and over every frame |
+| Source lifecycle releases every timer | **Verified** | Five start/pause/resume/stop cycles under a timer spy asserted at stop; mutation-checked |
+| Display-only live browser preview | **Implemented, hardware gate blocked** | `npm run verify:preview` exercises the adapter with plain Node fakes. No attached device has played through a browser |
+| Calibrated radiometry, Celsius values | **Not built** | Phase 1A no-go — no Y16 frame, no calibration mapping. See [docs/HARDWARE-PROBE.md](docs/HARDWARE-PROBE.md) |
+| Hotspot classification, directional heat warning | **Not built** | Blocked behind radiometry. This is the accessibility feature Ember exists for, and it does not work yet |
+| Source-status speech — Enable, Mute, Repeat | **Implemented, browser pass not run** | `npm run verify:speech` with fakes. Announces status and provenance only, never heat guidance |
+| Assessment speech | **Not built** | There is no assessment to speak |
+| Runs without a network | **Bundle verified, browser reload not run** | Build audit: no remote host, no `XMLHttpRequest`, no `WebSocket`; the only `fetch` is Vite’s same-origin modulepreload polyfill. Serve `dist` from a static local server — `file://` will not load it |
+| Keyboard, VoiceOver, 200% zoom, 320–390px | **Built to the requirement, manual matrix not run** | Code checks passed. No operator has completed the VoiceOver or zoom matrix, so no result is claimed |
+| Stored frames, video, or incidents | **None, by design** | `#history` is an honest empty state. No database, storage, analytics, or network path exists |
+
+Known and unfixed: pressing Start disables the Start button, so keyboard focus drops to the document body. The same applies to Pause and Resume. An operator must re-tab to reach the next control.
+
+## Frozen build
+
+Feature freeze was 17:30. The frozen commit is `7e0fe3a` on `main`. Every claim above describes that commit, and no product code changed afterwards.
+
 ## Run it
 
 Requirements: Node.js 22.12 or newer and npm. If you use `nvm`, the committed `.nvmrc` selects the minimum supported version.

@@ -94,11 +94,26 @@ Known keyboard behavior, unfixed: pressing Start disables Start, so focus moves 
 | `EMB-P4-FR-004` reload `#scan` and `#history` offline | Manual browser with the network disconnected; served locally, `/`, the JavaScript and CSS bundles, a replay PNG, and the favicon all returned 200 | Partial — server evidence only, browser reload **not run** |
 | `EMB-P4-FR-002`, `EMB-P4-FR-003`, `EMB-P4-FR-005`, `EMB-P4-AC-002`, `EMB-P4-AC-003` | — | Not applicable; Phase 1B did not pass |
 | `EMB-P4-AC-005` offline speech | — | Not applicable; Phase 2 did not pass |
-| `EMB-P4-NFR-003` 17:30 freeze | — | Pending |
+| `EMB-P4-NFR-003` 17:30 freeze | Product code frozen at `7e0fe3a` on `main`; only documentation changed afterwards | Passed |
 
 The spy was mutation-checked: deleting `clearTimer()` from `ReplayThermalSource.stop()` fails the run with `Cycle 1 left 1 timers pending after stop.` The behavioral assertions alone did not catch that leak, because `emitNext` already refuses to emit while idle.
 
 Demo constraint: `dist/index.html` references `/assets/...` absolutely, so the production build must be served by a static local server. Opening the file directly with `file://` will not load the bundle.
+
+### Phase 5 package record (in progress)
+
+Frozen commit: `7e0fe3a`. Everything below is documentation or media; no product code may change.
+
+| Requirement | Method | Result |
+|---|---|---|
+| `EMB-P5-FR-001` locked track-fit sentence and accurate capability | README opens with the locked sentence and states the Phase 1A no-go and blocked Phase 1D gate | Passed |
+| `EMB-P5-FR-002` truth table and boundaries | README gained a live-versus-simulated table covering replay, preview, radiometry, assessment, speech, offline, accessibility, and storage | Passed |
+| `EMB-P5-NFR-001` no unearned claim | Every blocked or unrun row is labelled not built, gate blocked, or not run; the unfixed Start-button focus drop is stated | Passed |
+| `EMB-P5-NFR-003` package describes the frozen commit | README names `7e0fe3a` | Passed |
+| `EMB-P5-FR-003` screenshots | None included; no completed gate supports a live screenshot | Not applicable |
+| `EMB-P5-FR-004` 90-second captioned recording | Operator | **Not run** |
+| `EMB-P5-FR-005` event form by 19:00 | Operator | **Not run** |
+| `EMB-P5-AC-004` links and commands work from the frozen commit | Fresh clone of `7e0fe3a` plus `npm ci`; `verify:replay`, `verify:preview`, `verify:speech`, `lint`, and `build` each exited 0. Every README link resolves, including the `docs/SETUP.md` Phase 1D anchor | Passed |
 
 ---
 
