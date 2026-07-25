@@ -7,6 +7,18 @@ import type {
   ThermalSource,
 } from '../types.ts';
 
+export interface ReplayScheduler {
+  now(): number;
+  set(callback: () => void, delayMs: number): unknown;
+  clear(handle: unknown): void;
+}
+
+const DEFAULT_SCHEDULER: ReplayScheduler = {
+  now: () => Date.now(),
+  set: (callback, delayMs) => setTimeout(callback, delayMs),
+  clear: handle => clearTimeout(handle as ReturnType<typeof setTimeout>),
+};
+
 const hasReplayProvenance = (value: unknown): boolean => {
   if (!value || typeof value !== 'object') return false;
   const provenance = value as Record<string, unknown>;
@@ -17,14 +29,15 @@ const hasReplayProvenance = (value: unknown): boolean => {
 
 export class ReplayThermalSource implements ThermalSource {
   private readonly manifest: ReplayManifest;
-  private timer: ReturnType<typeof setTimeout> | null = null;
+  private readonly scheduler: ReplayScheduler;
+  private timer: unknown | null = null;
   private frameIndex = 0;
   private frameHandler: ThermalFrameHandler | null = null;
   private statusHandler: SourceStatusHandler | null = null;
   private startedAtMs = 0;
   private currentStatus: SourceStatus = 'idle';
 
-  constructor(manifest: ReplayManifest) {
+  constructor(manifest: ReplayManifest, scheduler: ReplayScheduler = DEFAULT_SCHEDULER) {
     if (manifest.frames.length === 0) {
       throw new Error('Replay manifest must contain at least one frame.');
     }
@@ -32,6 +45,7 @@ export class ReplayThermalSource implements ThermalSource {
       throw new Error('Replay manifest cannot use live or ambiguous provenance.');
     }
     this.manifest = manifest;
+    this.scheduler = scheduler;
   }
 
   get status(): SourceStatus {
@@ -43,10 +57,10 @@ export class ReplayThermalSource implements ThermalSource {
     this.frameIndex = 0;
     this.frameHandler = onFrame;
     this.statusHandler = onStatus;
-    this.startedAtMs = Date.now();
+    this.startedAtMs = this.scheduler.now();
     this.setStatus('connecting');
 
-    this.timer = setTimeout(() => {
+    this.timer = this.scheduler.set(() => {
       this.timer = null;
       this.setStatus('streaming');
       this.emitNext();
@@ -101,7 +115,7 @@ export class ReplayThermalSource implements ThermalSource {
 
   private scheduleNext(): void {
     this.clearTimer();
-    this.timer = setTimeout(() => {
+    this.timer = this.scheduler.set(() => {
       this.timer = null;
       this.emitNext();
     }, this.manifest.intervalMs);
@@ -114,7 +128,7 @@ export class ReplayThermalSource implements ThermalSource {
 
   private clearTimer(): void {
     if (this.timer === null) return;
-    clearTimeout(this.timer);
+    this.scheduler.clear(this.timer);
     this.timer = null;
   }
 

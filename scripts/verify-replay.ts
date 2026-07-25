@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { emberReplayManifest } from '../src/fixtures/replay.ts';
 import { ReplayThermalSource } from '../src/lib/thermal-source.ts';
+import type { ReplayScheduler } from '../src/lib/thermal-source.ts';
 import type { ReplayManifest, SourceStatus, ThermalFrame } from '../src/types.ts';
 
 const assert = (condition: unknown, message: string): void => {
@@ -106,10 +107,69 @@ const verifyStopCleanup = async () => {
   assert(frames.length === 1, 'Stopped replay left a pending frame timer.');
 };
 
+class FakeReplayScheduler implements ReplayScheduler {
+  private readonly tasks = new Map<number, () => void>();
+  private nextHandle = 1;
+  private nowMs = 1_000;
+
+  get activeCount(): number {
+    return this.tasks.size;
+  }
+
+  now(): number {
+    return this.nowMs;
+  }
+
+  set(callback: () => void): number {
+    const handle = this.nextHandle;
+    this.nextHandle += 1;
+    this.tasks.set(handle, callback);
+    return handle;
+  }
+
+  clear(handle: unknown): void {
+    if (typeof handle === 'number') this.tasks.delete(handle);
+  }
+
+  runNext(): void {
+    const next = this.tasks.entries().next().value as [number, () => void] | undefined;
+    if (!next) throw new Error('Fake replay scheduler has no pending task to run.');
+    const [handle, callback] = next;
+    this.tasks.delete(handle);
+    this.nowMs += 5;
+    callback();
+  }
+}
+
+const verifyFiveResourceCycles = () => {
+  const scheduler = new FakeReplayScheduler();
+  const source = new ReplayThermalSource(testManifest, scheduler);
+
+  for (let cycle = 1; cycle <= 5; cycle += 1) {
+    const frames: ThermalFrame[] = [];
+    source.start(frame => frames.push(frame), () => undefined);
+    assert(scheduler.activeCount === 1, `Replay cycle ${cycle} did not retain exactly one bounded timer.`);
+    scheduler.runNext();
+    assert(frames.length === 1, `Replay cycle ${cycle} did not emit its first frame.`);
+    assert(scheduler.activeCount === 1, `Replay cycle ${cycle} did not retain one next-frame timer.`);
+
+    source.start(frame => frames.push(frame), () => undefined);
+    assert(scheduler.activeCount === 1, `Replay cycle ${cycle} restart retained more than one timer.`);
+    scheduler.runNext();
+    assert(frames.length === 2, `Replay cycle ${cycle} restart did not emit a fresh first frame.`);
+    assert(scheduler.activeCount === 1, `Replay cycle ${cycle} restart did not retain one bounded timer.`);
+
+    source.stop();
+    assert(source.status === 'idle', `Replay cycle ${cycle} did not return to idle.`);
+    assert(scheduler.activeCount === 0, `Replay cycle ${cycle} retained a timer after stop.`);
+  }
+};
+
 await verifyAssets();
 verifyProvenanceGuard();
 await verifyCompletion();
 await verifyPauseResume();
 await verifyStopCleanup();
+verifyFiveResourceCycles();
 
-console.log('Replay verified: assets, order, completion, pause/resume, and cleanup.');
+console.log('Replay verified: assets, order, completion, pause/resume, cleanup, and five zero-timer cycles.');

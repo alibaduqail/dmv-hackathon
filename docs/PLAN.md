@@ -18,8 +18,8 @@ Two builders. **L** = integration/build lead. **D** = second developer. One owne
 | 1B — radiometric bridge/source | — | Blocked by 1A | `EMB-P1B-*` | Future only; do not implement at this hackathon |
 | 1C — deterministic assessment | — | Blocked by 1A/1B | `EMB-P1C-*` | Future only; no display-pixel substitute |
 | 2 — assessment speech | — | Blocked by 1C | `EMB-P2-*` | Future only; no spoken heat guidance |
-| 3 — demo/accessibility QA | 16:15–17:00 | Planned | `EMB-P3-*` | Both builders complete the locked demo and manual accessibility matrix |
-| 4 — offline/failure hardening | 17:00–17:30 | Planned | `EMB-P4-*` | Every completed path runs twice; all required checks pass |
+| 3 — demo/accessibility QA | 16:15–17:00 | In progress; manual matrix open | `EMB-P3-*` | Both builders complete the locked demo and manual accessibility matrix |
+| 4 — offline/failure hardening | 17:00–17:30 | In progress | `EMB-P4-*` | Every completed path runs twice; all required checks pass |
 | **Feature freeze** | **17:30** | Hard stop | — | No product code changes |
 | 5 — package | 17:30–18:30 | Planned | `EMB-P5-*` | README, evidence, captioned recording, and form match frozen build |
 | Submission buffer | 18:30–19:00 | Reserved | — | Submit; do not build |
@@ -76,7 +76,7 @@ At 15:25, Phase 1A was closed as a calibrated-radiometry no-go:
 - [x] `npm run lint`
 - [x] `npm run build`
 - [x] Browser behavior was manually checked for route reload, controls, route cleanup, narrow layout, accessible names, and target sizing.
-- [ ] Extend replay verification to cover repeated `start()`/restart and emitted runtime-frame mapping.
+- [x] Extend replay verification to cover repeated `start()`/restart, bounded timer ownership, and emitted runtime-frame order.
 - [ ] Record browser/operator/commit details when the manual replay matrix is rerun in Phase 3.
 
 The two unchecked items improve reproducibility; they do not authorize live work or weaken replay provenance.
@@ -358,25 +358,33 @@ No architecture refactor begins in this phase.
 
 ### L — production and resource verification
 
-- [ ] Lock and run the production-like local command.
+- [x] Lock and run the production-like local command: `npm run demo:offline`.
 - [ ] Disconnect the network and run Replay twice with a reload between runs.
-- [ ] If Phase 1D passed, run the intended UVC preview twice without network.
-- [ ] Run five fixture-driven lifecycle/source-switch cycles; resource spies return to zero after each stop for replay timers and applicable media tracks/listeners/element attachments.
-- [ ] Run every verifier required by completed phases, then lint and build.
+- [x] Mark the intended-UVC offline row not applicable because Phase 1D’s attached-device gate did not pass.
+- [x] Run five fixture-driven lifecycle cycles; resource spies return to zero after each stop for replay timers and fake preview tracks/listeners/element attachments. The preview result hardens code but does not pass the hardware gate.
+- [x] Run every verifier required by completed phases, then lint and build through `npm run verify:hardening`.
 - [ ] Hand the exact command output and frozen commit candidate to D.
 
 ### D — manual failure and truth audit
 
-- [ ] Reload `#scan` and `#history` with the network disconnected.
-- [ ] If Phase 1D passed, test permission denial, wrong/missing intended device, device in use, unplug, playback failure, late permission result, and hidden page.
-- [ ] If Phase 1D passed, deliberately switch failed Live preview → Replay and verify the stream, tracks, element attachment, and provenance are gone first.
-- [ ] If Phase 2 passed, verify the selected voice works without network or record app speech unavailable while visible output remains complete.
-- [ ] Update `docs/STATUS.md` with each gate marked passed, blocked, or not applicable and review the frozen candidate.
+- [ ] Reload `#scan` and `#history` with the network physically disconnected.
+- [x] Mark Phase 1D’s attached-device failure matrix not applicable to Phase 4 because its hardware gate did not pass; retain fake-source verification as code evidence only.
+- [x] Mark Phase 2 speech offline verification not applicable because Phase 2 did not pass.
+- [x] Update `docs/STATUS.md` with each Phase 4 gate marked passed, in progress, blocked, or not applicable.
+- [ ] Have D review the frozen candidate and evidence.
 
 ### Joint freeze gate
 
 - [ ] Applicable `EMB-P4-AC-*` scenarios pass.
 - [ ] Both builders sign the handoff and freeze at 17:30 even if a polish item remains.
+
+### Evidence recorded at 17:01
+
+- `npm run verify:hardening` passed the replay, preview, lint, production-build, and local-build dependency checks.
+- Replay timers and fake preview resources returned to zero after each of five cycles.
+- The production server completed Replay twice with a reload between runs; `#scan` and `#history` both survived reload and rendered only local asset references.
+- External networking remained connected during the browser rehearsal. `EMB-P4-FR-001`, `FR-004`, and `AC-001` therefore remain open until a human repeats it after physically disconnecting networking.
+- Phase 1D, Phase 1B, and Phase 2 conditional rows are not applicable; they are not simulated as passes.
 
 ### Cut order
 

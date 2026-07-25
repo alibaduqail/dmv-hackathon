@@ -1,6 +1,6 @@
 # STATUS.md — where the build actually is
 
-**Current baseline:** Phase 0 and the Phase 1D display-only browser implementation are committed on the Ember integration branch. Phase 1A closed with a calibrated-radiometry **no-go**. Phase 1D code and dependency-injected source-lifecycle verification are complete, but its hardware exit gate is **blocked** after the intended input did not play by the 16:15 cutoff. The Codex in-app browser reached a pending camera-permission request and could not present the permission surface, so no attached PureThermal label, stream settings, playback, or camera-indicator closure is claimed. Replay is the submission path unless the team explicitly reopens and passes the two-run gate before the 17:30 feature freeze. Radiometric bridge, assessment, and assessment speech remain blocked.
+**Current baseline:** Phase 0 and the Phase 1D display-only browser implementation are committed on the Ember integration branch. Phase 1A closed with a calibrated-radiometry **no-go**, and Phase 1D’s attached-device gate remains **blocked**. Phase 3 manual accessibility evidence is still open. Phase 4 hardening has started: deterministic five-cycle resource checks, a production-like localhost command, a built-asset/network-API audit, and two production Replay rehearsals with route reloads are green. The laptop’s external network was not disconnected during those rehearsals, so the strict offline gate is still open and no offline claim is authorized yet. Replay remains the submission path. Radiometric bridge, assessment, and assessment speech remain blocked.
 
 This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule) or `docs/DECISIONS.md` (the running log). It says what exists, what is next, and what remains unproven.
 
@@ -17,17 +17,20 @@ This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule
 | Scan shell | `#scan` is default; high-contrast viewport, text status, source symbol, progress, and five controls |
 | Privacy shell | `#history` truthfully states that no live video, replay activity, or incidents are stored |
 | Accessibility foundation | Skip link, semantic landmarks, route-specific titles, post-navigation main focus, live status, text + symbol status, visible focus, 44px-or-larger controls, reduced-motion support |
-| Browser QA | Scan/history reload, replay controls, route cleanup, 390px layout, accessible names, control sizing, and console errors were manually checked; environment details must be recorded when rerun in Phase 3 |
+| Browser QA | Scan/history reload, replay controls, route cleanup, 390px layout, accessible names, control sizing, and console errors were manually checked; environment and assistive-technology details must still be recorded in Phase 3 |
 | Preview contract | Replay frame versus live `MediaStream` surface, opaque device choices, sanitized display settings, fixed error codes, and preview phase/state live in `src/types.ts` |
 | Preview runtime | `UvcPreviewSource` owns temporary authorization cleanup, private exact-device identity, generation gating, playback gating, pause/reacquire, disconnect handling, and listener/track cleanup |
 | Preview session | `usePreviewSession` keeps Replay selected by default, composes both sources, owns the identity-guarded `<video>` sink, and clears both surfaces on switch/route/unmount |
 | Preview interface | Explicit Live selection, authorization disclosure/action, operator chooser, accessible controls/errors/Retry, persistent non-radiometric truth, sanitized active label/settings, and no-assessment copy |
-| Preview verification | Plain Node fakes cover replay isolation, discovery cleanup, exact matching, playback gating/failure, ended-track races, errors, late results, pause/resume, restart, the `stop()`/generation boundary, disconnect/devicechange, hidden/pagehide, detached playback-sink cleanup, and zero listener/track retention; React switching/routing remains code/manual evidence |
+| Preview verification | Plain Node fakes cover replay isolation, discovery cleanup, exact matching, playback gating/failure, ended-track and late-playback races, errors, late results, pause/resume, restart, the `stop()`/generation boundary, disconnect/devicechange, hidden/pagehide, detached playback-sink cleanup, and five zero-resource cycles; React switching/routing and attached hardware remain manual evidence |
 | Phase 1D browser attempt | DOM/source-truth/pending-request-invalidation/mobile-target checks passed; OS/browser camera permission could not be completed in the in-app browser, so the attached-device gate is blocked |
 | Documentation | Product, atomic phased requirements, safety boundary, implemented schema, target architecture, schedule, demo, setup, references, and decisions describe Ember |
 | Collaboration | Repo-local `ember-collaboration` skill, partner onboarding, lane ownership, handoff template, and verified optional agent-tool guide |
 | Phase 1A probe | macOS 26.5.2 arm64 sees GroupGets `PureThermal (fw:v1.3.0)`, vendor/product `0x1e4e/0x0100`, with UVC control/streaming interfaces owned by `UVCAssistant`; exact board revision and capture mode remain unknown |
 | Phase 1A decision | No Y16 or calibrated-Celsius proof exists. Acceptance `AC-003` passes by choosing the no-radiometry branch; the other radiometric acceptance rows fail and block Phases 1B/1C/2 |
+| Phase 4 resource hardening | An injected replay scheduler proves one bounded timer while active and zero timers after each of five restart/stop cycles; preview fakes prove one bounded set of applicable listeners/attachment while active and zero tracks/listeners/attachments after each of five stop cycles |
+| Phase 4 local-build audit | The production output contains three local document assets, one local stylesheet, all six replay frames, and no application use of `fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource`, or `sendBeacon` |
+| Phase 4 production rehearsal | `#scan` completed the six-frame Replay twice from the production server, including reload between runs; `#history` and `#scan` survived reload and all rendered asset references were local. External networking remained connected, so this is not the disconnected-network acceptance run |
 
 **Verification actually run:**
 
@@ -36,9 +39,11 @@ npm run verify:replay  →  green
 npm run verify:preview →  green
 npm run lint           →  green
 npm run build          →  green
+npm run verify:offline →  green
+npm run verify:hardening → green
 ```
 
-Production build: 23 modules, 221.32 kB JavaScript / 68.00 kB gzip, 16.01 kB CSS / 4.19 kB gzip.
+Production build: 23 modules, 221.46 kB JavaScript / 68.06 kB gzip, 16.01 kB CSS / 4.19 kB gzip.
 
 ### What runs now
 
@@ -65,18 +70,16 @@ Production build: 23 modules, 221.32 kB JavaScript / 68.00 kB gzip, 16.01 kB CSS
 
 ## 2. Next
 
-**Phase 3 · Replay accessibility and demo QA.**
+**Finish Phase 3 evidence and close the remaining Phase 4 human gates.**
 
-The Phase 1D implementation work is done, but its hardware gate is blocked and Replay is the submission path. Continue Replay accessibility, offline, fallback, and presentation QA. Only if the team explicitly reopens the gate before 17:30 should an operator use the actual demo browser, complete its camera permission prompt, and:
+The Phase 1D implementation work is done, but its hardware gate is blocked and Replay is the submission path. Before freeze:
 
-1. Confirm only PureThermal-labelled choices appear and no input is selected automatically.
-2. Select the intended label, Start, and record only the active label plus width/height/frame rate shown by Ember.
-3. Confirm the playing video keeps both non-radiometric statements and **“No current assessment”** visible.
-4. Stop and confirm the video clears and the browser camera indicator closes.
-5. Run the same intended input a second time, then repeat cleanup on route change and page hide.
-6. Deny permission once and unplug once to verify the visible Retry states with the actual browser.
+1. Record the Phase 3 browser, viewport, keyboard, zoom, color/audio, and VoiceOver matrix.
+2. Run `npm run verify:hardening` from the candidate checkout.
+3. Run `npm run demo:offline`, physically disconnect external networking, complete Replay twice with a `#scan` reload between runs, and reload `#history`.
+4. Record the exact commit and a second-builder review, then freeze product code at 17:30.
 
-If all required runs and cleanup checks are not completed before freeze, keep Phase 1D’s hardware gate blocked and use the existing labelled Replay for the submission.
+If the disconnected-network run is not completed, keep Phase 4 open and describe the build only as application-self-contained—not offline-verified. If Phase 3’s matrix is incomplete, list the missing manual results rather than inferring them from automation.
 
 ---
 
@@ -93,7 +96,9 @@ If all required runs and cleanup checks are not completed before freeze, keep Ph
 | 7 | 200% zoom and VoiceOver remain unproven; replay route reload, controls, cleanup, and mobile layout were manually checked | D — Phase 3 |
 | 8 | `error` and `live-purethermal` are reserved contracts with no current producer | do not reuse `live-purethermal` for a non-radiometric stream |
 | 9 | Replay min/max values are simulated metadata | never display them as evidence or use them for classification |
-| 10 | Automated replay checks still do not cover restart, route cleanup, or DOM accessibility | record the remaining Phase 3 manual environment and results |
+| 10 | Replay restart and source-level cleanup are automated, but route/DOM accessibility remains browser evidence | record the remaining Phase 3 manual environment and results |
+| 11 | Production Replay and routes passed while external networking remained connected | operator — repeat the exact production rehearsal after physically disconnecting external networking |
+| 12 | The hardening suite has not yet been reproduced from a clean checkout and frozen commit | integration owner — run the clean-checkout gate, record the commit, and stop product changes at 17:30 |
 
 ---
 
@@ -101,9 +106,11 @@ If all required runs and cleanup checks are not completed before freeze, keep Ph
 
 - `ReplayThermalSource.start()` is also the restart primitive. The UI exposes separate Start and Restart labels around the same fresh-run behavior.
 - The source uses one timeout. Stop and unmount call `source.stop()`; the verifier proves stop cleanup at source level.
+- The default replay scheduler delegates to browser timers; the verifier injects a deterministic scheduler and proves five restart/stop cycles return to zero pending timers.
 - Replay timestamps are logical fixture timestamps: `startedAtMs + capturedAtOffsetMs`. Pausing delays delivery but does not rewrite capture offsets.
 - `usePreviewSession` is the focused local composition boundary; no global store exists.
 - No API, model endpoint, database, local storage, analytics, or cloud frame path exists.
+- `verify:offline` statically proves local production asset references and absence of application network APIs; only a physical network-disconnection rehearsal can close the offline behavior gate.
 - A display-only live stream path exists, but no successful attached-device playback, live frame capture, assessment, warning, speech, history record, notification, smart plug, or relay is claimed.
 - Display images and radiometric values are separate by contract. Replay has only the display side.
 - The attached sensor is thermal. A colorized webcam-compatible stream may contain RGB-formatted display pixels, but it is not a visible-light RGB sensor and its pixels are not temperature data.

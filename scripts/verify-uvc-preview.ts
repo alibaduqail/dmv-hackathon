@@ -155,6 +155,10 @@ class FakePlaybackSink implements PreviewPlaybackSink {
   readonly cleared: Array<MediaStream | null> = [];
   readonly queued = new Array<() => Promise<void>>();
 
+  get playCount(): number {
+    return this.played.length;
+  }
+
   play(stream: MediaStream): Promise<void> {
     this.attached = stream;
     this.played.push(stream);
@@ -173,6 +177,21 @@ class FakePlaybackSink implements PreviewPlaybackSink {
 
   queueFailure(): void {
     this.queued.push(() => Promise.reject({ name: 'NotSupportedError' }));
+  }
+}
+
+class ResourcePlaybackSink implements PreviewPlaybackSink {
+  attached: MediaStream | null = null;
+  playCount = 0;
+
+  play(stream: MediaStream): Promise<void> {
+    this.attached = stream;
+    this.playCount += 1;
+    return Promise.resolve();
+  }
+
+  clear(stream: MediaStream | null): void {
+    if (stream === null || this.attached === stream) this.attached = null;
   }
 }
 
@@ -214,10 +233,49 @@ const makeHarness = (secureContext = true) => {
   return { source, mediaDevices, documentTarget, pageTarget, sink, observation };
 };
 
+const makeResourceHarness = () => {
+  const mediaDevices = new FakeMediaDevices();
+  const documentTarget = new FakeDocumentTarget();
+  const pageTarget = new FakePageTarget();
+  const sink = new ResourcePlaybackSink();
+  const observation: Observation = {
+    state: {
+      status: 'idle',
+      phase: 'authorization-required',
+      error: null,
+    },
+    devices: [],
+    surface: null,
+  };
+  const observer: UvcPreviewObserver = {
+    onState: state => { observation.state = state; },
+    onDevices: devices => { observation.devices = devices; },
+    onSurface: surface => { observation.surface = surface; },
+  };
+  const source = new UvcPreviewSource(
+    {
+      mediaDevices: mediaDevices as unknown as MediaDevices,
+      documentTarget: documentTarget as unknown as Document,
+      pageTarget: pageTarget as unknown as Window,
+      secureContext: true,
+    },
+    sink,
+    observer,
+  );
+  return { source, mediaDevices, documentTarget, pageTarget, sink, observation };
+};
+
 const SECRET_DEVICE_ID = 'never-expose-this-device-id';
 const LIVE_LABEL = 'PureThermal (fw:v1.3.0)';
 
-const authorize = async (harness: ReturnType<typeof makeHarness>) => {
+interface AuthorizationHarness {
+  source: UvcPreviewSource;
+  mediaDevices: FakeMediaDevices;
+  sink: PreviewPlaybackSink & { readonly playCount: number };
+  observation: Observation;
+}
+
+const authorize = async (harness: AuthorizationHarness) => {
   const permissionTrack = new FakeTrack('Temporary default input', {});
   const permissionStream = new FakeStream(permissionTrack);
   harness.mediaDevices.devices = [
@@ -231,7 +289,7 @@ const authorize = async (harness: ReturnType<typeof makeHarness>) => {
   await harness.source.authorize();
 
   assert(permissionTrack.stopCount === 1, 'Discovery stream tracks were not stopped exactly once.');
-  assert(harness.sink.played.length === 0, 'Discovery stream was attached to the playback sink.');
+  assert(harness.sink.playCount === 0, 'Discovery stream was attached to the playback sink.');
   assert(harness.observation.state.phase === 'ready', 'Successful discovery did not enter ready.');
   assert(harness.observation.devices.length === 1, 'Discovery did not isolate the PureThermal-labelled input.');
   const choice = harness.observation.devices[0];
@@ -265,7 +323,13 @@ const assertExactRequest = (constraints: MediaStreamConstraints): void => {
   );
 };
 
-const assertNoListeners = (harness: ReturnType<typeof makeHarness>, track?: FakeTrack): void => {
+interface ListenerHarness {
+  documentTarget: FakeDocumentTarget;
+  pageTarget: FakePageTarget;
+  mediaDevices: FakeMediaDevices;
+}
+
+const assertNoListeners = (harness: ListenerHarness, track?: FakeTrack): void => {
   assert(harness.documentTarget.listenerCount() === 0, 'Document lifecycle listener leaked.');
   assert(harness.pageTarget.listenerCount() === 0, 'Page lifecycle listener leaked.');
   assert(harness.mediaDevices.listenerCount() === 0, 'MediaDevices listener leaked.');
@@ -458,6 +522,37 @@ const verifyLateResultsAndRestart = async () => {
   assertNoListeners(restartHarness, currentStream.track);
 };
 
+const verifyLatePlaybackSettlement = async () => {
+  const harness = makeHarness();
+  await authorize(harness);
+
+  const staleStream = liveStream();
+  const stalePlayback = deferred<void>();
+  harness.mediaDevices.queueStream(staleStream);
+  harness.sink.queuePromise(stalePlayback.promise);
+  const staleStart = harness.source.start();
+  await tick();
+
+  const currentStream = liveStream();
+  harness.mediaDevices.queueStream(currentStream);
+  const restarting = harness.source.restart();
+  await restarting;
+
+  assert(staleStream.track.stopped, 'Restart did not stop a stream awaiting playback.');
+  assert(harness.sink.attached === currentStream as unknown as MediaStream, 'Restart did not attach the current stream.');
+  assert(harness.observation.surface?.stream === currentStream as unknown as MediaStream, 'Restart did not publish the current surface.');
+
+  stalePlayback.resolve();
+  await staleStart;
+
+  assert(harness.sink.attached === currentStream as unknown as MediaStream, 'Late playback settlement cleared the current stream.');
+  assert(!currentStream.track.stopped, 'Late playback settlement stopped the current stream.');
+  assert(harness.observation.surface?.stream === currentStream as unknown as MediaStream, 'Late playback settlement replaced the current surface.');
+
+  harness.source.stop();
+  assertNoListeners(harness, currentStream.track);
+};
+
 const verifyHiddenAndPageHideCleanup = async () => {
   const hiddenHarness = makeHarness();
   await authorize(hiddenHarness);
@@ -551,6 +646,43 @@ const verifyDetachedPlaybackElementCleanup = async () => {
   assert(video.srcObject === null, 'Detached playback element retained srcObject after cleanup.');
 };
 
+const verifyFiveResourceCycles = async () => {
+  const harness = makeResourceHarness();
+  const tracks: FakeTrack[] = [];
+  await authorize(harness);
+  harness.mediaDevices.beforeEnumerate = null;
+
+  for (let cycle = 1; cycle <= 5; cycle += 1) {
+    const stream = liveStream();
+    tracks.push(stream.track);
+    harness.mediaDevices.queueStream(stream);
+    await harness.source.start();
+
+    assert(harness.observation.state.status === 'streaming', `Preview cycle ${cycle} did not stream.`);
+    assert(harness.sink.attached === stream as unknown as MediaStream, `Preview cycle ${cycle} did not attach its stream.`);
+    assert(harness.documentTarget.listenerCount('visibilitychange') === 1, `Preview cycle ${cycle} did not retain one visibility listener.`);
+    assert(harness.pageTarget.listenerCount('pagehide') === 1, `Preview cycle ${cycle} did not retain one pagehide listener.`);
+    assert(harness.mediaDevices.listenerCount('devicechange') === 1, `Preview cycle ${cycle} did not retain one device listener.`);
+    assert(stream.track.listenerCount('ended') === 1, `Preview cycle ${cycle} did not retain one track listener.`);
+
+    harness.source.stop();
+
+    const stoppedState: UvcPreviewState = { ...harness.observation.state };
+    assert(stream.track.stopCount === 1, `Preview cycle ${cycle} did not stop its track exactly once.`);
+    assert(stoppedState.status === 'idle', `Preview cycle ${cycle} did not return to idle.`);
+    assert(harness.observation.surface === null, `Preview cycle ${cycle} retained a surface.`);
+    assert(harness.sink.attached === null, `Preview cycle ${cycle} retained an element attachment.`);
+    assert(harness.mediaDevices.queued.length === 0, `Preview cycle ${cycle} retained a queued media request.`);
+    assertNoListeners(harness, stream.track);
+    assert(
+      tracks.every(track => track.stopped && track.listenerCount() === 0),
+      `Preview cycle ${cycle} retained a prior track or listener.`,
+    );
+  }
+
+  assert(harness.sink.playCount === 5, 'Five-cycle preview verification did not play exactly five streams.');
+};
+
 verifyReplayDoesNotRequestCameraAccess();
 await verifyAuthorizationAndExactPlayback();
 await verifyIdentityMismatchAndPlaybackFailure();
@@ -558,8 +690,10 @@ await verifyEndedTrackRaces();
 await verifyPauseResumeAndDisconnect();
 await verifyDeviceChangeDisconnect();
 await verifyLateResultsAndRestart();
+await verifyLatePlaybackSettlement();
 await verifyHiddenAndPageHideCleanup();
 await verifyErrorsAndUnsupportedContext();
 await verifyDetachedPlaybackElementCleanup();
+await verifyFiveResourceCycles();
 
-console.log('UVC preview verified: authorization, exact-device playback gate, ended-track races, retained-element cleanup, lifecycle invalidation, and errors.');
+console.log('UVC preview verified: authorization, exact-device playback gate, ended-track races, lifecycle invalidation, errors, and five zero-resource cycles.');

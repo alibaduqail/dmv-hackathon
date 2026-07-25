@@ -187,6 +187,7 @@ scripts/
   generate-replay-assets.mjs     deterministic fixture generator
   verify-replay.ts               source-level replay checks
   verify-uvc-preview.ts           fake MediaDevices and cleanup cases
+  verify-offline-build.ts         production asset and network-API audit
 
 src/
   types.ts                        implemented shared contracts
@@ -225,7 +226,10 @@ Do not create blocked files without a new calibrated Phase 1A pass and an update
 
 ## 6. Implemented replay architecture
 
-`ReplayThermalSource` is a deep module behind `ThermalSource`. It uses one `setTimeout`:
+`ReplayThermalSource` is a deep module behind `ThermalSource`. Production uses a
+default `ReplayScheduler` that delegates to `Date.now`, `setTimeout`, and
+`clearTimeout`; verification injects a deterministic scheduler. The source owns
+at most one scheduled task:
 
 - `start()` cancels old work and begins from frame zero.
 - A zero-delay task transitions `connecting → streaming` and emits the first frame.
@@ -245,9 +249,15 @@ The loose replay `ThermalFrame` shape still permits invalid future source/data c
 
 ### What replay verification proves
 
-`npm run verify:replay` currently proves asset signatures/dimensions, manifest metadata/order/provenance, full completion, one pause/resume path, and stop cleanup.
+`npm run verify:replay` currently proves asset signatures/dimensions, manifest
+metadata/order/provenance, full completion, one pause/resume path, repeated
+start/restart behavior, the one-active-timer bound, and zero timers after each
+of five stop cycles.
 
-It does not prove restart, route/unmount cleanup, DOM provenance, keyboard behavior, accessible names, target sizing, VoiceOver, 200% zoom, live errors, source switching, or stale-frame invalidation. Those require a new automated check or explicitly recorded manual evidence.
+It does not prove React route/unmount cleanup, DOM provenance, keyboard
+behavior, accessible names, target sizing, VoiceOver, 200% zoom, live errors,
+source switching, or stale-frame invalidation. Those require a new automated
+check or explicitly recorded manual evidence.
 
 ---
 
@@ -787,9 +797,9 @@ Keep verification dependency-free and proportionate:
 
 | Check | Owns |
 |---|---|
-| current `verify:replay` | Manifest/assets, order/provenance, completion, one pause/resume path, stop cleanup |
-| planned replay-verifier extension | Emitted runtime-frame mapping and repeated start/restart |
-| current `verify:preview` | Replay camera isolation, fake MediaDevices, authorize/discover cleanup, opaque/exact-device selection, playback gate, already-ended and during-playback track races, late permission resolution, pause/reacquire, restart, disconnect/devicechange, the reusable `stop()`/generation boundary, hidden/pagehide handling, detached playback-sink cleanup, error mapping, and track/listener cleanup; it does not execute the React source-switch or router |
+| current `verify:replay` | Manifest/assets, order/provenance, completion, pause/resume, repeated start/restart, one-active-timer bound, and five zero-timer stop cycles |
+| current `verify:preview` | Replay camera isolation, fake MediaDevices, authorize/discover cleanup, opaque/exact-device selection, playback gate, ended-track and late-playback races, late permission resolution, pause/reacquire, restart, disconnect/devicechange, the reusable `stop()`/generation boundary, hidden/pagehide handling, detached playback-sink cleanup, error mapping, and five zero-resource cycles; it does not execute the React source-switch/router or prove attached hardware |
+| current `verify:offline` | Built document/CSS asset locality, presence of all replay frames, and absence of application `fetch`, XHR, WebSocket, EventSource, or beacon use; it does not physically disconnect networking or execute a browser |
 | future bridge protocol verifier | Handshake, frame length/encoding, origin/version/error fixtures, credit/ack backpressure, timeout, sequence/run rejection, size ceiling, and resource-release spies |
 | future assessment verifier | Validator, clocks, connected regions, persistence/reset, expiry callback, boundaries, tie-break, replay/stale rejection, deterministic output |
 | future speech verifier | Pure formatter, dedupe, cancellation, mute, unavailable synthesizer through a fake adapter |
@@ -850,7 +860,16 @@ Synthetic numeric assessment fixtures must be generated in code and clearly labe
 
 ### Phase 4 — hardening
 
-- Exercise applicable completed paths. For Phase 1D: permission denial, wrong/missing device, unplug, late results, hidden tab, source switching, track cleanup, and repeated offline runs.
+- In progress: the localhost production command, local-build dependency audit,
+  and five-cycle fixture resource bounds are implemented and green.
+- Two production Replay runs plus `#scan`/`#history` reloads succeeded with
+  local rendered assets while external networking remained connected.
+- Still required: repeat the production Replay/routes after physically
+  disconnecting networking, reproduce the frozen commit from a clean checkout,
+  and complete the Phase 3 manual matrix.
+- Phase 1D hardware failure/offline rows are not applicable because its
+  attached-device gate did not pass. Fake preview checks remain code hardening,
+  not hardware acceptance.
 
 ### Phase 5 — packaging
 

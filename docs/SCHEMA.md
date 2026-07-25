@@ -128,6 +128,30 @@ Callbacks are push-only. The source does not own React state, classification, sp
 
 ---
 
+## Replay scheduler implementation seam
+
+`ReplayScheduler` is exported from `src/lib/thermal-source.ts`, not from the
+shared domain contract in `src/types.ts`:
+
+```ts
+export interface ReplayScheduler {
+  now(): number;
+  set(callback: () => void, delayMs: number): unknown;
+  clear(handle: unknown): void;
+}
+```
+
+Production `ReplayThermalSource` uses the default browser/Node timer adapter.
+Verification may inject a deterministic scheduler to observe ownership without
+installing a test framework or monkeypatching globals. The scheduler does not
+change `ThermalSource`, frame timestamps, or provenance.
+
+Lifecycle invariant: one replay source retains at most one scheduled task while
+active and retains zero after pause, stop, completion, or a fresh `start()` that
+invalidates prior work.
+
+---
+
 ## Phase 1D preview contracts
 
 The display-only UVC path is intentionally separate from `ThermalSource`:

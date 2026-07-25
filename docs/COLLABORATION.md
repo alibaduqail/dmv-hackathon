@@ -17,10 +17,7 @@ git fetch origin
 git switch --track origin/codex/ember
 node --version
 npm ci
-npm run verify:replay
-npm run verify:preview
-npm run lint
-npm run build
+npm run verify:hardening
 ```
 
 ### Existing clone
@@ -33,10 +30,7 @@ git switch codex/ember
 git pull --ff-only
 node --version
 npm ci
-npm run verify:replay
-npm run verify:preview
-npm run lint
-npm run build
+npm run verify:hardening
 ```
 
 Open the local app:
@@ -77,6 +71,7 @@ The committed foundation currently proves:
 - Keyboard-sized controls, visible focus, text status, and a non-color status symbol.
 - Phase 1A is closed with calibrated radiometry blocked; `docs/HARDWARE-PROBE.md` records the attached USB/UVC evidence and missing Y16/calibration proof.
 - The Phase 1D browser preview adapter, session, interface, and fake-MediaDevices verification are implemented; its attached-device gate is blocked after the intended input did not play by the 16:15 cutoff.
+- Phase 4 hardening is in progress: use `npm run verify:hardening` and `npm run demo:offline`; do not claim offline behavior until the production browser rehearsal is repeated with external networking physically disconnected.
 - No hotspot classification, speech, model endpoint, notifications, or persisted history is implemented.
 
 Describe Phase 1D precisely: the local display-only path is implemented and its source lifecycle is verified with fakes, while the attached-device gate is blocked and Replay is the submission path. React source-switch and route cleanup remain code/manual evidence, not `verify:preview` coverage. The team may explicitly reopen the hardware gate only before the 17:30 freeze by completing two actual-browser playback/cleanup runs and recording the result. Neither path proves temperature accuracy, direction, warning behavior, or touch safety.
@@ -191,6 +186,7 @@ npm run verify:replay
 npm run verify:preview
 npm run lint
 npm run build
+npm run verify:offline
 
 Handoff:
 Return files changed, behavior proven, checks run, and open risks. Do not push
@@ -297,10 +293,7 @@ A lane is ready to integrate when:
 3. All shared checks pass:
 
    ```sh
-   npm run verify:replay
-   npm run verify:preview
-   npm run lint
-   npm run build
+   npm run verify:hardening
    ```
 
 4. The diff contains no secrets, obsolete product language, unowned changes, or accidental generated output.

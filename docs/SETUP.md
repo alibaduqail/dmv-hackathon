@@ -25,18 +25,38 @@ Reload both routes once. Hash routing must survive a direct reload.
 
 ## Verification
 
-Run all four before handing off:
+Run the composed gate before handing off:
 
 ```sh
-npm run verify:replay
-npm run verify:preview
-npm run lint
-npm run build
+npm run verify:hardening
 ```
 
-`verify:replay` checks the six-frame manifest, 160 × 120 dimensions, finite metadata, order, deterministic completion, pause/resume, and cleanup. It does not validate thermal accuracy.
+`verify:hardening` runs replay verification, preview verification, lint, a fresh
+production build, and the offline-build audit.
 
-`verify:preview` uses injected fake browser media objects. It checks that Replay requests no camera access; authorization stops its unattached temporary stream before enumeration; public choices hide device/group IDs; Start opens and verifies only the selected identity; `streaming` waits for playback; already-ended tracks and tracks ending during playback fail closed; pause/resume, restart, errors, late results, disconnect/devicechange, hidden visibility, `pagehide`, tracks, listeners, and a detached video ref clean up deterministically. It exercises the reusable source boundary and playback sink, not the React router. It does not prove that this laptop’s browser can enumerate or play the attached hardware.
+`verify:replay` checks the six-frame manifest, 160 × 120 dimensions, finite
+metadata, order, deterministic completion, pause/resume, restart, and cleanup.
+Its injected scheduler also proves one bounded timer while active and zero
+pending timers after each of five restart/stop cycles. It does not validate
+thermal accuracy, the React route lifecycle, or DOM accessibility.
+
+`verify:preview` uses injected fake browser media objects. It checks that Replay
+requests no camera access; authorization stops its unattached temporary stream
+before enumeration; public choices hide device/group IDs; Start opens and
+verifies only the selected identity; `streaming` waits for playback; already-ended
+tracks, tracks ending during playback, and late playback settlement fail closed;
+pause/resume, restart, errors, late results, disconnect/devicechange, hidden
+visibility, `pagehide`, and detached video refs clean up deterministically. Five
+additional cycles prove zero retained tracks, listeners, stream attachments, and
+queued media requests after each stop. It exercises the reusable source boundary
+and playback sink, not the React router, and it does not prove that this laptop’s
+browser can enumerate or play the attached hardware.
+
+`verify:offline` rebuilds `dist`, resolves every document and stylesheet asset
+reference inside the production output, verifies all six replay assets are
+present, and rejects application use of common network APIs. It proves a
+self-contained application build, not physical network disconnection or browser
+behavior.
 
 For manual replay verification:
 
@@ -153,15 +173,38 @@ The GroupGets repositories in `docs/REFERENCES.md` remain prior art, not runtime
 
 ## Offline rehearsal
 
+Use the exact production-like candidate:
+
+```sh
+npm ci
+npm run verify:hardening
+npm run demo:offline
+```
+
+Open `http://127.0.0.1:4173/#scan`. `demo:offline` always rebuilds before Vite
+serves the candidate on loopback port 4173; `--strictPort` fails instead of
+silently changing the URL. Keep this process running for the full rehearsal.
+Ember has no service worker, so closing the local process stops the app. Assets
+use root-relative paths, so do not open `dist/index.html` through `file://` or
+mount it below an arbitrary URL prefix.
+
 Before 17:30:
 
-1. Disconnect the network.
-2. Run the complete replay twice.
-3. Reload `#scan` between runs.
-4. Confirm no API, font, image, or route requires the network.
-5. If Phase 1D passed, run the exact intended UVC preview twice, then unplug it mid-stream and confirm the video clears, every track stops, and an explicit error/Retry appears.
+1. After the production page loads, physically disconnect external networking.
+2. Start Replay and let all six frames complete.
+3. Reload `#scan`, then run the complete Replay a second time.
+4. Open and reload `#history`; return to and reload `#scan`.
+5. Confirm no API, font, image, or route requests an external origin.
+6. Reconnect networking only after recording browser, operator, commit, and result.
+7. If Phase 1D had passed, run the exact intended UVC preview twice and its unplug/failure cases. For the current build this row is not applicable because the attached-device gate is blocked.
 
 The Phase 4 offline-fallback candidate is the committed replay, not a cached or paused preview frame. Claim disconnected-network verification only after this rehearsal passes.
+
+Partial evidence recorded on 2026-07-25: the production server completed Replay
+twice with a reload, both hash routes survived reload, and the rendered document
+referenced local assets only. External networking remained connected to avoid
+disrupting the hackathon laptop, so the strict offline acceptance row remains
+open.
 
 ---
 

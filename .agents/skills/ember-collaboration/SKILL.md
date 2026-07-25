@@ -69,9 +69,7 @@ Do not let two agents edit the same high-conflict file concurrently. Give a subc
 5. Run focused checks, then the shared gate:
 
 ```sh
-npm run verify:replay
-npm run lint
-npm run build
+npm run verify:hardening
 ```
 
 6. Inspect the final diff for secrets, stale product language, accidental generated files, hidden provenance, and unowned edits.

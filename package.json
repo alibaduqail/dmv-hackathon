@@ -9,10 +9,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "demo:offline": "npm run build && vite preview --host 127.0.0.1 --port 4173 --strictPort",
     "lint": "oxlint",
-    "preview": "vite preview",
+    "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
     "verify:replay": "node --experimental-strip-types scripts/verify-replay.ts",
-    "verify:preview": "node --experimental-strip-types scripts/verify-uvc-preview.ts"
+    "verify:preview": "node --experimental-strip-types scripts/verify-uvc-preview.ts",
+    "verify:offline": "npm run build && node --experimental-strip-types scripts/verify-offline-build.ts",
+    "verify:hardening": "npm run verify:replay && npm run verify:preview && npm run lint && npm run verify:offline"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

@@ -18,7 +18,7 @@ The current repository is an accessible application with a clearly labelled simu
 - Live setup persistently says **“Live thermal preview — non-radiometric”**, **“Display-only colorized video. No temperature or safety assessment.”**, and **“No current assessment”**.
 - Status uses visible words and a non-color symbol.
 - `#history` truthfully explains that video, replay activity, and incidents are not stored.
-- Preview/replay verification, lint, and production build are green.
+- Replay/preview verification, five-cycle resource checks, lint, production build, and the local-build dependency audit are green.
 - macOS identifies the attached GroupGets `PureThermal (fw:v1.3.0)` USB/UVC interfaces; the privacy-safe no-go evidence is documented.
 
 ## Run it
@@ -40,11 +40,13 @@ The reported Node version must be 22.12 or newer. Vite prints the local URL; ope
 Before handing off:
 
 ```sh
-npm run verify:replay
-npm run verify:preview
-npm run lint
-npm run build
+npm run verify:hardening
 ```
+
+For the production-like local candidate, run `npm run demo:offline` and open
+`http://127.0.0.1:4173/#scan`. The command rebuilds before serving. The build is
+self-contained at the application layer, but the strict disconnected-network
+rehearsal remains a human Phase 4 gate until it is recorded.
 
 ## Safety boundary
 

@@ -45,7 +45,7 @@ Phase 0 is complete and verified:
 - Start, pause, resume, restart, and stop controls.
 - Source status in text, not color alone.
 - Shared `ThermalSource` contracts and `ReplayThermalSource`.
-- `npm run verify:replay`, `npm run verify:preview`, build, and lint green.
+- `npm run verify:hardening` green, including replay, preview, lint, production build, and the local-build dependency audit.
 
 Phase 1A investigation is complete with the calibrated-radiometry gate blocked:
 
@@ -57,7 +57,7 @@ Phase 1A investigation is complete with the calibrated-radiometry gate blocked:
 
 Phase 1D’s display-only implementation is complete: explicit Live selection, temporary authorization cleanup, private exact-device matching, playback-gated status, pause/reacquire, lifecycle cleanup, fixed recovery states, and persistent non-radiometric truth are in code. Its attached-device exit gate is **blocked** after the intended input did not play by the 16:15 cutoff. The Codex in-app browser left camera permission pending because it could not present the permission surface; Ember logically invalidated that request and would stop any late stream, but no PureThermal browser label, stream settings, playback, or camera-indicator result is claimed.
 
-The active milestone is Phase 3 accessibility/demo QA on the Replay path. Use Replay for the submitted demo and describe the live adapter as implemented but hardware-unverified. The team may explicitly reopen the Phase 1D hardware gate only before the 17:30 feature freeze and only if the intended input plays and cleans up twice in the actual demo browser; record that new evidence and decision before changing any claim.
+Phase 3 accessibility/demo QA remains open, and Phase 4 offline/failure hardening has started on the Replay path. The production-like localhost command, deterministic five-cycle resource checks, local-build dependency audit, and production Replay/route rehearsal exist. A human must still disconnect external networking, rerun the production Replay twice with a reload, finish the Phase 3 manual accessibility matrix, and record the frozen candidate before either phase can close. Use Replay for the submitted demo and describe the live adapter as implemented but hardware-unverified. The team may explicitly reopen the Phase 1D hardware gate only before the 17:30 feature freeze and only if the intended input plays and cleans up twice in the actual demo browser; record that new evidence and decision before changing any claim.
 
 Radiometric Phase 1B, deterministic assessment Phase 1C, and assessment speech Phase 2 are blocked for this hackathon build. Do **not** add `PureThermalSource`, a native radiometric bridge, hotspot analysis, temperature copy, palette analysis, warning speech, an LLM endpoint, notifications, persistent history, cloud frame storage, or physical actions. Follow requirement IDs and gates in `docs/REQUIREMENTS.md` and timing in `docs/PLAN.md`.
 
@@ -85,7 +85,7 @@ Git history is the archive for removed product work. Do not copy it into an acti
 - **No new dependency without asking.** The foundation needs none.
 - **One bounded lane per agent.** Keep bridge, analysis, interface, and review work in separate contexts with disjoint file ownership.
 - **No drive-by reorganization.** Remove obsolete files during the pivot; after that, keep paths stable.
-- **Verification is not optional.** Run `npm run verify:replay`, `npm run verify:preview`, `npm run lint`, and `npm run build` after relevant changes.
+- **Verification is not optional.** Run `npm run verify:hardening` after relevant changes. It composes replay, preview, lint, production build, and offline-build checks.
 - **Commit after each working increment.** Use `codex/ember` as the shared integration branch; do not push directly to `main`.
 - **Append one line to `docs/DECISIONS.md`** when a contract changes, a demo beat is cut, or hardware behavior surprises you.
 
