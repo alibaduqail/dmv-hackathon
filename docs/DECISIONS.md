@@ -28,5 +28,6 @@ Log when you: change a shape in `SCHEMA.md`, cut something from the demo, discov
 10:13 — claude — **No Supabase seed script written.** Nothing in the app reads Supabase, so seeding 39 historical rows buys zero demo beats. `api/extract.ts` inserting session-7 events in Phase 2 is enough to show a populated table. Say so if you want the history mirrored for the README screenshot — it is ~20 lines.
 10:15 — claude — Added `docs/STATUS.md` — cold-start briefing: what's built, what's next, resolved vs open issues. `AGENTS.md` now points there first. **Open blockers are D's: `vercel dev` unproven, no `.env`, no `ANTHROPIC_API_KEY`.** Phase 2 cannot start without the key.
 10:15 — claude — Pushed to `origin/main` (github.com/alibaduqail/dmv-hackathon). Remote had no branches; first push. Six commits of history now backed up off this laptop.
+11:20 — claude (second dev) — `outputs/` shell shipped: four tabs (soap_note, home_program, next_session_plan, auth_summary), local useState switch, renders `artifact.body` when present else empty-state copy. No generation, no Spanish toggle — Phase 3. Single file, no `ArtifactPane.tsx` split needed at this size.
 15:00 — ____ — Thermal gate: GO / NO-GO → ____
 17:30 — ____ — FEATURE FREEZE.
