@@ -1,11 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { syntheticHotspots } from '../../fixtures/replay.ts';
+import { assessHeat, speakableAssessment, type HeatLevel } from '../../lib/assessment.ts';
 import {
   createBrowserSpeechController,
   formatLivePreviewStatus,
   formatReplayStatus,
 } from '../../lib/speech.ts';
+import { createWarningTone } from '../../lib/warning-tone.ts';
 import type { SourceStatus, UvcPreviewPhase } from '../../types.ts';
 import { usePreviewSession } from './usePreviewSession.ts';
+
+const LEVEL_STYLE: Record<HeatLevel, { tone: string; border: string; symbol: string }> = {
+  none: { tone: 'text-muted', border: 'border-line', symbol: '—' },
+  warm: { tone: 'text-caution', border: 'border-caution', symbol: '△' },
+  hot: { tone: 'text-accent', border: 'border-accent', symbol: '▲' },
+  severe: { tone: 'text-danger', border: 'border-danger', symbol: '⣿' },
+};
 
 interface StatusCopy {
   symbol: string;
@@ -249,6 +259,45 @@ export default function ScanView() {
 
 
   const isStreaming = session.status === 'streaming';
+
+  /* Assessment exists only for the replay fixture, and only because its temperatures
+     are authored. A live preview frame is colorized display video, so it never
+     produces one — converting those pixels into degrees is the exact thing the
+     hardware gate forbade. */
+  const assessment = isReplay && replayFrame
+    ? assessHeat(replayFrame.maxC, syntheticHotspots[replayFrame.sequence] ?? null, true)
+    : null;
+  const level = assessment?.level ?? 'none';
+  const levelStyle = LEVEL_STYLE[level];
+
+  const warningTone = useMemo(() => createWarningTone(), []);
+  useEffect(() => () => warningTone?.stop(), [warningTone]);
+
+  useEffect(() => {
+    if (!warningTone) return;
+    if (!assessment || !isStreaming || document.visibilityState === 'hidden') {
+      warningTone.stop();
+      return;
+    }
+    warningTone.setLevel(assessment.level);
+  }, [assessment, isStreaming, warningTone]);
+
+  /* Speech fires on a level change, never per frame: a sentence restarted six times
+     a second is noise, not guidance. */
+  const spokenLevel = useRef<HeatLevel | null>(null);
+  useEffect(() => {
+    if (!assessment || !speechEnabled || speechMuted) {
+      spokenLevel.current = null;
+      return;
+    }
+    if (spokenLevel.current === assessment.level) return;
+    spokenLevel.current = assessment.level;
+    speechController?.present({
+      kind: 'assessment',
+      key: `assessment:${assessment.level}`,
+      text: speakableAssessment(assessment),
+    });
+  }, [assessment, speechController, speechEnabled, speechMuted]);
 
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-[104rem] px-3 py-4 outline-none md:px-6 md:py-6">
@@ -598,20 +647,41 @@ export default function ScanView() {
           )}
         </details>
 
-        <section aria-labelledby="assessment-title" className="border border-line bg-panel px-4 py-4">
+        <section aria-labelledby="assessment-title" className={`border-2 bg-panel px-4 py-4 ${levelStyle.border}`}>
           <p className="gutter">Assessment</p>
-          <h2 id="assessment-title" className="mt-3 text-lg font-bold uppercase tracking-wide">
-            No current assessment
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            Replay pixels are never assessed. Live preview pixels are display-only and never
-            create temperature, direction, guidance, warnings, or speech.
-          </p>
-          <p className="mt-3 border-t border-divider pt-3 text-sm leading-6 text-muted">
-            Ember can display a clearly labelled simulation or a local, non-radiometric PureThermal
-            video preview. Neither display path produces temperature, direction, or a safety
-            assessment.
-          </p>
+          {assessment ? (
+            <div role="status" aria-live="polite" aria-atomic="true">
+              <p className="readout mt-2 inline-block sim-hatch border border-sim px-2 py-1 text-[0.6875rem] font-bold uppercase text-sim">
+                Simulated temperatures — fixture values, not a measurement
+              </p>
+              <div className="mt-3 flex items-start gap-3">
+                <span aria-hidden="true" className={`text-4xl font-bold leading-none ${levelStyle.tone}`}>
+                  {levelStyle.symbol}
+                </span>
+                <div>
+                  <h2 id="assessment-title" className={`text-lg font-bold uppercase tracking-wide ${levelStyle.tone}`}>
+                    {assessment.headline}
+                  </h2>
+                  <p className="readout mt-1 text-2xl font-bold">
+                    {Math.round(assessment.peakC)} °C
+                    {assessment.direction && <span className="text-muted"> · {assessment.direction}</span>}
+                  </p>
+                </div>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-muted">{assessment.detail}</p>
+            </div>
+          ) : (
+            <>
+              <h2 id="assessment-title" className="mt-3 text-lg font-bold uppercase tracking-wide">
+                No current assessment
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Live preview pixels are display-only and never create temperature, direction,
+                guidance, warnings, or speech. Only the replay fixture carries authored
+                temperatures, and it says so whenever it reports one.
+              </p>
+            </>
+          )}
         </section>
       </div>
 

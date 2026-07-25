@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { emberReplayManifest } from '../src/fixtures/replay.ts';
+import { assessHeat, directionFor, speakableAssessment } from '../src/lib/assessment.ts';
 import { ReplayThermalSource } from '../src/lib/thermal-source.ts';
 import type { ReplayManifest, SourceStatus, ThermalFrame } from '../src/types.ts';
 
@@ -174,7 +175,32 @@ const verifyLifecycleResources = async () => {
   }
 };
 
+const verifyAssessment = () => {
+  assert(assessHeat(24, { x: 0.5, y: 0.5 }, true).level === 'none', 'Room temperature must not warn.');
+  assert(assessHeat(39.9, { x: 0.5, y: 0.5 }, true).level === 'none', 'Below the warm floor must not warn.');
+  assert(assessHeat(40, { x: 0.5, y: 0.5 }, true).level === 'warm', 'The warm floor is inclusive.');
+  assert(assessHeat(50, { x: 0.5, y: 0.5 }, true).level === 'hot', 'The hot floor is inclusive.');
+  assert(assessHeat(60, { x: 0.5, y: 0.5 }, true).level === 'severe', 'The severe floor is inclusive.');
+
+  assert(assessHeat(24, { x: 0.1, y: 0.1 }, true).direction === null, 'A cool frame reports no direction.');
+  assert(directionFor(0.1, 0.5) === 'left', 'Left third must read as left.');
+  assert(directionFor(0.9, 0.5) === 'right', 'Right third must read as right.');
+  assert(directionFor(0.5, 0.5) === 'straight ahead', 'The centre cell must read as straight ahead.');
+  assert(directionFor(0.9, 0.1) === 'above right', 'Corners combine both axes.');
+
+  // The safety line: a quiet result is never phrased as a clearance.
+  const quiet = assessHeat(22, null, true);
+  assert(!/\b(safe|clear|all good)\b/i.test(quiet.headline), 'A quiet headline must not assert safety.');
+  assert(/not the same as safe/i.test(quiet.detail), 'A quiet result must say plainly that it is not a safety clearance.');
+  assert(/reflective/i.test(quiet.detail), 'A quiet assessment must state the reflective-surface limit.');
+
+  // Simulated runs say so before anything else, including in speech.
+  assert(speakableAssessment(assessHeat(65, { x: 0.8, y: 0.2 }, true)).startsWith('Simulated.'), 'Synthetic speech must announce itself first.');
+  assert(!speakableAssessment(assessHeat(65, { x: 0.8, y: 0.2 }, false)).startsWith('Simulated.'), 'Measured speech must not claim to be simulated.');
+};
+
 await verifyAssets();
+verifyAssessment();
 verifyProvenanceGuard();
 await verifyCompletion();
 await verifyPauseResume();

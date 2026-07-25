@@ -2,7 +2,9 @@ export const MINIMUM_ANNOUNCEMENT_INTERVAL_MS = 2_500;
 export const SPEECH_START_TIMEOUT_MS = 3_000;
 
 export interface SpeechPresentation {
-  kind: 'source-status';
+  /* `source-status` describes the source itself. `assessment` describes observed
+     heat, and the verifier holds the line that the two are never confused. */
+  kind: 'source-status' | 'assessment';
   key: string;
   text: string;
 }

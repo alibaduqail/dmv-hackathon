@@ -2,6 +2,19 @@ import type { ReplayManifest } from '../types.ts';
 
 const FRAME_INTERVAL_MS = 420;
 
+/* Where the bright region sits in each committed frame, normalised 0–1. These are
+   authored fixture facts, not measurements, and they exist so the warning interaction
+   can be demonstrated without a sensor. Kept beside the frames they describe rather
+   than added to the shared frame contract, which still belongs to real captures. */
+export const syntheticHotspots: readonly { x: number; y: number }[] = [
+  { x: 0.22, y: 0.58 },
+  { x: 0.34, y: 0.54 },
+  { x: 0.47, y: 0.50 },
+  { x: 0.58, y: 0.46 },
+  { x: 0.71, y: 0.42 },
+  { x: 0.80, y: 0.40 },
+];
+
 export const emberReplayManifest: ReplayManifest = {
   id: 'ember-handheld-demo-v1',
   label: 'Simulated handheld sweep across a warm surface',
