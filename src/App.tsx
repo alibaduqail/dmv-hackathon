@@ -51,7 +51,7 @@ export default function App() {
             <span>
               <span className="block text-xl font-bold tracking-tight">Ember</span>
               <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                Thermal guidance
+                Thermal companion
               </span>
             </span>
           </a>
