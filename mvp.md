@@ -1,210 +1,251 @@
-# Tally — MVP Spec v3
+# Ember — MVP Spec v1
 
-**Supersedes all prior specs.** Track 02, Health Tech & Accessibility. **Submit by 7:00 PM.**
+**Supersedes all prior specs.** Track 02, Health Tech & Accessibility. **Feature freeze 17:30. Submit 19:00.**
 
-**One line:** Tally turns a therapy session into clinician-confirmed data that keeps a child's care authorized.
+**One line:** Ember gives blind and low-vision people a non-contact way to locate higher-heat areas before reaching toward them.
 
-**Niche:** Pediatric teletherapy for speech sound disorders, in 3–8 clinician private practices that bill insurance.
-
----
-
-## 0. What Tally is
-
-During a session, a speech therapist is doing two jobs at once — treating the child, and recording data on a paper tally sheet. Correct, incorrect, how much help the kid needed. Afterward they write the clinical note from memory.
-
-Tally extracts the clinical data points from the session, shows them to the clinician as cards to approve, edit, or reject in under a minute, and generates four documents from the confirmed data.
-
-**Why it matters:** insurers authorize therapy in blocks of visits and require documented progress to approve the next block. Thin data means denial. Denial means an eight-year-old stops receiving care. The record is what keeps the kid in therapy.
-
-**The evidence thesis:** a therapy session generates evidence. Some is what the clinician said and heard. Some is physical. Both need a human to confirm them before they count. Tally is the record that holds confirmed evidence of any kind — which is why the thermal camera is part of the product and not a side project.
+**MVP form:** a handheld Lepton 3.5 thermal camera on a PureThermal USB board, paired with a local web interface. On-screen guidance ships first; spoken guidance follows.
 
 ---
 
-## 1. Non-negotiables
+## 0. What Ember is
 
-**1. Feature freeze is 5:30 PM, not 7:00.** The last ninety minutes are README, recording, and the submission form. Criterion 05 is live-round only — everything before that is judged on what you upload, unnarrated.
+Residual heat is difficult to verify without sight or contact. A burner, pan, mug, space heater, or charging device may look ordinary and provide no useful cue until a hand is already close.
 
-**2. The demo opens on the record, not the upload.** Ambient scribes have no equivalent screen. Cheapest possible separation from "copy" on criterion 02.
-
-**3. Seed six weeks before any UI.** The payload is history that today's session lands into. Fixtures first, frozen at 11:00.
-
-**4. No audio, no ASR.** Pipeline starts at a hand-written transcript fixture.
-
-**5. Thermal frames are pre-captured.** No live hardware on stage, ever. Two PNGs committed as fixtures.
-
-**6. We produce a data structure, not a note.** Scribes output prose. Prose can't be trended for a payer. Every clinician-facing surface should make this visible.
-
----
-
-## 2. Clinical model
-
-### Cue hierarchy — the detail that proves you talked to an SLP
-
-Clinicians track how much support a child needs, not just accuracy. Less support is progress, even before accuracy moves.
+Ember turns thermal frames into directional guidance:
 
 ```
-independent  <  verbal_cue  <  visual_cue  <  tactile_cue  <  model
-   (best)                                                  (most support)
+PureThermal frame
+  → deterministic hotspot analysis
+  → observable heat assessment
+  → text + symbol + color
+  → the same guidance spoken aloud
 ```
 
-### Trials
+The model is deliberately narrow. Ember does not identify objects, diagnose injury, or guarantee touch safety. It reports where higher heat was observed and prompts the person to keep distance or verify another way.
 
-Every production attempt is scored `correct / total`. Percent accuracy across trials is the number a payer reads.
+### Why thermal
 
-### The arc — Maya, 8. Target: /r/ initial position.
+An RGB camera answers *what does this look like?* Thermal data answers *where is heat concentrated?* The Lepton 3.5 provides a 160 × 120 radiometric sensor. That resolution is enough for regions and direction, not fine object recognition.
 
-| # | Date | Record shows |
-|---|---|---|
-| 1 | Jun 13 | Baseline probe. 4/20 (20%). `tactile_cue` |
-| 2 | Jun 20 | 5/20 (25%). `tactile_cue`. /r/ final emerging, 11/20 |
-| 3 | Jun 27 | 6/20 (30%). `visual_cue` + `tactile_cue` |
-| 4 | Jul 4 | 6/20 (30%). Max cueing. **`QUESTION_UNRESOLVED` — no independent production** |
-| 5 | Jul 11 | 7/20 (35%). Unresolved (2) |
-| 6 | Jul 18 | 6/20 (30%). Unresolved (3). Home program assigned, 2 of 3 logged |
-| **7** | **Jul 25** | **`verbal_cue` → INDEPENDENT_PRODUCTION. 14/20 (70%)** |
+### Who it serves
 
-`/r/ initial` is the streak. Three sessions of no independent production, closing today.
+Primary user: a blind or low-vision person checking a nearby surface in a kitchen, workshop, bathroom, or charging area.
 
-Clinically realistic: /r/ typically isn't mastered until 7–8, so an 8-year-old in therapy for initial /r/ is textbook, and a plateau at 30% is an ordinary clinical picture.
+The first interaction is intentionally simple:
 
----
+1. Point the handheld camera toward the area.
+2. Start the source.
+3. Hear and read source status.
+4. Receive one directional warning when deterministic rules find higher heat.
+5. Stop or reposition.
 
-## 3. The thermal module
-
-### What it screens for
-
-Some children have **velopharyngeal insufficiency** — the soft palate doesn't seal during pressure consonants, so air leaks out the nose on /s/, /p/, /b/. It's the core speech issue in cleft palate and it is routinely mistaken for an articulation error, which means years of the wrong therapy.
-
-The gold standard is nasometry. That equipment costs thousands and lives at specialty craniofacial centers. A community SLP can't test for it.
-
-Warm exhaled air out the nostrils is what a thermal camera sees.
-
-### The paired-stimulus test
-
-The whole thing rests on one comparison:
-
-| Stimulus | Expected | Why |
-|---|---|---|
-| Sustained **/m/** | Nostrils warm | Nasal consonant — airflow *should* go out the nose |
-| Sustained **/sssss/** | Nostrils cold | Pressure consonant — nose should be sealed |
-
-If /s/ blooms warm too, that's the leak. Two frames side by side, and anyone in the room understands it instantly with no clinical background.
-
-### Why sustained and not repeated
-
-Many consumer thermal cameras run at **9 Hz** — an export-control threshold, not a hardware limit. Too slow for rapid syllable repetition, fine for held productions. Check the camera's framerate, but design for sustained either way.
-
-### How it connects — this is the point
-
-A thermal frame on its own is a picture. Pictures don't get anyone a referral. In Tally:
-
-```
-thermal frame → clinician confirms → SCREENING_FLAG event
-    → SOAP note objective section
-    → authorization summary referral recommendation
-```
-
-The camera produces the finding. Tally is what makes the finding *count* — billable documentation and payer evidence.
-
-Architecturally it's one field on the event (`evidence_type`) plus one small table. Having two evidence types is what proves the schema is a schema and not a transcript parser.
-
-### Framing — say screening, not measurement
-
-You are not replacing nasometry and a judge with clinical background will call it if you claim otherwise. The honest pitch is stronger:
-
-> "This doesn't diagnose. It tells a community SLP this kid needs a craniofacial referral — when the nearest nasometer is three hours away."
-
-### Gates
-
-- **3:00 PM checkpoint.** If the review UI isn't done and the record view isn't underway, the camera stays in the bag and you never mention it.
-- **Build window 5:00–5:30 only.** Standalone panel, its own route, not wired into extraction, nothing it can break.
-- **Hard abort 5:30.** No exceptions.
-- Capture the frames at lunch, not at 5.
+No account, setup wizard, object labelling, smart-home integration, or remote monitoring.
 
 ---
 
-## 4. Stack
+## 1. The claim boundary
 
-Vite + React + TS, Tailwind, Supabase (tables only — no auth, no RLS), one Vercel function at `api/extract.ts`, Anthropic API for extraction.
+Ember observes surface radiation under imperfect conditions. Material emissivity, reflections, distance, angle, recent calibration, exposure time, and individual sensitivity all matter.
 
-Hardcoded: `CURRENT_CLINICIAN_ID`, `CURRENT_CLIENT_ID`. No login screen.
+**The product must never say an object is safe to touch.**
 
-`ANTHROPIC_API_KEY` server-side only.
-
----
-
-## 5. The four artifacts
-
-Generated from confirmed events only. Four distinct voices — if they read the same, the best moment collapses.
-
-| Kind | Audience | Voice |
-|---|---|---|
-| `soap_note` | Chart / billing | Clinical shorthand, S/O/A/P headers. Objective carries trials, cue levels, and any thermal screening result |
-| `home_program` | Maya's caregiver | Warm, concrete, no jargon. **English + Spanish toggle** |
-| `next_session_plan` | The clinician | Telegraphic. Target, cue level to start at, what to probe |
-| `auth_summary` | **The payer** | Trend across 7 sessions, clinical justification for continued care |
-
-**`auth_summary` is the money shot.** No ambient scribe produces it. On stage: *"This is what gets Maya her next twelve visits approved."*
-
-The Spanish toggle is the accessibility half of the track prompt and costs one LLM call.
-
----
-
-## 6. Schedule — backwards from 7:00 PM
-
-| | | Checkpoint |
-|---|---|---|
-| 9:20–11:00 | Schema + six sessions of fixtures + transcript | **Fixtures frozen 11:00** |
-| 11:00–12:30 | Extraction pipeline, prompt, cached fallback | Live call returns 6–8 valid events |
-| 12:30–3:00 | **Review UI** — cards, approve/edit/reject, scroll-sync, streak banner | Review a session end to end |
-| 3:00–4:00 | Record view — accuracy trend, cue trend, streak | **3:00 thermal go/no-go** |
-| 4:00–5:00 | Four artifacts + **fallback test** | All four render, Spanish included |
-| 5:00–5:30 | Thermal panel *(only if 3:00 gate passed)* — else buffer | |
-| **5:30** | **HARD FREEZE** | |
-| 5:30–6:30 | README, 90-second captioned recording, submission form | |
-| 6:30–7:00 | Buffer | |
-
-**Cut order if behind at 3:00:** thermal → record view detail → `next_session_plan` → Spanish toggle.
-
-**Never cut** `auth_summary` or `home_program` — those carry criteria 01 and 04.
-
-**Already cut:** mock EHR integration, cross-vertical demo, settings, auth, tests, live thermal capture.
-
----
-
-## 7. Demo — 3 minutes
-
-| Time | Beat |
+| Ember may say | Ember must not say |
 |---|---|
-| 0:00–0:25 | Open on **Maya's record**. "Eight years old, six weeks of therapy on her R sound. Stuck at 30%, needing maximum support. The only reason we know that is her therapist wrote it down by hand every session." |
-| 0:25–1:05 | Today's session lands. Extraction runs live. Seven proposed cards, soft grey, one at 0.61. |
-| 1:05–1:40 | **The moment.** Approve, approve, edit one, reject one, approve. Cards turn red. Streak banner flips to *Resolved — first independent production*. |
-| 1:40–2:15 | Four artifacts. Land on `auth_summary`: "This is what gets Maya her next twelve visits approved." |
-| 2:15–2:40 | Thermal panel. /m/ warm, /s/ warm — that's the leak. Clinician confirms; it lands in the SOAP note and the referral line. "Same record. Different evidence." |
-| 2:40–3:00 | "Tally turns what a therapist observes into the documentation that keeps a kid in care." |
+| “Higher heat observed in the upper-right area.” | “The pan is safe.” |
+| “Keep your hand away and verify another way.” | “There is no burn risk.” |
+| “No current assessment.” | “Everything is clear.” |
+| “The source is paused.” | “The camera proved it is cold.” |
 
-If thermal was cut, 2:15–2:40 becomes the record view showing the six-week trend closing, and the closing line is unchanged.
+Classification is deterministic code over radiometric values. An LLM may later turn the resulting structured assessment into natural language, but it cannot select thresholds or alter severity.
 
 ---
 
-## 8. Anti-scribe positioning — lead with this
+## 2. What ships in the foundation
 
-A judge with health tech awareness pattern-matches you to an ambient scribe (Abridge, Freed, Heidi, DAX) in ten seconds. Get ahead of it:
+This repository reset builds the seam before the hardware path.
 
-1. **We produce a data structure, not a note.** Prose can't be trended for a payer.
-2. **The clinician confirms atoms, not paragraphs.** Every data point carries its own evidence span and its own human signature.
-3. **No audio retained.** We start at transcript, keep only confirmed events. With minors, that isn't a footnote.
-4. **It ingests physical evidence.** A thermal frame goes through the same confirm-and-record loop as a spoken observation. No scribe has a schema for that.
-5. **It looks forward.** Scribes document the session that ended. The next-session plan writes the one that hasn't happened.
+### Included now
+
+- `#scan` default route.
+- High-contrast thermal viewport.
+- Six ordered, simulated 160 × 120 PNG frames.
+- Visible provenance: **“Demo replay — not live”**
+- Start, pause, restart, and stop controls.
+- Text source status.
+- `ThermalSource` interface independent of transport.
+- `ReplayThermalSource` with deterministic timing and cleanup.
+- `#history` with an honest empty state.
+- Build, lint, and replay verification commands.
+
+### Explicitly deferred
+
+- PureThermal native bridge and live frames.
+- Radiometric hotspot analysis.
+- Severity thresholds.
+- Text-to-speech.
+- LLM explanation.
+- Alerts, notifications, or saved incidents.
+
+The replay proves the source boundary and interface lifecycle. It does **not** prove camera connectivity, temperature accuracy, or safety performance.
 
 ---
 
-## 9. Questions to have answers for
+## 3. The MVP after the next phases
 
-- *"Isn't this an ambient scribe?"* — The five points above.
-- *"Why won't EHR vendors build it?"* — They'll build notes. The schema working across articulation, fluency, OT, and ABA plus eval data on which suggestions clinicians accept is the part that compounds.
-- *"Is the thermal screening validated?"* — No, and we don't claim it is. It's a screening prompt for referral, not a measurement. Nasometry remains the standard.
-- *"HIPAA?"* — Not solved in a hackathon build, and don't claim it is. No audio retention, BAA-eligible infrastructure, PHI isolated to one table. Honest beats impressive.
-- *"Who pays?"* — The practice owner. 3–8 clinicians, short cycle, no procurement.
+### Source boundary
 
-> **Do not put a sourced-sounding statistic on screen.** Get the documentation-time number from interviews in the room today and quote it as what you heard. A judge who works in health will catch an invented figure and you lose criteria 02 and 04 at once.
+Both transports implement the same contract:
+
+```
+ReplayThermalSource ─┐
+                     ├── ThermalSource callbacks ── Scan UI
+PureThermalSource ───┘
+```
+
+The React surface never knows whether a frame came from a timer and PNG manifest or a native process. Provenance does.
+
+### Live bridge
+
+The browser is not assumed to expose radiometric Y16 data reliably. A local native bridge will:
+
+1. Open the PureThermal UVC device.
+2. Receive 160 × 120 Y16 frames.
+3. Preserve calibrated radiometric values when the device provides them.
+4. Produce a display image separately from analysis data.
+5. Stream both to `PureThermalSource` over a local-only connection.
+
+The bridge remains replaceable. Vendor example software is prior art, not a runtime dependency.
+
+### Assessment
+
+The analysis phase will:
+
+1. Reject malformed or non-radiometric frames.
+2. Normalize a valid radiometric grid.
+3. Find connected higher-heat regions.
+4. Require persistence across frames to reduce flicker.
+5. Map the strongest region to plain spatial language.
+6. Emit a structured `ThermalAssessment`.
+
+Thresholds are configuration owned by deterministic code and must be validated with the actual device before the UI uses them. No threshold is invented from the PNG replay.
+
+### Spoken interaction
+
+Speech repeats the structured assessment. It never outruns or replaces visible text. If speech fails, the screen remains complete. If the source fails, speech announces the source failure rather than reusing a stale warning.
+
+---
+
+## 4. Interface
+
+### `#scan` — default
+
+- Product name and short purpose.
+- Source badge with text status.
+- Thermal viewport preserving the source aspect ratio.
+- Persistent provenance beside the viewport.
+- Current frame metadata.
+- Start, pause, restart, and stop controls.
+- Live region for source changes.
+- Future assessment panel beneath the viewport.
+
+Every interactive target is at least 44 × 44 CSS pixels, keyboard operable, visibly focused, and named for assistive technology.
+
+### `#history`
+
+Foundation copy explains that Ember is not storing scans or incidents yet. It must not fabricate records to make the page look complete.
+
+History becomes real only after a later, explicit privacy decision. Live frames remain ephemeral even if structured incident metadata is eventually stored.
+
+---
+
+## 5. Demo object and safety
+
+Use a heating pad, reusable hand warmer, or warm mug. Do not bring an exposed heating element or create a burn hazard for the pitch.
+
+The final demo:
+
+1. Show an object whose residual heat is not obvious.
+2. Connect the PureThermal source.
+3. Point Ember toward it.
+4. Display and speak the same directional warning.
+5. Reposition to show the warning follows the thermal region.
+6. Explain that the decision came from deterministic radiometric analysis.
+
+If the native path fails, switch to replay and say exactly what it is. The UI must continue to display **“Demo replay — not live”**.
+
+---
+
+## 6. Stack
+
+- Vite + React 19 + TypeScript.
+- Tailwind v4 through the Vite plugin.
+- Lightweight `location.hash` routing.
+- Local React state in `ScanView` for the foundation.
+- Static PNG replay manifest.
+- Plain Node verification script; no test framework.
+- Future local native bridge for PureThermal Y16.
+
+No API, database, authentication, cloud storage, model endpoint, or persistence in the foundation.
+
+---
+
+## 7. Schedule — backwards from 19:00
+
+| Phase | Window | Exit gate |
+|---|---|---|
+| Repository reset + replay foundation | 12:50–14:00 | Replay lifecycle works; build, lint, verifier green |
+| PureThermal bridge + hotspot analysis | 14:00–15:30 | Valid live radiometric frame reaches deterministic analysis |
+| Spoken interaction | 15:30–16:15 | Screen and speech express the same assessment |
+| Demo flow + accessibility QA | 16:15–17:00 | Keyboard and screen-reader pass; full pitch rehearsed |
+| Offline hardening | 17:00–17:30 | Live path plus labeled replay fallback each run twice |
+| **Hard feature freeze** | **17:30** | No more product code |
+| Package | 17:30–18:30 | README, captioned recording, submission form |
+| Buffer | 18:30–19:00 | Submit; do not build |
+
+**Cut order:** LLM explanation → history persistence → polished temperature charts → multiple hotspot narration.
+
+**Never cut:** deterministic classification, redundant warning output, replay provenance, or the offline fallback.
+
+---
+
+## 8. Success criteria
+
+### Foundation
+
+- Reloading `#scan` preserves the route and presents an idle replay.
+- Six frames render in manifest order at 160 × 120.
+- Start reaches `ended`; pause freezes progress; resume continues; stop returns to idle; restart begins at frame one.
+- Leaving the route cancels timers.
+- Replay provenance remains visible for the entire replay.
+- `#history` truthfully states that nothing is stored.
+- `npm run verify:replay`, `npm run lint`, and `npm run build` pass.
+
+### Final hackathon MVP
+
+- A live radiometric frame crosses the native bridge.
+- Deterministic analysis creates one spatial assessment.
+- Visible and spoken outputs match.
+- Stale frames never produce a current warning.
+- Disconnecting the camera produces an explicit error state.
+- Replay remains a fully offline, plainly labelled fallback.
+- The three-minute demo runs twice without a reload.
+
+---
+
+## 9. Out of scope
+
+Smart plugs, relays, appliance control, third-party alerts, remote monitoring, cloud frame storage, medical diagnosis, injury assessment, fever screening, object recognition, RGB fusion, user accounts, billing, settings, mobile-native packaging, and multi-tenancy.
+
+The product acts by warning the person. It does not act on the physical environment.
+
+---
+
+## 10. Questions to answer honestly
+
+- **“Can it tell me something is safe?”** No. It can locate and describe higher heat; it cannot guarantee touch safety.
+- **“Is the replay a camera feed?”** No. It is a simulated six-frame UI and lifecycle fixture, visibly labelled at all times.
+- **“Does the AI decide what is hot?”** No. Deterministic code produces the assessment. Language generation can only explain that object.
+- **“Are frames uploaded?”** No. The MVP processes them locally and treats them as ephemeral.
+- **“Why not use a normal webcam?”** RGB describes visible appearance. Ember’s core input is radiometric thermal data.
+- **“What happens if the hardware fails on stage?”** The team switches to the labelled offline replay without changing the interface.

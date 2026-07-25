@@ -2,9 +2,9 @@
 
 **The only schedule.** `docs/DEMO.md` says what done looks like; `docs/ARCHITECTURE.md` says where code goes; this says what happens next and in what order.
 
-Two people. **L** = build lead, **D** = second dev. Check boxes as you go. Log surprises in `docs/DECISIONS.md`.
+Two people. **L** = build lead. **D** = second dev. Check boxes as you go. Log contract changes and surprises in `docs/DECISIONS.md`.
 
-**Freeze is 17:30, not 19:00.** The last 90 minutes are README + recording + submission form. Criteria 01–04 are judged on the upload, unnarrated.
+**Freeze is 17:30, not 19:00.** The last ninety minutes are README, captioned recording, and the submission form.
 
 ---
 
@@ -12,205 +12,155 @@ Two people. **L** = build lead, **D** = second dev. Check boxes as you go. Log s
 
 | # | Phase | Window | Exit gate |
 |---|---|---|---|
-| 0 | Scaffold & seam | now → 10:15 | D can import `useStore()` and render |
-| 1 | Fixtures | 10:15 → 11:00 | `verify:fixtures` green · **FROZEN 11:00** |
-| 2 | Extraction | 11:00 → 12:30 | Live call → 6–8 events, one at ≈0.6 |
-| — | **merge #1** | 12:30 | |
-| 3 | Review UI | 12:30 → 15:00 | Full session reviewed, banner flips |
-| — | **THERMAL GATE** | 15:00 | GO / NO-GO logged in `DECISIONS.md` |
-| 4 | Artifacts + record detail | 15:00 → 16:00 | Four artifacts, four voices, Spanish |
-| — | **merge #2 — last merge of the day** | 16:00 | |
-| 5 | Harden | 16:00 → 17:00 | **Full demo runs with wifi off, twice** |
-| 6 | Thermal *(only if GO)* | 17:00 → 17:30 | Confirmed flag lands in SOAP + referral line |
-| — | **HARD FREEZE** | **17:30** | |
-| 7 | Package | 17:30 → 18:30 | README + 90s recording + form submitted |
+| 0 | Repository reset + replay foundation | now → 14:00 | Replay lifecycle works; three verification commands green |
+| 1 | PureThermal bridge + hotspot analysis | 14:00 → 15:30 | Live radiometric frame produces a deterministic assessment |
+| 2 | Spoken interaction | 15:30 → 16:15 | Speech and screen express the same assessment |
+| 3 | Demo flow + accessibility QA | 16:15 → 17:00 | Full demo works by keyboard and with a screen reader |
+| 4 | Offline hardening | 17:00 → 17:30 | Live and replay paths each run twice |
+| — | **HARD FEATURE FREEZE** | **17:30** | No more product code |
+| 5 | Package | 17:30 → 18:30 | README, recording, submission form |
+| — | Buffer | 18:30 → 19:00 | Submit; do not build |
 
 ---
 
-## Phase 0 — Scaffold & seam · now → 10:15
+## Phase 0 — Repository reset + replay foundation · now → 14:00
 
-**Why first:** `types.ts`, `store.ts`, and `derive.ts` are the seam between the two lanes. Their *signatures* unblock every second-dev surface. Ship them before fixtures — stubs are fine, the shapes are not negotiable.
+The source contract ships before the device bridge. One UI, two transports.
 
-**L — done, commit `c2ee4a6`**
-- [x] Vite + React 19 + TS + Tailwind v4 (`@tailwindcss/vite`, no config file, no PostCSS)
-- [x] Fonts: Instrument Serif, Karla, JetBrains Mono
-- [x] `src/styles/tokens.css` — paper, ink, grey, hairline, the one red. **No other colors, ever**
-- [x] `src/types.ts` — real and complete
-- [x] `src/lib/events.ts` — `confirmed()`
-- [x] `src/lib/derive.ts` — **real bodies, not stubs.** Pure functions over arrays; stubs would be code written twice
-- [x] `src/lib/thermal.ts` — delta / ratio / threshold
-- [x] `src/store.tsx` — Context + provider. Fixtures wired, currently empty arrays
-- [x] `src/App.tsx` — hash switch, `<StoreProvider>`, four view files pre-created so nobody edits `App.tsx` later
-- [x] `scripts/verify-fixtures.ts` + `npm run verify:fixtures` — **already red, 6 of 7. That is Phase 1's target**
-- [x] `api/extract.ts` stub returning 200, so D can prove `vercel dev` now
+**L — source seam**
 
-**D** — blocked on L until 10:15, so do the things nobody else can:
-- [ ] Supabase project created, connection string in `.env`
-- [ ] `ANTHROPIC_API_KEY` set in Vercel **server-side only**, and locally for `vercel dev`
-- [ ] `vercel dev` serves a stub `api/extract.ts` returning 200 — **prove this now, not at 12:25**
-- [ ] Text the group chats: *"how long does your note take after each session?"* Replies take hours; you need the number by 15:00 for the README
-- [ ] Identify the thermal camera, read `docs/REFERENCES.md`, plan the lunch capture
+- [x] Replace legacy data shapes with `SourceStatus`, `ThermalProvenance`, `ThermalFrame`, and `ThermalSource`.
+- [x] Add future seams: `Hotspot`, `ThermalAssessment`, `AgentMessage`, `SafetyAction`.
+- [x] Add six 160 × 120 simulated PNGs and `emberReplayManifest`.
+- [x] Implement `ReplayThermalSource` with start, pause, resume, stop, restart support, deterministic completion, and timer cleanup.
+- [x] Add `scripts/verify-replay.ts` and `npm run verify:replay`.
+- [x] Remove unused server, database, and obsolete fixture code.
 
-**Exit:** D pulls, imports `useStore()` and `accuracyTrend()`, renders a component without touching L's files.
+**D — accessible shell**
 
----
+- [x] Make `#scan` the default route and preserve hash routing on reload.
+- [x] Build a high-contrast viewport with source status and persistent **“Demo replay — not live”** provenance.
+- [x] Add Start, Pause, Resume, Restart, and Stop controls: keyboard operable, visible focus, accessible names, 44 × 44 minimum.
+- [x] Add `#history` with an honest no-persistence empty state.
+- [x] Remove obsolete views and language.
+- [x] Rewrite the source-of-truth docs for Ember.
 
-## Phase 1 — Fixtures · 10:15 → 11:00
+**Exit gate**
 
-Read `.claude/skills/seed-fixtures/SKILL.md` first. Fixtures are not test data — they are the demo's entire payload.
+- [x] `npm run verify:replay`
+- [x] `npm run lint`
+- [x] `npm run build`
+- [x] Replay completes, pause/resume preserves position, restart begins at frame one, stop returns idle.
+- [x] Navigating away from `#scan` invokes source cleanup and leaves no timer running.
+- [x] Provenance remains visible throughout playback.
+- [x] No warning or temperature claim is inferred from PNG pixels.
 
-**L — done. FROZEN 10:13, 47 minutes early**
-- [x] `src/fixtures/sessions.ts` — 7 sessions, cast, `CURRENT_SESSION_ID` / `CURRENT_TARGET`
-- [x] `src/fixtures/events.ts` — 32 historical events, 4/5/6/6/5/6, two `edited`
-- [x] `src/fixtures/session-07-transcript.ts` — 84 lines, the four plants documented in its header
-- [x] `supabase/migrations/001_init.sql` — 6 tables, no auth, no RLS
-- [x] `npm run verify:fixtures` → **10/10 green**
-- [ ] `src/fixtures/thermal/` PNGs — Phase 6, capture at lunch
-- [ ] Supabase seed script — **skipped: nothing in the app reads the DB.** Say if you want the history mirrored for a README screenshot (~20 lines)
+### Foundation merge
 
-**D**
-- [ ] `src/features/record/` skeleton against stubbed `derive.ts` — chart shells, session list
-- [ ] Capture thermal frames **at lunch, not at 17:00**. Vendor app, sustain 3s each, export PNG, note nostril peak + facial baseline off the app readout
-
-**Exit gate — 11:00, non-negotiable:**
-- [x] `npm run verify:fixtures` green
-- [x] `unresolvedStreak('/r/ initial') === 3`
-- [x] Every session-7 `evidence` string appears **verbatim** in the transcript
-- [x] **`FIXTURES FROZEN` logged in `DECISIONS.md`.** A fixture change now needs both of you to agree
+One owner confirms the other lane’s files before committing. Do not push in this milestone.
 
 ---
 
-## Phase 2 — Extraction · 11:00 → 12:30
+## Phase 1 — PureThermal bridge + hotspot analysis · 14:00 → 15:30
 
-Read `.claude/skills/extraction-contract/SKILL.md` first. This is the one genuinely live thing on stage.
+**Why native:** browser video APIs are not assumed to preserve the Lepton’s radiometric Y16 values. Display pixels and analysis values are separate payloads.
+
+**L — native source**
+
+- [ ] Identify the exact PureThermal board and current firmware before choosing a capture example.
+- [ ] Enumerate the UVC device and prove one 160 × 120 Y16 frame outside React.
+- [ ] Build a local-only bridge that emits frame identity, sequence, timestamp, display image, radiometric grid, min/max, and live provenance.
+- [ ] Implement `PureThermalSource` against the existing callback contract.
+- [ ] On disconnect, stop emitting frames and transition to `error`; never retain the last frame as current.
+
+**D — deterministic analysis**
+
+- [ ] Reject frames with wrong dimensions, missing radiometric values, non-finite values, or stale timestamps.
+- [ ] Implement hotspot extraction and persistence across frames.
+- [ ] Map hotspot centroid to coarse spatial language: left / center / right and upper / middle / lower.
+- [ ] Render assessment as word + symbol + color. No classification is model-generated.
+- [ ] Keep the exact threshold configuration in deterministic code and log any device-driven change in `DECISIONS.md`.
+
+**Exit gate**
+
+- [ ] A live frame reaches the existing `#scan` surface without transport-specific UI code.
+- [ ] One controlled warm object produces a stable structured assessment.
+- [ ] Disconnect and reconnect are explicit, recoverable states.
+- [ ] No copy promises touch safety.
+
+**If Y16 is not proven by 15:00:** stop bridge debugging. Keep the labelled replay for the submission and describe the live adapter as next work. Do not convert display PNG colors into fake temperatures.
+
+---
+
+## Phase 2 — Spoken interaction · 15:30 → 16:15
+
+Speech is a renderer of structured state, not a second decision system.
 
 **L**
-- [ ] `api/prompt.ts` — the three load-bearing lines survive verbatim:
-  - *"You are documenting what the CLINICIAN did and observed."*
-  - *"You never make a diagnosis, prognosis, or clinical recommendation."*
-  - *"Extract trial counts when the transcript states them."*
-- [ ] Send the six-session history as context — it's why interpretations reference *"first since baseline"*
-- [ ] Instruct confidence < 0.7 on ambiguity. **You need one rejectable card at ≈0.6** or the review step feels ceremonial
-- [ ] `api/extract.ts` — all 10 validation rules. **Reject, never repair.** Silent drops
-- [ ] `SCREENING_FLAG` rejected from the extractor unconditionally
-- [ ] < 5 events surviving → serve the cache
-- [ ] `api/cached-extraction.json` from a known-good live run
-- [ ] **commit + push**
+
+- [ ] Define a pure assessment-to-utterance formatter.
+- [ ] Deduplicate repeated assessments and rate-limit announcements.
+- [ ] Cancel stale speech when the assessment, route, or source changes.
+- [ ] Announce source errors and replay provenance.
 
 **D**
-- [ ] `record/` done — accuracy trend, cue trend, streak visible, reads real fixtures
-- [ ] `outputs/` shell — four panes, tab switch, empty states
 
-**Exit:** live call returns 6–8 valid events with one at ≈0.6. `USE_CACHED_EXTRACTION=1` reproduces it offline.
+- [ ] Add speak, mute, and repeat controls with accessible names and visible state.
+- [ ] Keep complete warning text on screen when speech is unavailable.
+- [ ] Use a polite live region for source status and an assertive region only for urgent warnings.
+- [ ] Verify keyboard and VoiceOver operation.
 
-### merge #1 — 12:30
-
----
-
-## Phase 3 — Review UI · 12:30 → 15:00
-
-The highest-value surface in the product. Everything else is downstream of it.
-
-**L**
-- [ ] `EventCard` — proposed: soft grey, hairline dashed, confidence shown
-- [ ] Approve → snaps to full ink, grows a **red rule down the left edge**. The only animation in the app
-- [ ] Edit → `clinician_edit` required, status `edited`, renders red
-- [ ] Reject → recedes, excluded from everything downstream
-- [ ] `TranscriptPane` + scroll-sync — `String.indexOf` on the verbatim `evidence` span, `scrollIntoView`, highlight
-- [ ] `StreakBanner` — reads `unresolvedStreak` / `isResolved` from `derive.ts`. **No second implementation**
-- [ ] On last confirm: fire all 5 `/api/generate` calls in parallel. Hides latency behind stage talk
-
-**D**
-- [ ] `api/generate.ts` — one endpoint, `{sessionId, kind, lang}`, never 4xx to the UI
-- [ ] `api/artifact-prompts.ts` — four voice blocks. **Read them side by side; if two sound alike, the best beat collapses**
-- [ ] `outputs/` renders from `confirmed()` only. Spanish toggle on `home_program`
-- [ ] `api/cached-artifacts.json`
-
-**Exit:** review a full session end to end. Cards go grey → red. Banner flips to *Resolved — first independent production*.
-
-### THERMAL GATE — 15:00
-
-Review UI done end-to-end **and** record view underway?
-
-- **GO** → thermal gets 17:00–17:30. Standalone route, wired to nothing.
-- **NO-GO** → **cut it.** Delete the branch, strip the beat from `DEMO.md`, never mention it on stage.
-
-Log the answer in `DECISIONS.md`. This is a checkpoint, not a preference — do not renegotiate it at 16:30.
-
-**Cut order if behind:** thermal → record view detail → `next_session_plan` → Spanish toggle.
-**Never cut** `auth_summary` or `home_program` — they carry criteria 01 and 04.
+**Exit:** one structured assessment produces matching visible and spoken language; muting affects speech only.
 
 ---
 
-## Phase 4 — Artifacts + record detail · 15:00 → 16:00
+## Phase 3 — Demo flow + accessibility QA · 16:15 → 17:00
 
-**L**
-- [ ] Review polish, the approve interaction, empty and error states
-- [ ] Verify **no `proposed` event reaches any artifact.** One leak breaks the product thesis on stage
+- [ ] Rehearse `docs/DEMO.md` with a heating pad, reusable hand warmer, or warm mug.
+- [ ] Run every control by keyboard only.
+- [ ] Run the full flow with VoiceOver; confirm labels, order, live regions, and no duplicate announcements.
+- [ ] Verify status is understandable without color and without speech.
+- [ ] Check 200% zoom and narrow viewport reflow.
+- [ ] Confirm focus never enters the thermal image.
+- [ ] Capture screenshots while the build is known good.
 
-**D**
-- [ ] All four artifacts render from confirmed events, four distinct voices
-- [ ] `auth_summary` reads as a seven-session trend with justification for continued care — **the money shot**
-- [ ] Spanish toggle works
-- [ ] Record view detail — the six-week trend closing
-
-### merge #2 — 16:00 · last merge of the day
+**Exit:** two people can independently run the three-minute demo without explanation from the builder.
 
 ---
 
-## Phase 5 — Harden · 16:00 → 17:00
+## Phase 4 — Offline hardening · 17:00 → 17:30
 
-The phase teams skip and then lose at 17:20. Do not skip it.
+- [ ] Unplug the network and run the labelled replay twice.
+- [ ] Run the live hardware path twice if Phase 1 passed.
+- [ ] Unplug the camera mid-stream and verify the UI enters `error`, stops stale output, and can recover.
+- [ ] Reload `#scan` and `#history`.
+- [ ] Run `npm run verify:replay`, `npm run lint`, and `npm run build`.
+- [ ] Freeze at 17:30 even if a polish item remains.
 
-- [ ] **Turn the wifi off.** `USE_CACHED_EXTRACTION=1` + cached artifacts → run the entire demo. Both flags
-- [ ] Refresh `cached-extraction.json` if `prompt.ts` changed since Phase 2. A stale cache that disagrees with live is worse than none
-- [ ] Full end-to-end run **twice, no reload between**
-- [ ] Screenshot all four artifacts for the README while everything is working
-- [ ] Every remaining commit pushed
+**Cut order:** LLM explanation → persistent history → temperature chart polish → multi-hotspot narration.
 
-**Exit:** demo runs offline, twice, without a reload. If it doesn't, this phase gets Phase 6's window and thermal is cut.
-
----
-
-## Phase 6 — Thermal · 17:00 → 17:30 · only if 15:00 was GO
-
-Read `.claude/skills/thermal-panel/SKILL.md` first. **No capture code. Two committed PNGs.** Hard abort 17:30.
-
-**D**
-- [ ] `#thermal` standalone route, wired to nothing that can break the main flow
-- [ ] Frame pair side by side, **native thermal palette — do not recolor**, labelled `/m/ sustained` / `/s/ sustained`
-- [ ] Nasal delta under each, mono
-- [ ] The comparison in plain words: `/s/ delta is 82% of /m/ delta — expected under 30%`
-- [ ] Proposed `SCREENING_FLAG` card, **identical styling to every other proposed card**
-- [ ] Confirm → template-append into the SOAP objective and the `auth_summary` referral line. **Deterministic string, no LLM call on stage**
-- [ ] Copy says **screening**. Never diagnose, detect, measure, or test for
-- [ ] If the frames are staged, the UI says **simulated example** — and you say it out loud
-
-**If you run out of time, cut the panel's polish. Never cut the flow into the artifacts** — that loop is the entire reason thermal is in the product.
-
-### HARD FREEZE — 17:30
+**Never cut:** deterministic classification, redundant warning output, replay provenance, or the offline fallback.
 
 ---
 
-## Phase 7 — Package · 17:30 → 18:30
+## Phase 5 — Package · 17:30 → 18:30
 
-Criteria 01–04 are scored on this, unnarrated. A perfect build that isn't packaged scores nothing.
-
-- [ ] **README**, first line is track fit:
-  > Tally lowers the cost of care and closes an accessibility gap for pediatric speech therapy: it removes documentation time from every session, and it produces the progress evidence that keeps a child's therapy authorized.
-- [ ] Then: problem · four artifact screenshots · the anti-scribe difference · **what's real vs. mocked, stated plainly** · interview quotes
-- [ ] **90-second captioned screen recording, no voiceover.** Same beats as `DEMO.md`
-- [ ] Submission form
-- [ ] 18:30–19:00 buffer. Do not spend it building
-
-**The number:** quote what you heard in interviews today. *"We asked three people and heard 6–10 minutes per session"* beats a citation you can't defend. **Do not invent a statistic** — a judge who works in health will catch it and you lose criteria 02 and 04 at once.
+- [ ] README first line states track fit:
+  > Ember widens independent access to everyday spaces by giving blind and low-vision people a non-contact way to locate higher heat before reaching toward it.
+- [ ] Show the product, accessibility behavior, architecture, and what is live versus simulated.
+- [ ] Include one screenshot of the live path if proven and one clearly labelled replay screenshot.
+- [ ] Record a 90-second captioned demo.
+- [ ] Complete and submit the form.
+- [ ] Use 18:30–19:00 only as submission buffer.
 
 ---
 
 ## Standing rules
 
-- **Commit after every working increment.** A broken uncommitted repo at 17:15 is how teams lose
-- **Merges at 12:30 and 16:00 only.** Never after 16:00
-- **One task per session, `/clear` between.** Session budget is scarcer than time
-- **No new dependency without asking.** No abstractions before the third repetition
-- **Escalate, don't guess:** a fixture would change after 11:00 · extraction returns <5 or >10 events · a design token doesn't cover a case · `mvp.md` contradicts `AGENTS.md`
+- Never claim an object is safe to touch.
+- Deterministic code owns classification; generated language cannot change it.
+- Text + symbol are required; color and speech reinforce them.
+- Frames are ephemeral unless an explicit later privacy decision changes that.
+- No smart plug, relay, cloud frame store, or autonomous physical action.
+- No new dependency without asking.
+- Commit after every working increment; append the handoff to `docs/DECISIONS.md`.

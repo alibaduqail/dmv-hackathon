@@ -1,41 +1,105 @@
 # SETUP.md
 
-## Plugins — two, no more
+## Web app
+
+Requirements: Node.js supported by Vite 8 and npm. This machine currently uses Node `v26.5.0`.
+
+```sh
+npm ci
+npm run dev
+```
+
+Open the local URL Vite prints.
+
+| Route | Purpose |
+|---|---|
+| `#scan` | Default scan surface and simulated replay |
+| `#history` | Honest empty state; no data is persisted |
+
+Reload both routes once. Hash routing must survive a direct reload.
+
+---
+
+## Verification
+
+Run all three before handing off:
+
+```sh
+npm run verify:replay
+npm run lint
+npm run build
+```
+
+`verify:replay` checks the six-frame manifest, 160 × 120 dimensions, finite metadata, order, deterministic completion, pause/resume, and cleanup. It does not validate thermal accuracy.
+
+For manual replay verification:
+
+1. Open `#scan`.
+2. Confirm status is `Idle`.
+3. Start and let all six frames finish.
+4. Restart, pause after frame two, wait longer than one interval, and confirm the frame does not advance.
+5. Resume and confirm the next frame is frame three.
+6. Stop and confirm status returns to idle.
+7. Start again, navigate to `#history`, wait, then return; no old timer or frame may advance in the background.
+8. Confirm **“Demo replay — not live”** stays adjacent to the viewport whenever a replay frame is displayed.
+
+Run the controls by keyboard only. Every control needs a visible focus indicator and accessible name.
+
+---
+
+## Replay assets
 
 ```
-/plugin marketplace add DietrichGebert/ponytail
-/plugin install ponytail@ponytail
+public/replay/ember-frame-01.png
+public/replay/ember-frame-02.png
+public/replay/ember-frame-03.png
+public/replay/ember-frame-04.png
+public/replay/ember-frame-05.png
+public/replay/ember-frame-06.png
 ```
-Needs `node` on PATH. Cuts code volume and token spend — direct lever on session budget.
 
-```
-/plugin marketplace add mattpocock/skills
-/plugin install grill-me@skills
-```
-**Not for code.** Fifteen minutes at 5:30 on the pitch and the ambient-scribe question, while the recording renders.
+All are simulated, 160 × 120, and ordered by `src/fixtures/replay.ts`.
 
-**Do not install:** Graphify (built for 500+ file codebases; ours is ~30), Ruflo (orchestration harness — coordination overhead burns session budget you can't refill).
+Do not:
 
-Optional at 4:00 only: `impeccable` (`flora131/atomic`) for review-card polish. Tell it the palette is locked or it'll generate its own and fight the marginalia direction.
+- Rename or reorder an asset without updating the manifest and verifier.
+- Treat the PNG palette as radiometric Celsius values.
+- Remove or shorten the provenance label.
+- Use replay to claim camera connectivity or classification accuracy.
 
-## Repo
+---
 
-- Vite + React + TS + Tailwind
-- Supabase project, `001_init.sql` migrated
-- `api/extract.ts` on Vercel, `ANTHROPIC_API_KEY` set server-side, returns 200 on a stub
-- Fonts + `tokens.css`
-- This doc set committed
+## PureThermal hardware — next phase, not foundation setup
 
-## Thermal frames — capture at lunch, not at 5:00
+Before writing bridge code:
 
-Identify the camera first, then read `docs/REFERENCES.md`.
+1. Identify the exact PureThermal board revision and firmware.
+2. Seat the Lepton 3.5 with power disconnected.
+3. Use a USB data cable, not a charge-only cable.
+4. Confirm the device enumerates:
 
-**Default path, ~20 minutes:** use the vendor app, sustain /m/ for 3 seconds, capture. Sustain /sssss/ for 3 seconds, capture. Export both as PNG, commit to `src/fixtures/thermal/`. Note the nostril-region peak and facial baseline temperature off the app's own readout and hard-code them.
+   ```sh
+   system_profiler SPUSBDataType
+   ```
 
-Do not write a capture driver. It's a 3-hour detour that produces the same two PNGs.
+5. Prove one 160 × 120 Y16 frame outside React.
+6. Record whether the device supplies radiometric values and which calibration mode is active.
+7. Only then implement the local bridge and `PureThermalSource`.
 
-Get a clean pair from two different people if you can — one where /s/ stays cold (normal) and one where it blooms. If nobody in the room has nasal emission, use the normal pair and label the flagged frame clearly as a **simulated example**. Say so on stage. Do not pass off a staged frame as a real finding.
+Direct browser UVC radiometry is not assumed. The live path needs a local native bridge that preserves Y16 analysis data and creates a separate display image.
 
-## Interviews — send before you open an editor
+The GroupGets repositories in `docs/REFERENCES.md` are examples and feasibility evidence, not guaranteed working software. `GetThermal` currently labels itself non-working. Do not make it the demo dependency.
 
-Text your group chats now. One question: *how long does your note take after each session?* Roughly one in twelve kids goes through speech services, so someone in your network qualifies. Replies take hours; you want them by 3:00 so the number makes the README.
+---
+
+## Offline rehearsal
+
+Before 17:30:
+
+1. Disconnect the network.
+2. Run the complete replay twice.
+3. Reload `#scan` between runs.
+4. Confirm no API, font, image, or route requires the network.
+5. If the live bridge exists, unplug the camera mid-stream and confirm the UI enters `error` without retaining a current assessment.
+
+The offline fallback is the committed replay, not a cached live frame.

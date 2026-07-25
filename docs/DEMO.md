@@ -1,57 +1,84 @@
 # DEMO.md — the three minutes everything serves
 
-Acceptance criteria for the entire repo. If a change doesn't improve a beat below, it's out of scope.
+Acceptance criteria for the repo. If a change does not improve a beat below or protect the fallback, it is out of scope.
+
+Use a heating pad, reusable hand warmer, or warm mug. No exposed burner and no invitation for a judge to touch a heated object.
 
 | Time | Beat | Depends on |
 |---|---|---|
-| 0:00–0:25 | Open on **Maya's record**. "Eight years old. Six weeks on her R sound. Stuck at 30%, needing maximum support. The only reason we know that is her therapist wrote it down by hand every session." | fixtures, record view |
-| 0:25–1:05 | Today's session lands. Extraction runs live. Seven proposed cards, soft grey, one at 0.61. | api/extract, review view |
-| 1:05–1:40 | **The moment.** Approve, approve, edit one, reject one, approve. Cards turn red. Banner flips to *Resolved — first independent production*. | derive.ts, approve interaction |
-| 1:40–2:15 | Four artifacts. Land on `auth_summary`: "This is what gets Maya her next twelve visits approved." | outputs view |
-| 2:15–2:40 | Thermal. /m/ warm, /s/ warm — that's the leak. Clinician confirms; it lands in the SOAP note and the referral line. "Same record. Different evidence." | thermal panel *(gated)* |
-| 2:40–3:00 | "Tally turns what a therapist observes into the documentation that keeps a kid in care." | — |
+| 0:00–0:25 | Hold up the ordinary-looking object. “Residual heat has no reliable sound. Finding it by contact means finding it too late.” | object, pitch |
+| 0:25–0:45 | Open `#scan`. “Ember is a handheld thermal companion for blind and low-vision people.” Source status is visible and announced. | accessible shell |
+| 0:45–1:15 | Start the PureThermal source and point it toward the object. The thermal frame appears. | native bridge |
+| 1:15–1:50 | Directional assessment appears as text + symbol + color and is spoken once: “Higher heat observed in the upper-right area. Keep your hand away and verify another way.” | deterministic analysis, speech |
+| 1:50–2:15 | Reposition the camera. The direction updates without repeating stale speech. “The language model does not decide this. Deterministic radiometric rules do.” | persistence, formatter |
+| 2:15–2:35 | Stop the source. Show that frames disappear from current state and nothing was saved in `#history`. | lifecycle, privacy |
+| 2:35–3:00 | “RGB can tell you what an object looks like. Ember tells you where higher heat is—without making contact.” Land on the accessible assessment panel. | — |
 
-**If thermal was cut at 3:00 PM:** 2:15–2:40 becomes the record view showing the six-week trend closing. Closing line unchanged.
+The closing comparison is product positioning, not a guarantee of temperature accuracy or touch safety.
 
-## Cut order if behind at 3:00
+---
 
-thermal → record view detail → `next_session_plan` → Spanish toggle.
-**Never cut** `auth_summary` or `home_program` — criteria 01 and 04.
+## Foundation rehearsal
 
-## Submission package — 5:30 to 6:30
+Before the native bridge exists, rehearse beats 0:00–0:45 and then start the six-frame replay.
 
-Criteria 01–04 are judged on what you upload, unnarrated. Only 05 is live.
+Say:
 
-**90-second captioned screen recording.** Same beats, no voiceover. Record at 5:30 while the build is frozen and you still have energy.
+> “This is our offline interface fixture. It is simulated, not camera data, and it does not produce a safety assessment.”
+
+The viewport must display **“Demo replay — not live”** for the entire sequence. Demonstrate start, pause, resume, restart, and stop. Do not narrate PNG colors as temperatures.
+
+---
+
+## Hardware fallback
+
+If live capture fails on stage:
+
+1. Say, “The device source is unavailable, so I’m switching to our labelled offline replay.”
+2. Start replay.
+3. Keep the provenance label on screen.
+4. Demonstrate interface lifecycle and accessibility.
+5. Describe—not simulate—the deterministic assessment phase.
+
+Never hide the source switch, reuse a stale live assessment, or call replay a scan.
+
+---
+
+## Submission package — 17:30 to 18:30
+
+Criteria 01–04 are judged on what gets uploaded, unnarrated.
+
+**90-second captioned recording.** Keep source provenance visible. If the recording uses replay, the captions also say it is simulated.
 
 **README, first line is track fit:**
-> Tally lowers the cost of care and closes an accessibility gap for pediatric speech therapy: it removes documentation time from every session, and it produces the progress evidence that keeps a child's therapy authorized.
 
-Then: problem, four artifacts as screenshots, the anti-scribe difference, **what's real vs. mocked stated plainly**, interview quotes.
+> Ember widens independent access to everyday spaces by giving blind and low-vision people a non-contact way to locate higher heat before reaching toward it.
+
+Then: problem, target user, one architecture diagram, accessible output, privacy boundary, and a plain table of what is live versus simulated.
+
+---
 
 ## The 60-second pitch
 
-> Maya is eight. She's been in speech therapy six weeks, working on her R sound.
+> A hot pan and a cold pan can make the same sound. For someone who is blind or has low vision, checking by contact can mean finding the danger too late.
 >
-> Her therapist is doing two jobs at once — treating Maya, and making tally marks on paper to prove the therapy is working. Because insurance approves therapy twelve visits at a time, and if the progress data is thin, Maya gets denied.
+> Ember is a handheld thermal companion. Point it toward a counter, stove, mug, heater, or charging device. It locates higher heat, tells you where it is on screen, and speaks the same warning aloud.
 >
-> Tally takes the session and pulls out the clinical data. How many trials. How much help she needed. The moment she said it on her own for the first time in six weeks. The therapist confirms it in under a minute — and we write the clinical note, the home practice plan for her mom in Spanish, and the evidence packet that gets her next twelve visits approved.
+> The important part is what the AI does not do. A deterministic rules engine analyzes the radiometric frame. Language only explains that structured result. Ember never claims something is safe to touch, and it never needs to upload the thermal image.
 >
-> And it isn't limited to what was said. With a thermal camera, we can see air escaping a child's nose on sounds where it shouldn't — the sign of a palate problem community clinics can't test for, because the equipment costs thousands of dollars.
+> Today we are using a Lepton 3.5 thermal camera through PureThermal USB. If the hardware drops, the same interface has a clearly labelled offline replay—because an accessibility tool needs a fallback people can trust.
 >
-> Same record. Different evidence.
->
-> Tally turns what a therapist observes into the documentation that keeps a kid in care.
+> Ember gives people a thermal sense before contact.
 
-Land on the last line and stop. No "thank you."
+Land on the last line and stop.
 
-## Questions to have answers for
+---
 
-- *"Isn't this an ambient scribe?"* — We produce a data structure, not prose. The clinician confirms atoms, not paragraphs. No audio retained. It ingests physical evidence. It looks forward.
-- *"Is the thermal validated?"* — No, and we don't claim it. Screening prompt for referral, not measurement. Nasometry remains the standard.
-- *"HIPAA?"* — Not solved in a hackathon build. No audio retention, BAA-eligible infra, PHI in one table. Honest beats impressive.
-- *"Who pays?"* — Practice owner, 3–8 clinicians. Short cycle, no procurement.
+## Questions to answer
 
-## The number
-
-Get documentation time from interviews in the room today. **Do not invent one.** "We asked three people today and heard 6–10 minutes per session" beats a citation you can't defend.
+- **“Can it guarantee I will not be burned?”** No. Ember reports higher heat and direction; it cannot account for every material, reflection, distance, exposure, or person.
+- **“Does AI decide what is dangerous?”** No. Deterministic code creates the assessment. Generated language may only explain it.
+- **“Are you storing video?”** No. Frames are local and ephemeral in the MVP. `#history` is intentionally empty.
+- **“Is the replay real camera output?”** No. It is a simulated interface fixture labelled on screen at all times.
+- **“Why thermal instead of RGB?”** The task is locating thermal concentration, not identifying visible objects.
+- **“Why no smart plug?”** The MVP warns the person; it does not autonomously control the physical environment.

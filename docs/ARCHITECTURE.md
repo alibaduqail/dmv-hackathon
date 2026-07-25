@@ -1,348 +1,309 @@
-# ARCHITECTURE.md — the file map and the contracts
+# ARCHITECTURE.md — where things go and why
 
-`SCHEMA.md` says what the data *is*. This says **what file it lives in, what that file exports, and who writes it.**
+Cold start: `docs/STATUS.md`. Shared shapes: `docs/SCHEMA.md`. Schedule: `docs/PLAN.md`. Demo acceptance: `docs/DEMO.md`.
 
-Read this before your first edit. If you are picking up a task cold, you need exactly three files: `AGENTS.md` (rules), this file (where things go), `docs/DEMO.md` (what counts as done).
+This file owns boundaries, file placement, and landmines. It is not a second schedule.
 
 ---
 
-## 1. Read order for a fresh session
+## 1. System shape
 
-| # | File | What you get |
+### Foundation
+
+```
+six simulated PNGs + manifest
+              │
+              ▼
+    ReplayThermalSource
+       frame + status callbacks
+              │
+              ▼
+       ScanView local state
+              │
+       ┌──────┼────────┐
+       ▼      ▼        ▼
+   viewport  status  controls
+```
+
+### After the live bridge
+
+```
+Lepton 3.5 + PureThermal USB
+              │ Y16
+              ▼
+      local native bridge
+      ├── display image
+      └── radiometric Celsius grid
+              │
+              ▼
+      PureThermalSource
+              │ same callbacks
+              ▼
+        deterministic analysis
+              │ ThermalAssessment
+              ├── visible text + symbol + color
+              └── spoken copy
+```
+
+React never opens the USB device and never guesses Celsius values from display colors. The source boundary is the architecture.
+
+---
+
+## 2. Product boundaries
+
+| Layer | Owns | Does not own |
 |---|---|---|
-| 1 | `AGENTS.md` | Rules, lane ownership, vocabulary, the 3:00 PM gate |
-| 2 | `docs/ARCHITECTURE.md` | This file — tree, contracts, build order |
-| 3 | `docs/SCHEMA.md` | Field-level data contract |
-| 4 | `docs/DEMO.md` | The three minutes. Acceptance criteria for everything |
-| 5 | `mvp.md` | Product + clinical background. Read once, don't re-read |
+| Native bridge | USB, Y16, calibration metadata, display conversion | UI, classification, speech |
+| `ThermalSource` | Lifecycle, ordered frame delivery, source provenance | React state, analysis, persistence |
+| Deterministic analysis | Validation, hotspot extraction, spatial assessment | Generated language, hardware control |
+| `ScanView` | Current source status, current frame, controls, accessible output | USB details, threshold logic, history |
+| Speech renderer | Utterance of current structured assessment | Severity or guidance decisions |
+| `#history` | Honest privacy state | Fabricated or persisted incidents |
 
-Skills in `.claude/skills/` load automatically in Claude Code. On Codex, read the matching `SKILL.md` by hand before touching that area:
-
-| Touching | Read first |
-|---|---|
-| `src/fixtures/**` | `.claude/skills/seed-fixtures/SKILL.md` |
-| `api/extract.ts`, `api/prompt.ts` | `.claude/skills/extraction-contract/SKILL.md` |
-| `src/features/thermal/**` | `.claude/skills/thermal-panel/SKILL.md` |
-
----
-
-## 2. The whole system in one diagram
-
-```
-src/fixtures/*.ts ──seed──> Supabase (write-only at runtime; UI never reads it)
-       │
-       └──> src/store.ts  ◄── THE ONLY RUNTIME SOURCE OF TRUTH
-                 │
-                 │  session 7 transcript
-                 ▼
-         POST /api/extract ──> Anthropic ──> validate ──> 6-8 events, status='proposed'
-                 │                              │
-                 │                    fail ─> api/cached-extraction.json
-                 ▼
-         Review UI: approve / edit / reject
-                 │
-                 ▼
-         confirmed(e)  =  status is 'approved' or 'edited'
-                 │
-    ┌────────────┼─────────────┬──────────────────┐
-    ▼            ▼             ▼                  ▼
- derive.ts   record view   POST /api/generate   thermal panel
- (trends,    (6-week          × 5, parallel      (2 fixture PNGs)
-  streak)     chart)          = 4 artifacts        │
-                                    ▲              │ SCREENING_FLAG
-                                    └──────────────┘ confirmed → template
-                                                       append, no regen
-```
-
-**One sentence:** fixtures seed a local store, extraction proposes events into it, the clinician confirms them, and every downstream surface reads the confirmed subset of that same store.
+Frames are ephemeral. Stop, route change, or source error invalidates “current” output.
 
 ---
 
 ## 3. File tree
 
-`✅` exists · `⬜` to build · **Owner** per `AGENTS.md` lane table.
-
 ```
-AGENTS.md                          ✅  rules — source of truth
-CLAUDE.md                          ✅  Claude Code specifics
-mvp.md                             ✅  product spec
-README.md                          ⬜  written 5:30–6:30, not before
-docs/  ARCHITECTURE.md SCHEMA.md DEMO.md SETUP.md REFERENCES.md DECISIONS.md   ✅
-.claude/skills/{seed-fixtures,extraction-contract,thermal-panel}/SKILL.md      ✅
+AGENTS.md                         source of truth for every coding agent
+CLAUDE.md                         Claude Code-specific discipline only
+mvp.md                            product and claim boundary
 
-supabase/migrations/001_init.sql   ⬜  lead   tables only. no auth, no RLS, no policies
-scripts/verify-fixtures.ts         ⬜  lead   npm run verify:fixtures — asserts the 7 invariants
+docs/
+  STATUS.md                       cold-start briefing
+  ARCHITECTURE.md                 this file
+  SCHEMA.md                       source contracts
+  PLAN.md                         the only schedule
+  DEMO.md                         acceptance and pitch
+  SETUP.md                        local, hardware, and offline setup
+  REFERENCES.md                   primary sources and prior art
+  DECISIONS.md                    append-only handoff
 
-api/                                       ← lead. ANTHROPIC_API_KEY server-side only
-  extract.ts                       ⬜  POST {sessionId} -> proposed events
-  generate.ts                      ⬜  POST {sessionId, kind, lang} -> one artifact
-  prompt.ts                        ⬜  extraction system prompt (3 load-bearing lines)
-  artifact-prompts.ts              ⬜  one voice block per artifact kind
-  cached-extraction.json           ⬜  offline fallback — refresh whenever prompt.ts changes
-  cached-artifacts.json            ⬜  offline fallback
+public/
+  favicon.svg
+  replay/
+    ember-frame-01.png
+    ember-frame-02.png
+    ember-frame-03.png
+    ember-frame-04.png
+    ember-frame-05.png
+    ember-frame-06.png
+
+scripts/
+  generate-replay-assets.mjs      deterministic fixture generator
+  verify-replay.ts                asset + lifecycle verification
 
 src/
-  types.ts                         ✅  lead   ALL unions + interfaces. Import, never redeclare
-  store.tsx                        ✅  lead   React Context. The runtime source of truth
-  App.tsx                          ✅  lead   hash view switch + StoreProvider
-  main.tsx  index.css              ✅  lead
-  styles/tokens.css                ✅  lead   DO NOT ADD COLORS
+  types.ts                        all shared source and future-seam contracts
+  App.tsx                         hash route switch and global navigation
+  main.tsx                        React entry point
+  index.css                       global CSS entry
+
+  fixtures/
+    replay.ts                     emberReplayManifest
 
   lib/
-    events.ts                      ✅  lead   confirmed() — write once, import everywhere
-    derive.ts                      ✅  lead   4 trend fns. Both banner and record view read here
-    thermal.ts                     ✅  lead   delta + ratio + threshold constant
-    supabase.ts                    ⬜  lead   client + fire-and-forget writes
-
-  fixtures/                        ⬜  lead   FROZEN 11:00
-    sessions.ts                          7 sessions. 1-6 transcript=null, 7 populated
-    events.ts                            32 historical events: 4,5,6,6,5,6 per session
-    session-07-transcript.ts             TranscriptLine[] — evidence strings match verbatim
-    thermal.ts                           2 ThermalCapture records, hard-coded temps
-    thermal/m-sustained.png  s-sustained.png
+    thermal-source.ts             ReplayThermalSource
 
   features/
-    review/                        ⬜  lead        THE PRODUCT. Highest-value surface
-      ReviewView.tsx  EventCard.tsx  TranscriptPane.tsx  StreakBanner.tsx
-    record/                        ⬜  second dev  demo opens here
-      RecordView.tsx  AccuracyTrend.tsx  CueTrend.tsx
-    outputs/                       ⬜  second dev
-      OutputsView.tsx  ArtifactPane.tsx
-    thermal/                       ⬜  second dev  GATED — do not start before the 3:00 GO
-      ThermalView.tsx  FramePair.tsx
+    scan/
+      ScanView.tsx                source lifecycle + accessible replay surface
+    history/
+      HistoryView.tsx             honest empty state
+
+  styles/
+    tokens.css                    high-contrast design tokens
 ```
 
-**~30 files.** If your change adds a file not on this list, say so in chat first.
+Git history is the archive for removed work. Do not add a legacy application folder.
 
 ---
 
-## 4. Five architectural calls
+## 4. Architectural calls
 
-Made now so nobody re-litigates them at 5:20.
+### 4.1 One source interface, two transports
 
-### 4.1 Supabase is write-only at runtime
+`ReplayThermalSource` and the future `PureThermalSource` implement `ThermalSource`. UI controls call `start`, `pause`, `resume`, and `stop` without transport checks.
 
-`AGENTS.md` non-negotiable #6 says the demo must run **with the network unplugged**. That is impossible if the UI reads from Supabase. So:
+If a component branches on `simulated-replay` to manage timers or on `live-purethermal` to open hardware, the seam has failed. Provenance branches may change copy; they may not change lifecycle ownership.
 
-- Fixtures seed Supabase once, at setup.
-- `api/extract.ts` inserts proposed rows.
-- The client writes confirmations through, **fire-and-forget, errors swallowed**.
-- **No render path ever awaits Supabase.** No loading spinners on stage.
+### 4.2 Replay is infrastructure, not a fake live mode
 
-Supabase stays real and demoable ("here's the table"), and the demo survives conference wifi. If you're behind at 3:00, deleting the write-through costs zero demo beats.
+The replay is a first-class source with truthful provenance. It exists for:
 
-### 4.2 One in-memory store, seeded from fixtures
+- Offline demo fallback.
+- UI development before the bridge.
+- Deterministic lifecycle verification.
 
-`src/store.ts` — React Context over `useState`. No Zustand, no Redux, no TanStack Query. Four features read the same event list; prop-drilling it is worse than 30 lines of Context.
+It does not exist for:
 
-### 4.3 Artifacts: one endpoint, five parallel calls, fired early
+- Deriving Celsius from colors.
+- Tuning hotspot thresholds.
+- Showing generated warnings in the foundation.
+- Claiming the camera works.
 
-Four artifacts + Spanish = 5 LLM calls. Beat `1:40–2:15` is **35 seconds** — sequential generation does not fit.
+### 4.3 Local state is enough
 
-- One endpoint `api/generate.ts`, called 5× **in parallel** (separate calls keep the four voices from bleeding into each other, which is the failure mode `SCHEMA.md` warns about).
-- **Fire on review-complete, not on tab-open.** There is ~15s of stage talk between the last approve and the artifacts beat. Spend it generating.
-- Render each pane the moment its own call lands.
+Only `ScanView` needs current frame and source status. Keep them local. No Context store, external state library, query layer, local storage, or database.
 
-### 4.4 Thermal → artifacts is a template append, not a regeneration
+The source instance must survive ordinary renders and be stopped in effect cleanup. It must not be constructed on every frame callback.
 
-Thermal is confirmed at beat `2:15`, after artifacts already rendered at `1:40`. Do **not** re-run the LLM on stage.
+### 4.4 Display and analysis data are separate
 
-The SOAP objective line and the `auth_summary` referral line are **deterministic strings built from the confirmed `SCREENING_FLAG` event** and appended on confirm. Instant, unbreakable, and it makes "same record, different evidence" visibly literal.
-
-### 4.5 No router
-
-Four views, no deep-linking requirement. `location.hash` + a `hashchange` listener, ~12 lines in `App.tsx`. Survives a reload, lets you type `#thermal` if something goes wrong on stage, adds no dependency.
+`displayUrl` is for people. `radiometricValuesC` is for deterministic code.
 
 ```
-#record  (default — the demo opens here)   #review   #outputs   #thermal
+displayUrl ───────────────> <img>
+radiometricValuesC ───────> validator → hotspot analysis
 ```
+
+Never parse a color palette back into temperature. Replay omits `radiometricValuesC`, so deterministic analysis has nothing to consume.
+
+### 4.5 Hash routing stays
+
+Two routes do not justify a router dependency.
+
+```
+#scan      default and scanner surface
+#history   empty privacy/history surface
+```
+
+Unknown hashes fall back to `#scan`. A reload must preserve either named route. Route cleanup stops the active source.
+
+### 4.6 Provenance is content, not decoration
+
+`ThermalProvenance.label` renders next to the viewport and remains visible whenever its frame is visible. It cannot be hidden behind a tooltip, color, hover, or screen-reader-only class.
+
+Replay copy is exact: **“Demo replay — not live.”**
+
+### 4.7 Classification stays pure and deterministic
+
+Future analysis accepts a radiometric frame and returns a `ThermalAssessment`. It does not call a model, speak, manipulate DOM, or perform a physical action.
+
+Speech and generated explanations consume the assessment. They cannot rewrite `level`, `hotspots`, or `guidance`.
 
 ---
 
-## 5. Contracts — copy these signatures exactly
+## 5. Contracts
 
-Anything below is a promise between the two of us. Change one, announce it and log it in `docs/DECISIONS.md`.
+All signatures live in `src/types.ts` and are documented once in `docs/SCHEMA.md`.
 
-### `src/types.ts`
+Foundation exports:
 
-```ts
-export type EventType =
-  | 'ATTEMPT' | 'CUE' | 'RETRY' | 'INDEPENDENT_PRODUCTION'
-  | 'GENERALIZATION' | 'ERROR_PATTERN' | 'HOME_PROGRAM_ASSIGNED'
-  | 'QUESTION_UNRESOLVED' | 'REINFORCEMENT' | 'SCREENING_FLAG';
+- `SourceStatus`
+- `ThermalProvenance`
+- `ThermalFrame`
+- `ThermalFrameHandler`
+- `SourceStatusHandler`
+- `ThermalSource`
+- `ReplayFrameMetadata`
+- `ReplayManifest`
 
-export type CueLevel = 'independent' | 'verbal_cue' | 'visual_cue' | 'tactile_cue' | 'model';
-export type Domain =
-  | 'articulation' | 'phonological_process' | 'fluency'
-  | 'prosody' | 'expressive_language' | 'receptive_language' | 'resonance';
+Future seams already reserved:
 
-export type EventStatus  = 'proposed' | 'approved' | 'edited' | 'rejected';
-export type EvidenceType = 'transcript' | 'thermal';
-export type ArtifactKind = 'soap_note' | 'home_program' | 'next_session_plan' | 'auth_summary';
+- `Hotspot`
+- `AssessmentLevel`
+- `ThermalAssessment`
+- `AgentMessage`
+- `SafetyAction`
 
-export interface ClinicalEvent {
-  id: string;
-  session_id: string;
-  event_type: EventType;
-  evidence_type: EvidenceType;
-  timestamp_sec: number | null;      // null for thermal
-  target: string | null;             // '/r/ initial'
-  domain: Domain | null;
-  trials_correct: number | null;     // ATTEMPT only
-  trials_total: number | null;       // ATTEMPT only
-  cue_level: CueLevel | null;
-  evidence: string;                  // VERBATIM transcript span, <25 words
-  thermal_capture_id: string | null; // set iff evidence_type === 'thermal'
-  ai_interpretation: string;
-  confidence: number;                // 0.00–1.00, shown only on unapproved cards
-  status: EventStatus;
-  clinician_edit: string | null;     // set only when status === 'edited'
-  reviewed_at: string | null;
-}
+Do not redeclare any of them inside a feature.
 
-export interface Session {
-  id: string; index: number; date: string;      // '2026-07-25'
-  status: 'complete' | 'pending';
-  transcript_id: string | null;                 // only session 7
-}
+### Replay implementation
 
-export interface TranscriptLine {
-  t_sec: number; speaker: 'clinician' | 'client'; text: string;
-}
+`ReplayThermalSource` uses a single `setTimeout`, not `setInterval`.
 
-export interface ThermalCapture {
-  id: string; session_id: string;
-  stimulus: '/m/ sustained' | '/s/ sustained';
-  image_path: string; nasal_roi_peak_c: number; baseline_c: number;
-  captured_at: string;
-}
+- `start()` cancels old work and begins at frame zero.
+- The zero-delay first task transitions `connecting → streaming` and emits the first frame.
+- Each later frame is scheduled after `manifest.intervalMs`.
+- `pause()` cancels the pending timer without advancing the index.
+- `resume()` schedules the next un-emitted frame.
+- The sixth frame transitions to `ended` without another timer.
+- `stop()` cancels pending work, resets index, emits `idle`, and releases callbacks.
 
-export interface Artifact {
-  kind: ArtifactKind; lang: 'en' | 'es'; body: string;
-}
-```
-
-### `src/lib/events.ts`
-
-```ts
-export const confirmed = (e: ClinicalEvent) =>
-  e.status === 'approved' || e.status === 'edited';
-```
-
-Do not re-filter inline anywhere. One definition, imported.
-
-### `src/lib/derive.ts`
-
-Pure functions. Every one filters through `confirmed()` first.
-
-```ts
-// index 0 = least support. Used for ordering and for "lowest cue reached".
-export const CUE_ORDER: CueLevel[] =
-  ['independent', 'verbal_cue', 'visual_cue', 'tactile_cue', 'model'];
-
-export function accuracyTrend(
-  events: ClinicalEvent[], sessions: Session[], target: string
-): { sessionIndex: number; date: string; pct: number }[];
-
-export function cueTrend(
-  events: ClinicalEvent[], sessions: Session[], target: string
-): { sessionIndex: number; date: string; cue: CueLevel }[];
-
-export function unresolvedStreak(
-  events: ClinicalEvent[], sessions: Session[], target: string
-): number;
-
-export function isResolved(
-  events: ClinicalEvent[], sessionId: string, target: string
-): boolean;
-```
-
-> `unresolvedStreak(…, '/r/ initial') === 3` before review, `isResolved === true` after.
-> **That flip is the demo.** If a fixture change breaks it, the fixture is wrong — never patch `derive.ts` to make it pass.
-
-### `src/store.tsx`
-
-```ts
-export function useStore(): {
-  sessions:   Session[];
-  events:     ClinicalEvent[];      // all statuses — filter with confirmed()
-  captures:   ThermalCapture[];
-  transcript: TranscriptLine[];     // session 7
-  artifacts:  Artifact[];
-
-  addProposed(events: ClinicalEvent[]): void;
-  setStatus(id: string, status: EventStatus, clinicianEdit?: string): void;
-  setArtifact(a: Artifact): void;
-};
-```
-
-`setStatus` stamps `reviewed_at` and fires the Supabase write-through itself. Callers do not touch Supabase.
-
-### `src/lib/thermal.ts`
-
-```ts
-// Demo constant. NOT a validated clinical cutoff.
-export const NASAL_EMISSION_RATIO = 0.30;
-
-export const delta = (c: ThermalCapture) => c.nasal_roi_peak_c - c.baseline_c;
-export const ratio = (m: ThermalCapture, s: ThermalCapture) => delta(s) / delta(m);
-export const flagged = (m: ThermalCapture, s: ThermalCapture) =>
-  ratio(m, s) > NASAL_EMISSION_RATIO;
-```
-
-### HTTP
-
-```
-POST /api/extract    { sessionId }
-  -> 200 { count: number, events: ClinicalEvent[], source: 'live' | 'cached' }
-     Never 4xx/5xx to the UI. Any failure serves the cache.
-
-POST /api/generate   { sessionId, kind: ArtifactKind, lang?: 'en' | 'es' }
-  -> 200 { kind, lang, body: string, source: 'live' | 'cached' }
-     Same rule: never fails to the UI.
-```
-
-`source` is rendered nowhere. It exists so you can tell at a glance in devtools whether you're live or cached.
+This is why stop is also the unmount cleanup.
 
 ---
 
-## 6. Build order — the seam matters more than the schedule
+## 6. Replay generation and verification
 
-`mvp.md`'s schedule leaves the second dev with nothing to own until 4:00 PM. Fix: **ship the seam first.**
+`scripts/generate-replay-assets.mjs` creates the committed PNG fixtures. Generated assets are reviewed and committed; the app does not run the generator.
 
-> **`types.ts` + `store.ts` + `derive.ts` are the seam.** Their *signatures* — even returning stubs — unblock every second-dev surface. Write them before fixtures, not after.
+`npm run verify:replay` proves:
 
-**Phase-by-phase tasks, owners, and gates live in `docs/PLAN.md` — the only schedule.** Two schedules drift and one of them ends up on screen.
+- Six assets exist and are PNGs.
+- PNG headers report 160 × 120.
+- Manifest order is zero-based and stable.
+- Metadata is finite and `maxC > minC`.
+- Replay provenance is not live and its label has not drifted.
+- Full playback emits six frames and ends.
+- Paused playback does not advance.
+- Resume completes from the current index.
+- Stop leaves no pending frame timer.
 
-The architectural point that drives it: the seam ships in Phase 0, before fixtures. Signatures unblock; implementations can lag.
-
----
-
-## 7. Landmines
-
-Each of these has cost a team an hour before.
-
-1. **`npm run dev` does not serve `/api`.** Vite's dev server knows nothing about Vercel functions — `POST /api/extract` will 404 and look like a code bug. Run **`vercel dev`**. Sort this out at 11:00, not at 12:25.
-2. **`evidence` must match the transcript byte-for-byte.** Scroll-sync is `String.indexOf`. A smart quote, an em dash, or a trailing space in a fixture and the card scrolls nowhere. Same rule validates extraction output — mismatch → **drop the event**.
-3. **A stale `cached-extraction.json` is worse than none.** Regenerate it every time `prompt.ts` changes. Test the flag at **16:00**, not 17:25.
-4. **A `proposed` event reaching an artifact breaks the whole thesis on stage.** Every downstream read goes through `confirmed()`. No inline status checks.
-5. **`SCREENING_FLAG` is never accepted from the extractor.** It originates only in the thermal panel. Validation rejects it from `/api/extract` unconditionally.
-6. **Never recolor the thermal PNGs.** Native false-color palette or the clinical claim collapses.
-7. **Two `derive` implementations will drift and one of them will be on screen.** The streak banner and the record view import the same functions.
-8. **If the thermal frames are staged, the UI says "simulated example."** In the panel, the README, and out loud.
-9. **Relative imports inside `src/` carry their file extension** — `'./events.ts'`, `'./store.tsx'`. `allowImportingTsExtensions` is on and Vite is fine with it; it's what lets `verify:fixtures` run on plain `node --experimental-strip-types` with no ts-node or tsx dependency. Drop an extension and only the script breaks, not the build — so you'd find out late.
-10. **Commit after every working increment.** A broken uncommitted repo at 17:15 is how teams lose.
+It does **not** prove browser accessibility, route cleanup, radiometric accuracy, or live hardware. Those are manual gates in `docs/SETUP.md`.
 
 ---
 
-## 8. Definition of done, per surface
+## 7. Native bridge boundary — next phase
+
+The bridge is a local process because standard macOS camera capture is not assumed to expose raw Y16. Before implementation, prove the board and one raw frame using the exact hardware.
+
+Minimum bridge output per frame:
+
+| Field | Source |
+|---|---|
+| identity + sequence | bridge |
+| capture timestamp | bridge |
+| `160 × 120` dimensions | device, validated by bridge |
+| display image | bridge conversion |
+| row-major Celsius grid | radiometric Y16 conversion |
+| min / max Celsius | bridge or deterministic validation |
+| `live-purethermal` provenance | adapter |
+
+Transport stays local-only. The first implementation may choose the smallest mechanism the verified capture example supports, but `PureThermalSource` must hide it from React.
+
+On disconnect:
+
+1. Stop emitting frames.
+2. Invalidate the current frame and assessment.
+3. Emit `error`.
+4. Keep restart available.
+
+Do not silently switch to replay. The person operating the demo makes that explicit choice.
+
+---
+
+## 8. Landmines
+
+1. **A colored UVC preview is not radiometry.** Prove Y16 before analysis.
+2. **macOS camera drivers may omit Y16.** The GroupGets radiometry example bypasses them with `libuvc`; direct browser access is not the plan.
+3. **Replay min/max are simulated metadata.** They cannot justify a warning or a camera-accuracy claim.
+4. **`setInterval` races with pause and cleanup.** The replay uses one owned timeout.
+5. **An old source can still call back after a restart.** `start()` clears prior work before registering the new run.
+6. **Source status conveyed only by color fails the product audience.** Always render text and a symbol.
+7. **Speech can become stale.** Future speech cancels on frame, assessment, source, and route changes.
+8. **Shiny metal can reflect another heat source.** Never promise touch safety from a hotspot.
+9. **Thermal images stretch easily.** Preserve the 4:3 source aspect ratio; do not crop away provenance or direction.
+10. **Relative imports inside `src/` carry extensions.** Keep `.ts` / `.tsx` so the plain Node verifier can import shared code.
+11. **`public` asset URLs begin at `/`.** Files live under `public/replay/`; manifest URLs are `/replay/...`.
+12. **Do not add persistence to make `#history` look finished.** Its emptiness is the privacy claim.
+
+---
+
+## 9. Definition of done
 
 | Surface | Done when |
 |---|---|
-| fixtures | `npm run verify:fixtures` asserts all 7 invariants green |
-| `api/extract` | Live call returns 6–8 valid events, **one at ≈0.6 you'd want to reject**. Cache flag reproduces it offline |
-| `review/` | Approve, edit, reject a full session. Cards go grey→red. Banner flips to *Resolved* |
-| `record/` | Six-week accuracy + cue trend render from fixtures, streak visible before review |
-| `outputs/` | All four render from confirmed events only, four distinct voices, Spanish toggle works |
-| `thermal/` | Frame pair + deltas + comparison line + proposed card → confirm → **lands in SOAP objective and the referral line** |
-| whole demo | Runs end-to-end **with wifi off**, twice in a row, without a reload |
+| source contracts | Both transports can satisfy the same lifecycle and frame callbacks |
+| replay manifest | Six ordered 160 × 120 PNGs, finite metadata, exact provenance |
+| replay source | Complete, pause/resume, stop cleanup, and restart are deterministic |
+| `#scan` | Route reloads; viewport, status, controls, and provenance work by keyboard and assistive technology |
+| `#history` | Truthfully states that no frames or incidents are stored |
+| foundation | `verify:replay`, lint, and build green; no obsolete product language remains |
+| live bridge | One validated radiometric frame reaches `PureThermalSource`; disconnect is explicit |
+| assessment | Pure deterministic output from valid radiometric data; no model in the decision path |
+| speech | Visible and spoken outputs match; stale utterances cancel |
+| whole demo | Live path and labelled offline fallback each run twice before 17:30 |

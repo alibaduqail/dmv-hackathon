@@ -1,44 +1,88 @@
-# REFERENCES.md — what to model off, what not to install
+# REFERENCES.md — primary sources and prior art
 
-Rule for all of these: **read them, steal the shape, don't install them.** Every dependency is a risk you can't debug at 4 PM.
-
----
-
-## Transcript + synced review
-
-### bbc/react-transcript-editor
-`https://github.com/bbc/react-transcript-editor`
-
-The closest prior art to our review screen — a transcript where each word carries timing and edits preserve word-level alignment. Built by BBC News Labs for correcting STT output.
-
-**Steal:** the transcript JSON shape (word → `start`, `end`, `speaker`), and their `timecodeConverter` helpers (`secondsToTimecode`, `timecodeToSeconds`).
-
-**Do not install.** It's Draft.js-based, marked work-in-progress, and pulls a large dependency tree. Our transcript is a fixture with speaker-labelled lines — we need string-match highlighting, not a rich text editor. That's about 30 lines.
-
-Lighter variants if you want a second look: `alexnorton/transcript-editor`, `YusufCelik/annotato` (small React text-annotation hook).
+Rule: **read the source, copy the proven shape, do not make an old repository a runtime dependency.** Hardware examples establish feasibility; they do not prove our board, firmware, or laptop works.
 
 ---
 
-## Thermal capture
+## Lepton 3.5
 
-**Which library depends on hardware. Identify the camera before choosing.**
+### Teledyne FLIR — Lepton product page
 
-| Camera | Path |
-|---|---|
-| Phone-attached (FLIR One, Topdon, InfiRay, Seek) | **Vendor app → export PNG → commit as fixture.** 20 minutes. Do this. |
-| FLIR Lepton on PureThermal board | `groupgets/purethermal1-uvc-capture` — UVC, works with `cv2.VideoCapture` |
-| FLIR Boson / Tau 2 / Lepton+PureThermal | `LJMUAstroecology/flirpy` — returns radiometric images as numpy arrays in Celsius |
-| Seek Compact / CompactPRO | `libseek-thermal` |
-| Radiometric ROI reading | `ozel/FLIR_ROI_Viewer` — region-of-interest temperature readout, exactly our nostril ROI |
+<https://oem.flir.com/en-ca/products/lepton/>
 
-**Default to the phone path.** Writing a capture driver is a 3-hour detour that produces the same two PNGs you could have exported in 20 minutes. We are not doing live capture on stage under any circumstances.
+The manufacturer lists Lepton 3.5 as 160 × 120 with a 57° field of view and shutter, and publishes the Lepton engineering datasheet from the same page.
 
-If you do go radiometric, `flirpy` is the one to read — it's the cleanest API and it hands back Celsius directly, which is what the nostril delta needs.
+**Use:** native frame dimensions, hardware terminology, integration documentation.
+
+**Do not infer:** that a PNG contains radiometric values, that every board exposes the same UVC format, or that a reading proves touch safety.
+
+### Teledyne FLIR — how emissivity affects thermal imaging
+
+<https://www.flir.com/en-gb/discover/professional-tools/how-does-emissivity-affect-thermal-imaging/>
+
+Surface material and reflected radiation can materially change an apparent temperature. Shiny metal can behave like an infrared mirror.
+
+**Use:** claim boundary and demo-object selection.
+
+**Product consequence:** Ember reports observed higher heat and direction. It does not guarantee an object is safe to touch.
 
 ---
 
-## What NOT to model off
+## PureThermal capture
 
-- **OpenEMR / FHIR / any EHR schema.** Correct for a real product, fatal here. FHIR resource modelling will eat your entire morning and no judge will notice.
-- **Ambient scribe repos.** Our whole positioning is that we're not one. Reading their architecture pulls you toward producing prose.
-- **Anything with an auth layer.** You'll inherit it by accident.
+### GroupGets — PureThermal UVC capture examples
+
+<https://github.com/groupgets/purethermal1-uvc-capture>
+
+The repository shows PureThermal UVC capture paths across operating systems. Its examples distinguish display formats from raw `GRAY16_LE` / Y16 data and note that standard macOS camera drivers do not support Y16 raw capture in that example path. The radiometry example uses a modified `libuvc`.
+
+**Steal:**
+
+- Prove Y16 outside React first.
+- Keep display pixels separate from analysis values.
+- Treat board firmware, telemetry, and calibration as explicit inputs.
+- Put capture behind a native bridge.
+
+**Do not install blindly.** GroupGets says its software is example code, may be outdated, and is not guaranteed to function.
+
+### GroupGets — GetThermal
+
+<https://github.com/groupgets/GetThermal>
+
+The project documents support for radiometric Lepton 3.5 on PureThermal 1/2, but its current README heading says the software no longer works.
+
+**Use:** historical architecture and supported-device evidence only.
+
+**Do not use:** as the stage viewer, bridge, or proof that this laptop can connect.
+
+---
+
+## Accessibility
+
+### W3C — use of color
+
+<https://www.w3.org/WAI/WCAG22/Understanding/use-of-color>
+
+Color cannot be the only visual means of conveying information. Ember uses text + symbol first; color reinforces.
+
+### W3C — 44 × 44 target size
+
+<https://www.w3.org/WAI/WCAG21/Understanding/target-size>
+
+W3C’s enhanced target-size guidance uses at least 44 × 44 CSS pixels. Ember adopts that size for every custom control because the interface may be used one-handed and without precision pointing.
+
+### W3C — keyboard
+
+<https://www.w3.org/WAI/WCAG22/Understanding/keyboard>
+
+Every action available to a pointer must be available by keyboard. A thermal viewport is output, not an interactive image map.
+
+---
+
+## What not to build from
+
+- **Webcam-only tutorials.** A colored video preview is not proof of radiometric Y16.
+- **Color-palette inversion.** Display RGB cannot be converted back into trustworthy Celsius values.
+- **Medical thermography thresholds.** Ember is an everyday heat-awareness companion, not a diagnostic or body-temperature product.
+- **Cloud video pipelines.** The MVP’s frames are local and ephemeral.
+- **Smart-home automation examples.** No relay or smart plug is in scope.
