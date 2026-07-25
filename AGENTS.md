@@ -29,7 +29,7 @@ Use directional, observable language: *“Higher heat is present in the upper-ri
 4. **Replay provenance never disappears.** Every replay surface says exactly **“Demo replay — not live”** while replay content is displayed.
 5. **Never mix source truth.** A replay frame cannot carry live provenance. A live source cannot use replay metadata.
 6. **Replay does not classify.** Phase 0 replay proves the source seam and accessible controls only. Only a future reopened radiometric phase may consume validated live radiometric values; never infer warnings from the six PNGs.
-7. **A colorized UVC preview does not classify.** Display pixels may never produce temperature, hotspot, direction, severity, guidance, warning, or speech. Keep **“Live thermal preview — non-radiometric”** and **“Display-only colorized video. No temperature or safety assessment.”** visible beside any live preview.
+7. **A colorized UVC preview does not classify.** Phase 1E is one narrow, user-authorized exception: deterministic code may sample an ephemeral downscaled copy of the current playing live preview and produce only **“Experimental palette brightness cue — not temperature or safety detection”** from near-white RGB pixels. It may not produce temperature, hotspot, direction, severity, guidance, a safety warning, an all-clear, or speech. The cue includes people and every other near-white display region; do not add YOLO or person suppression. Replay is never sampled. Keep **“Live thermal preview — non-radiometric”**, **“Display-only colorized video. No temperature or safety assessment.”**, and the exact experimental label visible beside the live cue.
 8. **Controls work without precision pointing.** Keyboard operable, visible focus, accessible names, and at least 44 × 44 CSS pixels.
 9. **Clean up the source lifecycle.** Leaving `#scan`, restarting, stopping, switching, hiding/unloading the page, or unmounting must clear pending replay timers and stop every live media track.
 
@@ -57,9 +57,11 @@ Phase 1A investigation is complete with the calibrated-radiometry gate blocked:
 
 Phase 1D’s display-only implementation is complete: explicit Live selection, temporary authorization cleanup, private exact-device matching, playback-gated status, pause/reacquire, lifecycle cleanup, fixed recovery states, and persistent non-radiometric truth are in code. Its attached-device exit gate is **blocked** after the intended input did not play by the 16:15 cutoff. The Codex in-app browser left camera permission pending because it could not present the permission surface; Ember logically invalidated that request and would stop any late stream, but no PureThermal browser label, stream settings, playback, or camera-indicator result is claimed.
 
-Phase 3 accessibility/demo QA remains open, and Phase 4 offline/failure hardening has started on the Replay path. The production-like localhost command, deterministic five-cycle resource checks, local-build dependency audit, and production Replay/route rehearsal exist. A human must still disconnect external networking, rerun the production Replay twice with a reload, finish the Phase 3 manual accessibility matrix, and record the frozen candidate before either phase can close. Use Replay for the submitted demo and describe the live adapter as implemented but hardware-unverified. The team may explicitly reopen the Phase 1D hardware gate only before the 17:30 feature freeze and only if the intended input plays and cleans up twice in the actual demo browser; record that new evidence and decision before changing any claim.
+Phase 3 accessibility/demo QA remains open, and Phase 4 offline/failure hardening has started on the Replay path. The production-like localhost command, deterministic five-cycle resource checks, local-build dependency audit, and production Replay/route rehearsal exist. A human must still disconnect external networking, rerun the production Replay twice with a reload, finish the Phase 3 manual accessibility matrix, and record the candidate before either phase can close.
 
-Radiometric Phase 1B, deterministic assessment Phase 1C, and assessment speech Phase 2 are blocked for this hackathon build. Do **not** add `PureThermalSource`, a native radiometric bridge, hotspot analysis, temperature copy, palette analysis, warning speech, an LLM endpoint, notifications, persistent history, cloud frame storage, or physical actions. Follow requirement IDs and gates in `docs/REQUIREMENTS.md` and timing in `docs/PLAN.md`.
+At 18:03 the user explicitly reopened product scope after the 17:30 freeze for Phase 1E: an experimental near-white palette-brightness cue on the current live preview. It is a deliberate display heuristic for a staged demo, not a thermal assessment. It must show a visible `!` and complete text before any user-enabled additive tone, apply hysteresis to deterministic near-white RGB coverage, keep samples ephemeral, exclude Replay, and clear on every inactive lifecycle state. It does not identify or exclude people. This reopening does not pass Phase 1D’s attached-device gate and does not unblock radiometric Phase 1B, assessment Phase 1C, or assessment speech Phase 2.
+
+Radiometric Phase 1B, deterministic assessment Phase 1C, and assessment speech Phase 2 are blocked for this hackathon build. Outside the exact Phase 1E exception, do **not** add `PureThermalSource`, a native radiometric bridge, hotspot analysis, temperature copy, palette-to-heat interpretation, warning speech, an LLM endpoint, notifications, persistent history, cloud frame storage, or physical actions. Follow requirement IDs and gates in `docs/REQUIREMENTS.md` and timing in `docs/PLAN.md`.
 
 ---
 
@@ -105,6 +107,7 @@ Git history is the archive for removed product work. Do not copy it into an acti
 The interface is a high-contrast safety instrument, not a decorative heat map.
 
 - Status and warnings require **word + symbol**. Color may reinforce them but cannot carry meaning by itself.
+- The Phase 1E cue requires the exact experimental label, visible cue text, and a `!` symbol. Its user-enabled tone is additive and must never be the only output.
 - Visible focus must survive every theme color.
 - Do not place essential text inside the thermal image.
 - Preserve the thermal asset’s palette. Do not recolor replay or live frames for branding.
@@ -128,6 +131,8 @@ Exact terms in code, UI, and commits.
 | radiometric values | Per-pixel Celsius data supplied by the live bridge | temperatures inferred from a PNG |
 | assessment | Deterministic output derived from validated live radiometric values | AI opinion |
 | warning | Redundant text, symbol, color, and later speech | guarantee |
+| palette brightness cue | Phase 1E’s non-semantic observation that enough current live display pixels are near white | temperature, hotspot, heat warning, person detection |
+| cue tone | User-enabled non-speech reinforcement of the visible Phase 1E cue | assessment speech, alarm proving danger |
 | lower heat observed | A comparative thermal observation | safe to touch |
 
 ---
@@ -140,6 +145,7 @@ Allowed:
 - “Keep your hand away and verify another way.”
 - “Thermal source paused.”
 - “No current assessment”
+- “Experimental palette brightness cue — not temperature or safety detection”
 
 Forbidden:
 
@@ -148,13 +154,14 @@ Forbidden:
 - “No burn risk.”
 - A Celsius value when the frame has no radiometric data.
 - Any warning generated from replay pixels.
-- Any temperature, hotspot, direction, warning, or speech generated from colorized UVC display pixels.
+- Any temperature, hotspot, direction, severity, guidance, safety warning, all-clear, or speech generated from colorized UVC display pixels.
+- Any claim that Phase 1E detects or excludes people, recognizes objects, measures heat, or proves danger.
 
 ---
 
 ## Out of scope
 
-For the current hackathon build: radiometric bridge work, classification, temperature, hotspot analysis, speech, LLM calls, alerts, history persistence, cloud frame storage, screenshots/recording, canvas extraction, palette analysis, and physical actions.
+For the current hackathon build: radiometric bridge work, thermal classification, temperature, hotspot analysis, assessment speech, LLM calls, safety alerts, history persistence, cloud frame storage, screenshots/recording, general-purpose canvas extraction, palette-to-heat interpretation, object/person recognition, and physical actions. Phase 1E alone may use one ephemeral downscaled canvas for its labelled brightness cue.
 
 For the hackathon MVP: smart plugs or relays, remote third-party monitoring, cloud frame storage, diagnosis, medical claims, identity, billing, settings, dark mode, multi-tenancy, and autonomous physical actions.
 

@@ -268,6 +268,116 @@ The authorize/discover stream is never passed to the playback sink and stops bef
 
 ---
 
+## Phase 1E palette-cue contracts
+
+Phase 1E is an implementation-local display heuristic, not part of
+`ThermalSource`, `ThermalFrame`, `ThermalAssessment`, or the Phase 2 speech
+contract. Its exact UI label is **“Experimental palette brightness cue — not
+temperature or safety detection”**.
+
+`src/lib/palette-cue.ts` exports:
+
+```ts
+export const NEAR_WHITE_CHANNEL_MINIMUM = 248;
+export const NEAR_WHITE_CHANNEL_SPREAD_LIMIT = 6;
+
+export interface PaletteCueConfig {
+  minimumCoverage: number;
+  enterAfterFrames: number;
+  exitAfterFrames: number;
+}
+
+export const DEFAULT_PALETTE_CUE_CONFIG = {
+  minimumCoverage: 0.01,
+  enterAfterFrames: 3,
+  exitAfterFrames: 2,
+} as const;
+
+export interface PaletteCueFrameAnalysis {
+  inputValid: boolean;
+  pixelCount: number;
+  qualifyingPixelCount: number;
+  coverage: number;
+  meetsMinimumCoverage: boolean;
+}
+
+export type PaletteCueTransition = 'entered' | 'exited' | null;
+
+export interface PaletteCueObservation extends PaletteCueFrameAnalysis {
+  cueActive: boolean;
+  transition: PaletteCueTransition;
+  consecutiveQualifyingFrames: number;
+  consecutiveOtherFrames: number;
+}
+```
+
+`analyzePaletteCueFrame(rgba, minimumCoverage?)` accepts a
+`Uint8Array | Uint8ClampedArray`. Input must contain complete RGBA pixels. Alpha
+does not participate. A pixel qualifies only when each RGB channel is at least
+`248` and the maximum/minimum channel spread is at most `6`. Coverage is
+`qualifyingPixelCount / pixelCount`; the default inclusive boundary is `1%`.
+Empty or malformed input returns `inputValid: false`, finite zero counts and
+coverage, and `meetsMinimumCoverage: false`.
+
+`PaletteCueDetector` owns temporal state:
+
+```ts
+const detector = new PaletteCueDetector();
+detector.observe(rgba); // PaletteCueObservation
+detector.cueActive;     // current boolean state
+detector.reset();       // false with both consecutive counts cleared
+```
+
+The default detector enters on the third consecutive qualifying observation
+and exits on the second consecutive other observation. Invalid input resets it.
+Instances share no state. The constants describe colorized display pixels, not
+temperature, heat, danger, severity, or a safety threshold.
+
+### React sampler and sound state
+
+`src/features/scan/usePaletteCue.ts` exposes:
+
+```ts
+export interface UsePaletteCueOptions {
+  videoRef: RefObject<HTMLVideoElement | null>;
+  active: boolean;
+}
+
+export interface PaletteCueState {
+  monitoring: boolean;
+  detected: boolean;
+  coverage: number;
+  soundEnabled: boolean;
+  soundSupported: boolean;
+  enableSound: () => Promise<void>;
+  disableSound: () => void;
+}
+```
+
+`ScanView` sets `active` only for a current playing live-preview surface. While
+active, the hook samples one in-memory 40 × 30 canvas every 125 ms and passes
+the resulting bytes synchronously to its detector. It stores only the derived
+current state above; it does not return or retain the canvas or RGBA bytes.
+Replay never makes the hook active.
+
+Sound starts disabled and requires the explicit `enableSound()` user action. A
+620 Hz, 110 ms tone acknowledges enablement. An active cue uses an 840 Hz,
+180 ms tone on entry and at most once every two seconds while it remains active.
+These are non-speech additive tones; visible `!` + text remains complete when
+sound is muted, unsupported, suspended, or fails.
+
+Setting `active` false or unmounting clears the interval, detector, canvas,
+coverage, cue state, and `AudioContext`. Preview pause, stop, restart/acquire,
+error/disconnect, source switch, hidden visibility, `pagehide`, and route
+cleanup all reach that inactive boundary. Draw/security failures also reset the
+current observation.
+
+No type includes a temperature, hotspot, direction, severity, guidance,
+warning, identity, object, or person field. No YOLO/model seam exists. People
+and all other near-white display regions follow the same pixel rule.
+
+---
+
 ## Replay manifest
 
 ```ts
@@ -375,7 +485,7 @@ Rules:
 
 ## State that is not stored
 
-`usePreviewSession` keeps the selected source, current replay/live surface, status, opaque device option, and source instances in local runtime state. The raw browser device identity remains private to `UvcPreviewSource`. All of it disappears when the route session is destroyed. `#history` does not persist or fabricate incidents.
+`usePreviewSession` keeps the selected source, current replay/live surface, status, opaque device option, and source instances in local runtime state. The raw browser device identity remains private to `UvcPreviewSource`. `usePaletteCue` keeps only its current derived monitoring/coverage/cue/sound state while a live surface is active. All of it disappears when the route session is destroyed. `#history` does not persist or fabricate incidents.
 
 Do not add:
 
@@ -385,4 +495,5 @@ Do not add:
 - Browser local storage.
 - A database.
 - Analytics containing frames or temperatures.
+- Palette sample pixels, canvases, cue logs, tone history, or person/object labels.
 - A cached “last current” assessment after stop, route change, or source error.

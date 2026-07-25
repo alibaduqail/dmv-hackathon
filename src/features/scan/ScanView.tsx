@@ -1,4 +1,10 @@
 import type { SourceStatus, UvcPreviewPhase } from '../../types.ts';
+import {
+  DEFAULT_PALETTE_CUE_CONFIG,
+  NEAR_WHITE_CHANNEL_MINIMUM,
+  NEAR_WHITE_CHANNEL_SPREAD_LIMIT,
+} from '../../lib/palette-cue.ts';
+import { usePaletteCue } from './usePaletteCue.ts';
 import { usePreviewSession } from './usePreviewSession.ts';
 
 interface StatusCopy {
@@ -148,6 +154,10 @@ export default function ScanView() {
   const isReplay = session.sourceKind === 'replay';
   const replayFrame = session.surface?.kind === 'replay-frame' ? session.surface.frame : null;
   const liveSurface = session.surface?.kind === 'live-preview' ? session.surface : null;
+  const paletteCue = usePaletteCue({
+    videoRef: session.videoRef,
+    active: !isReplay && session.status === 'streaming' && Boolean(liveSurface),
+  });
   const frameNumber = replayFrame ? replayFrame.sequence + 1 : 0;
   const frameCount = session.replayManifest.frames.length;
   const statusCopy = isReplay
@@ -169,6 +179,7 @@ export default function ScanView() {
           : null,
       ].filter(Boolean).join(' · ')
     : '';
+  const nearWhiteCoverage = `${(paletteCue.coverage * 100).toFixed(1)}%`;
 
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-7xl px-5 py-8 outline-none md:px-8 md:py-12">
@@ -181,8 +192,8 @@ export default function ScanView() {
         </h1>
         <p className="mt-5 max-w-3xl text-lg leading-8 text-muted">
           Ember can display a clearly labelled simulation or a local, non-radiometric PureThermal
-          video preview. Neither display path produces temperature, direction, or a safety
-          assessment.
+          video preview. Live preview can optionally cue near-white palette pixels, but neither
+          display path produces temperature, direction, or a safety assessment.
         </p>
       </section>
 
@@ -220,7 +231,7 @@ export default function ScanView() {
             />
             <span>
               <span className="block font-bold">Live preview</span>
-              <span className="mt-1 block text-sm text-muted">Local display video · no analysis</span>
+              <span className="mt-1 block text-sm text-muted">Local video · experimental brightness cue</span>
             </span>
           </label>
         </div>
@@ -298,6 +309,12 @@ export default function ScanView() {
                   Live preview · non-radiometric
                 </span>
               )}
+              {!isReplay && liveSurface && paletteCue.detected && (
+                <span className="absolute right-3 top-3 inline-flex items-center gap-2 rounded-md border border-danger bg-canvas/95 px-3 py-2 text-xs font-bold uppercase tracking-wider text-danger">
+                  <span aria-hidden="true" className="text-base">!</span>
+                  Near-white palette cue
+                </span>
+              )}
             </figure>
 
             {isReplay ? (
@@ -315,7 +332,12 @@ export default function ScanView() {
               </div>
             ) : (
               <div className="border-t border-line px-4 py-4 md:px-5">
-                <p className="font-bold">Display-only colorized video. No temperature or safety assessment.</p>
+                <p className="font-bold">
+                  Display-only colorized video. No temperature or safety assessment.
+                </p>
+                <p className="mt-2 text-sm leading-6 text-muted">
+                  The optional cue observes near-white display pixels only.
+                </p>
                 <dl className="mt-3 grid gap-2 text-sm text-muted sm:grid-cols-2">
                   <div>
                     <dt className="font-bold text-text">Active input</dt>
@@ -349,6 +371,82 @@ export default function ScanView() {
               </div>
             </div>
           </section>
+
+          {!isReplay && (
+            <section aria-labelledby="palette-cue-title" className="rounded-2xl border border-line bg-panel p-5 md:p-6">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-caution">
+                Experimental palette brightness cue — not temperature or safety detection
+              </p>
+              <div
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                className="mt-4 flex items-start gap-4"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`text-3xl font-bold ${
+                    paletteCue.detected ? 'text-danger' : 'text-muted'
+                  }`}
+                >
+                  {paletteCue.detected ? '!' : '○'}
+                </span>
+                <div>
+                  <h2 id="palette-cue-title" className="text-xl font-bold">
+                    {paletteCue.detected
+                      ? 'Near-white palette area detected'
+                      : (paletteCue.monitoring ? 'Monitoring palette brightness' : 'Palette cue standing by')}
+                  </h2>
+                  <p className="mt-2 leading-6 text-muted">
+                    {paletteCue.detected
+                      ? 'A near-white region crossed the fixed display threshold. This does not measure temperature or indicate safety.'
+                      : (paletteCue.monitoring
+                          ? 'The current live display is being sampled transiently. People and any other near-white region can activate this cue.'
+                          : 'Start the live preview to begin transient local sampling. Replay is never sampled.')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <div className="flex items-center justify-between gap-4 text-sm font-bold">
+                  <label htmlFor="near-white-coverage">Near-white pixel coverage</label>
+                  <span className="font-mono text-muted">{nearWhiteCoverage}</span>
+                </div>
+                <progress
+                  id="near-white-coverage"
+                  value={paletteCue.coverage}
+                  max={1}
+                  className="mt-3 h-2 w-full overflow-hidden rounded-full accent-danger"
+                />
+                <p className="mt-3 text-sm leading-6 text-muted">
+                  Fixed rule: at least {DEFAULT_PALETTE_CUE_CONFIG.minimumCoverage * 100}% of sampled
+                  pixels have red, green, and blue values of {NEAR_WHITE_CHANNEL_MINIMUM} or higher
+                  with no more than {NEAR_WHITE_CHANNEL_SPREAD_LIMIT} levels between channels, for{' '}
+                  {DEFAULT_PALETTE_CUE_CONFIG.enterAfterFrames} consecutive samples.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (paletteCue.soundEnabled) paletteCue.disableSound();
+                  else void paletteCue.enableSound();
+                }}
+                disabled={!paletteCue.soundSupported || !paletteCue.monitoring}
+                aria-pressed={paletteCue.soundEnabled}
+                className="mt-5 min-h-12 w-full rounded-md border border-caution px-4 font-bold text-caution outline-none hover:bg-caution hover:text-canvas focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus disabled:border-line disabled:text-muted"
+              >
+                {paletteCue.soundEnabled ? 'Mute cue sound' : 'Enable cue sound'}
+              </button>
+              <p className="mt-3 text-sm leading-6 text-muted">
+                {paletteCue.soundSupported
+                  ? (paletteCue.monitoring
+                      ? 'Sound is additive to the complete visible cue and repeats at a bounded interval while detection remains active.'
+                      : 'Start the live preview before enabling sound. Browsers require this separate user action.')
+                  : 'Cue sound is unavailable in this browser. The visible cue remains complete.'}
+              </p>
+            </section>
+          )}
 
           <section aria-labelledby="controls-title" className="rounded-2xl border border-line bg-panel p-5 md:p-6">
             <h2 id="controls-title" className="text-xl font-bold">
@@ -479,8 +577,9 @@ export default function ScanView() {
               <div>
                 <h2 id="assessment-title" className="text-xl font-bold">No current assessment</h2>
                 <p className="mt-2 leading-6 text-muted">
-                  Replay pixels are never assessed. Live preview pixels are display-only and never
-                  create temperature, direction, guidance, warnings, or speech.
+                  Replay pixels are never assessed. Live preview may drive only the explicitly
+                  labelled palette brightness cue; it never creates temperature, direction,
+                  guidance, or a safety assessment.
                 </p>
               </div>
             </div>

@@ -16,7 +16,7 @@ The reported Node version must be 22.12 or newer. If you use `nvm`, run `nvm use
 
 | Route | Purpose |
 |---|---|
-| `#scan` | Default Replay surface plus explicit display-only Live preview |
+| `#scan` | Default Replay surface plus explicit display-only Live preview and its separately labelled experimental palette cue |
 | `#history` | Honest empty state; no data is persisted |
 
 Reload both routes once. Hash routing must survive a direct reload.
@@ -31,8 +31,8 @@ Run the composed gate before handing off:
 npm run verify:hardening
 ```
 
-`verify:hardening` runs replay verification, preview verification, lint, a fresh
-production build, and the offline-build audit.
+`verify:hardening` runs replay verification, preview verification, palette-cue
+verification, lint, a fresh production build, and the offline-build audit.
 
 `verify:replay` checks the six-frame manifest, 160 × 120 dimensions, finite
 metadata, order, deterministic completion, pause/resume, restart, and cleanup.
@@ -51,6 +51,12 @@ additional cycles prove zero retained tracks, listeners, stream attachments, and
 queued media requests after each stop. It exercises the reusable source boundary
 and playback sink, not the React router, and it does not prove that this laptop’s
 browser can enumerate or play the attached hardware.
+
+`verify:palette` checks invalid RGBA input; the inclusive RGB channel minimum,
+channel-spread, and `1%` coverage boundaries; three-sample entry; two-sample
+exit; reset; and detector-instance isolation. It proves deterministic synthetic
+display-pixel behavior only. It does not execute the 40 × 30 browser canvas,
+audio, React lifecycle, or attached camera.
 
 `verify:offline` rebuilds `dist`, resolves every document and stylesheet asset
 reference inside the production output, verifies all six replay assets are
@@ -140,7 +146,7 @@ The final FFmpeg command exits non-zero because it opens no input. In the record
 
 ## Phase 1D browser-preview validation
 
-The adapter and UI are implemented, but the attached-device gate is blocked after the 16:15 cutoff. Replay is the submission path. These steps may explicitly reopen the gate only if they are completed twice in the exact demo browser before the 17:30 feature freeze and the result is recorded:
+The adapter and UI are implemented, but the attached-device gate is blocked after the 16:15 cutoff. The 18:03 Phase 1E exception did not pass that gate. Complete these steps twice in the exact demo browser and record the result before making any attached-live claim:
 
 1. Confirm the PureThermal device still appears in the metadata probe.
 2. Start Vite with `npm run dev`, open the printed localhost origin, and load `#scan`.
@@ -159,7 +165,7 @@ The adapter and UI are implemented, but the attached-device gate is blocked afte
 
 The Codex in-app browser reached step 5 but could not present its OS/browser permission surface. Ember logically invalidated that request generation and returned its UI to the authorization-required state; because a browser permission promise cannot be cancelled directly, any stream resolving later would be stopped immediately. That proves neither enumeration nor playback. Do not claim Phase 1D passed unless the team explicitly reopens the gate and completes the two required normal-browser runs before freeze.
 
-Do not open DevTools to print, copy, or persist a `deviceId` or `groupId`. Do not add a canvas, screenshot, `ImageCapture`, `MediaRecorder`, upload, or palette-analysis step. Even when the video uses RGB-formatted display pixels, the Lepton is not a visible-light RGB sensor and the stream is not calibrated radiometry.
+Do not open DevTools to print, copy, or persist a `deviceId` or `groupId`. Do not add a screenshot, `ImageCapture`, `MediaRecorder`, upload, or general-purpose frame extraction step. Phase 1E’s reviewed 40 × 30 ephemeral sampler is the sole canvas/palette exception and produces no retained image. Even when the video uses RGB-formatted display pixels, the Lepton is not a visible-light RGB sensor and the stream is not calibrated radiometry.
 
 The Phase 1D UI must persist:
 
@@ -168,6 +174,61 @@ The Phase 1D UI must persist:
 - **“No current assessment”**
 
 The GroupGets repositories in `docs/REFERENCES.md` remain prior art, not runtime dependencies. The native radiometric bridge is future work only after a new calibrated hardware proof.
+
+---
+
+## Phase 1E experimental palette-cue validation
+
+At 18:03 the user explicitly reopened this one feature after the planned freeze.
+Its exact label is **“Experimental palette brightness cue — not temperature or
+safety detection”**. Synthetic verification is necessary but does not prove the
+attached PureThermal/browser path.
+
+Run the focused check:
+
+```sh
+npm run verify:palette
+```
+
+Then use the normal demo browser—not the Codex in-app browser if it cannot show
+the operating-system permission surface:
+
+1. Complete Phase 1D authorization, exact PureThermal selection, and Start. If
+   the intended label is absent or video does not play, stop and keep the
+   attached-device gate blocked.
+2. Confirm all four truths are visible: **“Live thermal preview —
+   non-radiometric”**, **“Display-only colorized video. No temperature or safety
+   assessment.”**, **“No current assessment”**, and the exact Phase 1E label.
+3. Keep **Enable cue sound** untouched. Use a staged non-personal scene and move
+   a display region that the colorized preview renders near white into view.
+   Do not call the object hot and do not infer a physical temperature.
+4. Confirm the cue does not enter until three consecutive qualifying samples,
+   then shows a visible `!`, **“Near-white palette area detected”**, and the
+   fixed explanation. It must remain silent because sound was not enabled.
+5. Move the near-white palette region out of view. Confirm the cue clears after
+   two consecutive other samples. The UI may show current near-white coverage;
+   that percentage is display pixels, not temperature or danger probability.
+6. Activate **Enable cue sound** by keyboard. A short enable acknowledgement is
+   expected. Cross and leave the cue again; active sound is an 840 Hz,
+   180 ms non-speech tone and repeats no more often than once every two seconds.
+   Mute it and confirm the visible cue remains complete.
+7. Pause, Resume, Restart, Stop, hide/show the page, navigate to `#history`, and
+   return. Each inactive transition must clear the cue/coverage, stop sound,
+   destroy the sampler lifetime, and require a new explicit sound enable.
+8. Select Replay and complete it. The palette panel is absent and no replay
+   frame may activate a cue or tone.
+9. Repeat the live entry/exit/Stop sequence once. Record browser/OS, commit,
+   selected public label, pass/fail, and camera-indicator cleanup only. Do not
+   record or log pixels, canvas data, device IDs, or a person.
+
+There is no YOLO or person detector. Do not point the staged recording at a
+person. That protects privacy; it does not prove filtering. A person and any
+other region rendered near white can activate the same cue.
+
+Phase 1E attached behavior remains unverified until this exact normal-browser
+sequence passes twice. Passing it still does not produce a temperature,
+hotspot, direction, severity, guidance, safety warning, or all-clear and does
+not unblock Phases 1B, 1C, or 2.
 
 ---
 

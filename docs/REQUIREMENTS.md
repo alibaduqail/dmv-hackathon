@@ -1,6 +1,6 @@
 # REQUIREMENTS.md — what Ember must prove
 
-**Status:** Phase 0 is implemented. Phase 1A investigation is complete with the calibrated-radiometry gate blocked. Phase 1D’s display-only code and focused verifier are implemented, but its attached-device/browser exit gate is blocked after missing the 16:15 cutoff. Replay is the submission path unless the team explicitly reopens and passes that gate before the 17:30 feature freeze. Radiometric Phases 1B, 1C, and assessment speech are blocked.
+**Status:** Phase 0 is implemented. Phase 1A investigation is complete with the calibrated-radiometry gate blocked. Phase 1D’s display-only code and focused verifier are implemented, but its attached-device/browser exit gate remains blocked. At 18:03 the user explicitly reopened scope after the 17:30 freeze for Phase 1E, a narrowly labelled experimental near-white palette-brightness cue on the current live preview. It is not temperature, hotspot, person, or safety detection. Radiometric Phases 1B, 1C, and assessment speech remain blocked.
 
 This is the atomic, testable requirements source for Ember. It says **what** must be true and how the team accepts it. `mvp.md` owns the product claim and scope, `docs/SCHEMA.md` documents implemented contracts, `docs/ARCHITECTURE.md` owns boundaries and target placement, `docs/PLAN.md` owns timing and lane assignment, and `docs/STATUS.md` owns current evidence.
 
@@ -12,7 +12,7 @@ If a requirement conflicts with Ember’s safety rules, the safety rule wins. Re
 
 Ember’s product target is a handheld thermal companion for blind and low-vision people. A user points a Lepton 3.5 and PureThermal assembly toward a nearby surface, and a future radiometric build reports an observable higher-heat region through redundant visible guidance and matching speech.
 
-The current hackathon path does not have calibrated radiometry. It implements a local, colorized UVC preview adapter for display transport and lifecycle demonstration, but attached-device playback is unproven and the gate is blocked. Even after a future pass, that preview cannot deliver temperature, hotspot, direction, safety guidance, or the core blind-user warning.
+The current hackathon path does not have calibrated radiometry. It implements a local, colorized UVC preview adapter for display transport and lifecycle demonstration, but attached-device playback is unproven and the gate is blocked. Phase 1E may add only a deterministic near-white display-pixel cue with fixed visible text, a `!` symbol, and an optional user-enabled tone. That cue cannot deliver temperature, hotspot, direction, severity, safety guidance, person exclusion, or the core blind-user warning.
 
 Primary actors:
 
@@ -43,6 +43,7 @@ EMB-P1A-*     hardware and radiometry proof
 EMB-P1B-*     local bridge and source integration
 EMB-P1C-*     deterministic assessment
 EMB-P1D-*     display-only UVC preview
+EMB-P1E-*     experimental live palette-brightness cue
 EMB-P2-*      spoken interaction
 EMB-P3-*      accessibility and demo QA
 EMB-P4-*      offline and failure hardening
@@ -59,14 +60,14 @@ These requirements apply to every implementation, test fixture, screenshot, reco
 
 | ID | Requirement |
 |---|---|
-| `EMB-X-SAF-001` | Ember must report only observable thermal conditions and direction. It must never promise “safe,” “all clear,” “no burn risk,” or “safe to touch.” |
+| `EMB-X-SAF-001` | Any Ember thermal assessment must report only observable thermal conditions and direction. Ember must never promise “safe,” “all clear,” “no burn risk,” or “safe to touch.” A Phase 1E display-brightness cue must never be presented as a thermal assessment. |
 | `EMB-X-DET-001` | Deterministic code alone validates thermal data, selects policy, extracts regions, classifies levels, and chooses guidance. A model cannot participate in this decision path. |
-| `EMB-X-ACC-001` | Every warning must include visible text and a non-color symbol. Color and speech may reinforce the warning but cannot be essential. |
+| `EMB-X-ACC-001` | Every warning must include visible text and a non-color symbol. The non-safety Phase 1E cue follows the same visible-text-plus-`!` rule. Color, speech, and the Phase 1E tone may reinforce an output but cannot be essential. |
 | `EMB-X-PRV-001` | Every frame and assessment must retain truthful source provenance. Replay content must visibly display exactly **“Demo replay — not live”**. |
 | `EMB-X-PRV-002` | Replay pixels and simulated replay min/max metadata must never enter validation, hotspot extraction, classification, threshold tuning, or warning generation. |
-| `EMB-X-PRV-003` | Colorized UVC display pixels must never enter temperature conversion, hotspot extraction, direction, severity, guidance, warning, or speech. A live preview must persistently say **“Live thermal preview — non-radiometric”** and **“Display-only colorized video. No temperature or safety assessment.”** |
+| `EMB-X-PRV-003` | Colorized UVC display pixels must never enter temperature conversion, hotspot extraction, direction, severity, guidance, safety warning, or speech. Phase 1E is the sole exception for a deterministic, non-semantic near-white display-brightness cue and additive non-speech tone. A live preview must persistently say **“Live thermal preview — non-radiometric”**, **“Display-only colorized video. No temperature or safety assessment.”**, and **“Experimental palette brightness cue — not temperature or safety detection”** wherever the cue is offered. |
 | `EMB-X-PRI-001` | Live `MediaStream`s, tracks, per-frame display payloads, and radiometric arrays must remain local and ephemeral: no in-app/runtime recording, upload, persistence, browser storage, incident insertion, analytics, or per-frame logging. Privacy-safe aggregate hardware/policy evidence is allowed. A reviewed external recording of a staged non-personal Phase 5 demo is the only media exception; it does not authorize capture code in Ember. |
-| `EMB-X-LIF-001` | Stop, error, route change, source switch, restart, hidden visibility, `pagehide`, unmount, frame timeout, and assessment expiry must invalidate all now-stale frames, streams, assessments, pending speech, callbacks, timers, tracks, and display resources owned by that run. |
+| `EMB-X-LIF-001` | Stop, error, route change, source switch, restart, hidden visibility, `pagehide`, unmount, frame timeout, and assessment expiry must invalidate all now-stale frames, streams, assessments, palette-cue state, tone output, pending speech, callbacks, timers, tracks, and display resources owned by that run. |
 | `EMB-X-SCP-001` | No diagnosis, object recognition, medical claim, notification, remote monitoring, cloud frame store, relay, smart plug, or autonomous physical action enters the MVP. |
 | `EMB-X-VER-001` | Preserve the lightweight verification style. New deterministic logic must have plain Node verification in addition to replay verification, lint, and build. |
 | `EMB-X-TRU-001` | Documentation and presentation may claim only behavior supported by a completed phase gate. Planned and simulated behavior must be labelled as such. |
@@ -82,6 +83,7 @@ P1A hardware/radiometry probe — COMPLETE, CALIBRATED GATE BLOCKED         │
   ├─ radiometry proven ─> P1B bridge ─> P1C assessment ─> P2 speech       │
   │                       BLOCKED         BLOCKED          BLOCKED         │
   └─ radiometry unavailable ─> P1D display-only UVC preview ──────────┐   │
+                                   └─ P1E experimental palette cue ───┤   │
                                                                      │   │
 P0 labelled replay ───────────────────────────────────────────────────┴──> P3 QA
                                                                               │
@@ -92,6 +94,7 @@ P0 labelled replay ────────────────────�
 - A downstream live phase starts only after its predecessor passes.
 - Because calibrated radiometry was not proven by the Phase 1 hardware cutoff, stop the radiometric bridge, assessment, and assessment-speech path.
 - Phase 1D may render a local colorized UVC stream only through its separate no-analysis acceptance gate.
+- Phase 1E may inspect only an ephemeral downscaled copy of the current playing Phase 1D stream and report only near-white palette coverage through its exact experimental label. Its actual-browser gate cannot pass unless the intended live preview plays.
 - A replay-only submission remains valid, but it must not display or speak a fabricated thermal assessment.
 - Phase 2 is future-only while Phase 1C is blocked; do not use synthetic assessment data to imply hackathon speech progress.
 - Phase 4 hardens only the capabilities that actually passed.
@@ -194,7 +197,7 @@ Phase 1A work is closed, but Phase 1B is not authorized. Calibrated 160 × 120 r
 | `EMB-P1D-FR-006` | Functional | Permission denied, no matching device, device in use, unsupported context, playback failure, and disconnect produce visible text plus a non-color status symbol and an explicit Retry action. Failure never silently starts Replay. |
 | `EMB-P1D-DR-001` | Data | Only the browser-reported selected track label and sanitized display settings may appear. Width, height, and frame rate may be shown only after the selected stream reports them; never display or log `deviceId`/`groupId`, Celsius, calibration, thermal extrema, or radiometric arrays. |
 | `EMB-P1D-NFR-001` | Privacy | Keep device choice session-only. Do not use local storage, analytics, screenshots, canvas extraction, `ImageCapture`, `MediaRecorder`, upload, frame logging, or persistence. |
-| `EMB-P1D-NFR-002` | Safety | The preview has no edge into frame validation, palette interpretation, hotspot extraction, assessment, guidance, warnings, or speech. The assessment value is always absent. |
+| `EMB-P1D-NFR-002` | Safety | The preview has no edge into frame validation, temperature interpretation, hotspot extraction, assessment, guidance, safety warnings, or speech. The assessment value is always absent. Phase 1E’s separately labelled near-white display cue is not an assessment edge. |
 | `EMB-P1D-NFR-003` | Accessibility | Source selection, controls, status, provenance, error, and Retry are keyboard operable, visibly focused, named, and at least 44 × 44 CSS pixels; meaning remains complete without color or audio. |
 | `EMB-P1D-NFR-004` | Verification | A dependency-injected plain Node check covers authorize/discover cleanup, exact selected-device matching, already-ended and during-playback track races, late `getUserMedia` resolution, pause/reacquire, disconnect, restart, the reusable `stop()`/generation boundary, hidden/pagehide cleanup, detached playback-sink cleanup, and track cleanup. React source-switch and route cleanup require code review plus manual browser evidence; manual hardware evidence verifies the selected label and camera indicator closes. |
 
@@ -205,17 +208,54 @@ Phase 1A work is closed, but Phase 1B is not authorized. Calibrated 160 × 120 r
 - `EMB-P1D-AC-003` — **Given** an authorization or preview request resolves after Stop, Restart, source switch, route change, hidden visibility, or `pagehide`, **then** every returned track is stopped and the late result cannot update current status or the viewport.
 - `EMB-P1D-AC-004` — **Given** a playing preview, **when** Pause, Stop, disconnect, hidden visibility, `pagehide`, or unmount occurs, **then** no stale image remains, all tracks stop, `srcObject` clears, and a visible non-color status explains the state when the page remains active.
 - `EMB-P1D-AC-005` — **Given** permission denial, no uniquely selected matching device, active-track identity mismatch, device-in-use, unsupported context, or playback failure, **then** no stream is retained or attached, the assessment remains absent, and Retry is explicit.
-- `EMB-P1D-AC-006` — **Given** any live preview, **then** code and presentation contain no snapshot/recording/palette-analysis path and no temperature, hotspot, direction, severity, guidance, warning, or speech derived from display pixels.
+- `EMB-P1D-AC-006` — **Given** any live preview, **then** code and presentation contain no snapshot/recording path and no temperature, hotspot, direction, severity, guidance, safety warning, or speech derived from display pixels. Phase 1E’s separately labelled ephemeral near-white cue is the only palette exception.
 
 ### Exit gate
 
 The actual intended UVC device plays locally twice; source truth remains visible; failure and all lifecycle invalidations release tracks; the focused verifier, replay verifier, lint, and build pass; and the submission describes the preview as display-only.
 
-Current evidence: `verify:preview`, `verify:replay`, lint, and build pass. Browser DOM checks passed default Replay, explicit Live selection without permission, persistent truth, logical invalidation of a pending authorization, route reset, 390px reflow, and 44px targets. The hardware gate is blocked. It may be explicitly reopened only before the 17:30 feature freeze and only after two actual-browser playback/cleanup runs plus the remaining manual hardware checks are recorded.
+Current evidence: `verify:preview`, `verify:replay`, lint, and build pass. Browser DOM checks passed default Replay, explicit Live selection without permission, persistent truth, logical invalidation of a pending authorization, route reset, 390px reflow, and 44px targets. The Phase 1D hardware gate remains blocked. The user’s 18:03 Phase 1E exception does not retroactively pass it; actual label, playback, and cleanup evidence must still be recorded before either live capability is claimed.
 
 ---
 
-## 8. Phase 1B — local bridge and transport-neutral live source
+## 8. Phase 1E — experimental palette-brightness cue
+
+**Purpose:** make one deliberately limited live interaction observable in a staged demo without converting colorized display pixels into temperature or a safety claim.
+
+**State:** user-authorized post-freeze exception opened at 18:03. Deterministic implementation, live-only sampler, visible cue, additive tone, and synthetic verification are implemented. The attached-device exit gate remains blocked until the intended PureThermal input plays and the complete behavior is reproduced in the actual demo browser.
+
+### Requirements
+
+| ID | Type | Requirement |
+|---|---|---|
+| `EMB-P1E-IR-001` | Integration | Sample only the current playing live-preview `<video>` through a bounded ephemeral downscale. Never pass Replay, a replay `<img>`, a fabricated `ThermalFrame`, or a retained frame into the cue path. |
+| `EMB-P1E-FR-001` | Functional | Deterministic code alone computes near-white coverage. A pixel qualifies only when every RGB channel is at least `248` and the largest-minus-smallest channel spread is at most `6`; alpha is ignored. Coverage qualifies at an inclusive `1%` minimum. These are display-palette constants, not thermal thresholds. |
+| `EMB-P1E-FR-002` | Functional | Apply temporal hysteresis: enter after three consecutive qualifying samples and exit after two consecutive other samples. Empty or malformed RGBA input resets state, reports finite zero coverage, and cannot activate the cue. |
+| `EMB-P1E-FR-003` | Functional | While Live preview is selected, show exactly **“Experimental palette brightness cue — not temperature or safety detection”**. An active cue adds a visible `!` and complete fixed text. **“No current assessment”** and both live non-radiometric truth statements remain visible. |
+| `EMB-P1E-FR-004` | Functional | Cue sound starts disabled and may be enabled only through an explicit user action. It is a bounded, non-speech tone that reinforces the complete visible cue; unavailable or muted audio cannot remove information. |
+| `EMB-P1E-FR-005` | Functional | Pause, Stop, Restart, source switch, error, disconnect, hidden visibility, `pagehide`, route change, unmount, or loss of a current playing surface stops sampling and tone output, resets hysteresis/coverage, and clears the active cue. |
+| `EMB-P1E-DR-001` | Data | RGBA samples and the downscaled canvas remain local and ephemeral. Do not return, upload, persist, log, serialize, cache, or insert pixels. Only current derived coverage/cue state may exist in memory for rendering and must clear with the lifecycle. |
+| `EMB-P1E-NFR-001` | Truthfulness | The cue must not use “hot,” temperature, hotspot, direction, severity, danger, guidance, safety warning, or all-clear language. It must not identify objects or people. People and every other near-white display region count equally; no YOLO model or person-suppression branch exists. |
+| `EMB-P1E-NFR-002` | Accessibility | Meaning remains complete through visible fixed text plus a `!` symbol with audio unavailable or muted. The sound control is keyboard operable, visibly focused, named, and at least 44 × 44 CSS pixels. |
+| `EMB-P1E-NFR-003` | Verification | A plain Node verifier covers RGBA validation, the inclusive RGB/spread/coverage boundaries, entry/exit hysteresis, reset, deterministic isolation, and invalid input. Code review plus browser evidence covers live-only sampling, audio gating, and lifecycle cleanup. |
+
+### Acceptance scenarios
+
+- `EMB-P1E-AC-001` — **Given** synthetic RGBA samples at each fixed boundary, **when** deterministic analysis runs repeatedly, **then** entry occurs only on the third consecutive sample at or above `1%` qualifying coverage and exit occurs only on the second consecutive sample below it.
+- `EMB-P1E-AC-002` — **Given** Replay is selected or displayed, **when** it runs, pauses, resumes, restarts, or ends, **then** no canvas sampling, palette state, cue text, or tone is produced from Replay pixels.
+- `EMB-P1E-AC-003` — **Given** a current playing live preview and cue sound still disabled, **when** near-white coverage enters, **then** the fixed visible `!` + text appears without sound and the UI continues to say it has no temperature or safety assessment.
+- `EMB-P1E-AC-004` — **Given** the user explicitly enables cue sound, **when** the same deterministic cue enters or remains active, **then** a bounded non-speech tone reinforces—but never replaces—the complete visible cue; muting or unavailable audio preserves the visual result.
+- `EMB-P1E-AC-005` — **Given** an active cue, **when** any inactive lifecycle event occurs, **then** sampling stops, tone output stops, coverage and hysteresis reset, the active cue clears, and no prior sample can affect a later run.
+- `EMB-P1E-AC-006` — **Given** any live scene, **then** code and presentation contain no object/person model or exclusion branch and make no temperature, direction, severity, guidance, danger, safety-warning, or all-clear claim. A person rendered near white can activate the same cue as any other near-white region.
+- `EMB-P1E-AC-007` — **Given** the intended PureThermal input in the actual demo browser, **when** it plays and a staged non-personal scene crosses and then leaves the palette threshold twice, **then** visible cue entry/exit, optional tone, provenance, and cleanup are recorded without storing a frame. Until this passes, attached-device Phase 1E behavior remains unverified.
+
+### Exit gate
+
+The deterministic verifier, preview verifier, replay verifier, lint, and build pass; code review proves Replay isolation and ephemeral lifecycle ownership. The exact intended input must additionally play and reproduce `EMB-P1E-AC-007` before the team claims the cue works with attached hardware. That manual row is still open. Passing the code gate does not pass Phase 1D retroactively and does not unblock radiometric Phase 1B, assessment Phase 1C, or assessment speech Phase 2.
+
+---
+
+## 9. Phase 1B — local bridge and transport-neutral live source
 
 **Purpose:** carry one truthful live frame from the native device boundary into the existing source lifecycle without exposing transport mechanics to the view.
 
@@ -269,7 +309,7 @@ One live frame reaches the scan surface through `PureThermalSource`; all `EMB-P1
 
 ---
 
-## 9. Phase 1C — validated deterministic assessment
+## 10. Phase 1C — validated deterministic assessment
 
 **Purpose:** derive current directional guidance only from validated, calibrated, live radiometric input.
 
@@ -329,7 +369,7 @@ A controlled non-personal warm object produces a stable structured live assessme
 
 ---
 
-## 10. Phase 2 — matching visible and spoken output
+## 11. Phase 2 — matching visible and spoken output
 
 **Purpose:** add speech as a renderer of the same structured assessment, never as a decision system.
 
@@ -364,7 +404,7 @@ Only a future passed Phase 1C may authorize this phase. One validated live asses
 
 ---
 
-## 11. Phase 3 — accessibility and demo QA
+## 12. Phase 3 — accessibility and demo QA
 
 ### Requirements
 
@@ -396,7 +436,7 @@ The common replay/status manual QA record is complete for the locked browser/Voi
 
 ---
 
-## 12. Phase 4 — offline and failure hardening
+## 13. Phase 4 — offline and failure hardening
 
 ### Requirements
 
@@ -452,7 +492,7 @@ pass, and a fake-source result cannot satisfy an attached-hardware condition.
 
 ---
 
-## 13. Phase 5 — truthful submission package
+## 14. Phase 5 — truthful submission package
 
 ### Requirements
 
@@ -480,7 +520,7 @@ All `EMB-P5-AC-*` scenarios pass, the package names the frozen commit, submissio
 
 ---
 
-## 14. Edge and failure cases
+## 15. Edge and failure cases
 
 Every applicable implementation phase must handle these explicitly:
 
@@ -513,14 +553,14 @@ Every applicable implementation phase must handle these explicitly:
 
 ---
 
-## 15. Integration contracts and trust gates
+## 16. Integration contracts and trust gates
 
 The active Phase 1D path crosses these gates:
 
 1. **USB/UVC → browser MediaDevices:** macOS UVC presence is not enough; explicit permission and browser-reported label must identify the intended input.
 2. **MediaDevices → `UvcPreviewSource`:** the adapter accepts a current-generation `MediaStream`, owns tracks/listeners, and exposes status/errors without extracting pixels.
 3. **Preview source → session/viewport:** the controller accepts only the current generation, attaches the stream to `<video>`, and keeps exact non-radiometric truth visible.
-4. **Preview → assessment:** no edge exists. Temperature, hotspot, direction, guidance, warning, and speech are unreachable.
+4. **Preview → assessment:** no edge exists. Temperature, hotspot, direction, severity, guidance, safety warning, and speech are unreachable. Phase 1E terminates at non-semantic cue state and tone.
 5. **Replay → viewport:** replay follows `ThermalSource`, retains exact simulated provenance, and has no assessment edge.
 
 The blocked future radiometric path remains ordered:
@@ -534,7 +574,7 @@ Detailed placement and lifecycle ownership live in `docs/ARCHITECTURE.md`. Imple
 
 ---
 
-## 16. Open decisions
+## 17. Open decisions
 
 These are decisions, not permission to invent values. The named phase must resolve each before its exit gate.
 

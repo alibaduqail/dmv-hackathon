@@ -1,6 +1,6 @@
 # STATUS.md — where the build actually is
 
-**Current baseline:** Phase 0 and the Phase 1D display-only browser implementation are committed on the Ember integration branch. Phase 1A closed with a calibrated-radiometry **no-go**, and Phase 1D’s attached-device gate remains **blocked**. Phase 3 manual accessibility evidence is still open. Phase 4 hardening has started: deterministic five-cycle resource checks, a production-like localhost command, a built-asset/network-API audit, two production Replay rehearsals with route reloads, and a clean-checkout hardening run are green. The laptop’s external network was not disconnected during the browser rehearsals, so the strict offline gate is still open and no offline claim is authorized yet. Replay remains the submission path. Radiometric bridge, assessment, and assessment speech remain blocked.
+**Current baseline:** Phase 0 and the Phase 1D display-only browser implementation are committed on the Ember integration branch. Phase 1A closed with a calibrated-radiometry **no-go**, and Phase 1D’s attached-device gate remains **blocked**. At 18:03 the user explicitly reopened post-freeze scope for Phase 1E, **“Experimental palette brightness cue — not temperature or safety detection”**. Its deterministic near-white detector, live-only ephemeral sampler, visible cue, optional non-speech tone, and synthetic verifier are implemented and the hardening suite is green; attached-device behavior is still unverified. Phase 3 manual accessibility evidence and Phase 4’s physical disconnected-network run remain open. Radiometric bridge, thermal assessment, and assessment speech remain blocked.
 
 This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule) or `docs/DECISIONS.md` (the running log). It says what exists, what is next, and what remains unproven.
 
@@ -32,19 +32,24 @@ This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule
 | Phase 4 local-build audit | The production output contains three local document assets, one local stylesheet, all six replay frames, and no application use of `fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource`, or `sendBeacon` |
 | Phase 4 production rehearsal | `#scan` completed the six-frame Replay twice from the production server, including reload between runs; `#history` and `#scan` survived reload and all rendered asset references were local. External networking remained connected, so this is not the disconnected-network acceptance run |
 | Phase 4 clean checkout | Detached commit `ed19552` completed `npm ci --offline` and `npm run verify:hardening`; dependency installation and every current automated check passed without registry access |
+| Phase 1E deterministic cue | Fixed display-pixel rule: all RGB channels at least 248, spread at most 6, at least 1% coverage; enters after three qualifying samples and exits after two other samples; invalid input resets |
+| Phase 1E live integration | Current playing Live preview alone activates one 40 × 30 canvas sampled every 125 ms; Replay is excluded; inactive lifecycle clears interval, detector, canvas, coverage, cue, and audio |
+| Phase 1E accessible output | Exact experimental label plus visible `!` and complete text; sound starts disabled and may add a bounded non-speech tone after explicit user action |
+| Phase 1E truth/privacy | No YOLO or person exclusion; people and anything else rendered near white count equally. No temperature, hotspot, direction, severity, guidance, safety warning, all-clear, persistence, upload, or pixel logging |
 
 **Verification actually run:**
 
 ```text
 npm run verify:replay  →  green
 npm run verify:preview →  green
+npm run verify:palette →  green
 npm run lint           →  green
 npm run build          →  green
 npm run verify:offline →  green
 npm run verify:hardening → green
 ```
 
-Production build: 23 modules, 221.46 kB JavaScript / 68.06 kB gzip, 16.01 kB CSS / 4.19 kB gzip.
+Production build after Phase 1E: 25 modules, 228.89 kB JavaScript / 70.29 kB gzip, 16.82 kB CSS / 4.30 kB gzip.
 
 ### What runs now
 
@@ -64,6 +69,10 @@ Production build: 23 modules, 221.46 kB JavaScript / 68.06 kB gzip, 16.01 kB CSS
 - The operator must choose an input. Start uses the private exact identity, verifies the active track identity, attaches locally, and reaches `streaming` only after `<video>.play()` resolves.
 - Pause stops tracks and clears `srcObject`; Resume reacquires. Stop, Restart, errors, switch, route change, hidden visibility, `pagehide`, unmount, and late results share the same cleanup/generation boundary.
 - Fixed visible errors include a non-color `!` symbol and explicit Retry. Raw exception messages and device/group identifiers never render.
+- While a current Live preview is playing, Phase 1E samples one ephemeral 40 × 30 display copy every 125 ms. Replay never enters this hook.
+- The palette cue enters only after three samples meet its fixed near-white display rule and exits after two other samples. The UI retains **“No current assessment”** and the exact experimental label.
+- **Enable cue sound** is explicit. The visible cue remains complete when sound is muted or unavailable; inactive lifecycle closes audio and clears current cue state.
+- A person is not excluded. Any region rendered near white can activate the cue, so it must never be called human-filtered or hot-surface detection.
 
 `#history` renders an empty state and explains that live video, replay activity, and incidents are not stored.
 
@@ -71,14 +80,15 @@ Production build: 23 modules, 221.46 kB JavaScript / 68.06 kB gzip, 16.01 kB CSS
 
 ## 2. Next
 
-**Finish Phase 3 evidence and close the remaining Phase 4 human gates.**
+**Run the Phase 1E actual-browser gate, then finish only the essential Phase 3/package evidence.**
 
-The Phase 1D implementation work is done, but its hardware gate is blocked and Replay is the submission path. Before freeze:
+The Phase 1E code and synthetic verifier are done, but the same attached hardware/browser evidence is still missing:
 
-1. Record the Phase 3 browser, viewport, keyboard, zoom, color/audio, and VoiceOver matrix.
-2. Have the second builder review or reproduce `npm run verify:hardening` from the candidate checkout.
-3. Run `npm run demo:offline`, physically disconnect external networking, complete Replay twice with a `#scan` reload between runs, and reload `#history`.
-4. Record the exact commit and a second-builder review, then freeze product code at 17:30.
+1. In the normal demo browser, authorize and select the exact PureThermal input and obtain playing video.
+2. With a staged non-personal scene, reproduce palette-cue entry/exit, optional tone, mute, Stop cleanup, and route cleanup twice.
+3. If that fails, keep the attached-device claim blocked and use labelled Replay; synthetic checks are not hardware evidence.
+4. Record keyboard/focus/audio-muted behavior for the new cue and the exact commit.
+5. Package immediately. The user-authorized 18:03 exception does not reopen radiometry, thermal assessment, assessment speech, YOLO, or unrelated polish.
 
 If the disconnected-network run is not completed, keep Phase 4 open and describe the build only as application-self-contained—not offline-verified. If Phase 3’s matrix is incomplete, list the missing manual results rather than inferring them from automation.
 
@@ -100,6 +110,9 @@ If the disconnected-network run is not completed, keep Phase 4 open and describe
 | 10 | Replay restart and source-level cleanup are automated, but route/DOM accessibility remains browser evidence | record the remaining Phase 3 manual environment and results |
 | 11 | Production Replay and routes passed while external networking remained connected | operator — repeat the exact production rehearsal after physically disconnecting external networking |
 | 12 | Clean-checkout hardening passed at `ed19552`, but the final candidate is not yet reviewed or frozen | both — record the final commit and stop product changes at 17:30 |
+| 13 | Near-white is relative colorized display output and may change with firmware palette/automatic gain; it is not calibrated heat evidence | both — keep the exact Phase 1E label and never say hot detection |
+| 14 | Phase 1E deliberately has no person exclusion; a person or any other near-white region can activate it | demo owner — stage a non-personal scene for privacy and disclose the limitation |
+| 15 | The sampler/tone pass code review and synthetic verification, but the intended PureThermal live path still has no actual-browser evidence | operator — run the complete Phase 1E sequence twice or keep the hardware claim blocked |
 
 ---
 
@@ -110,12 +123,12 @@ If the disconnected-network run is not completed, keep Phase 4 open and describe
 - The default replay scheduler delegates to browser timers; the verifier injects a deterministic scheduler and proves five restart/stop cycles return to zero pending timers.
 - Replay timestamps are logical fixture timestamps: `startedAtMs + capturedAtOffsetMs`. Pausing delays delivery but does not rewrite capture offsets.
 - `usePreviewSession` is the focused local composition boundary; no global store exists.
-- No API, model endpoint, database, local storage, analytics, or cloud frame path exists.
+- No API, model endpoint, YOLO/person detector, database, local storage, analytics, or cloud frame path exists.
 - `verify:offline` statically proves local production asset references and absence of application network APIs; only a physical network-disconnection rehearsal can close the offline behavior gate.
-- A display-only live stream path exists, but no successful attached-device playback, live frame capture, assessment, warning, speech, history record, notification, smart plug, or relay is claimed.
+- A display-only live stream and experimental palette-cue path exist, but no successful attached-device playback, temperature, thermal assessment, safety warning, assessment speech, person exclusion, history record, notification, smart plug, or relay is claimed.
 - Display images and radiometric values are separate by contract. Replay has only the display side.
 - The attached sensor is thermal. A colorized webcam-compatible stream may contain RGB-formatted display pixels, but it is not a visible-light RGB sensor and its pixels are not temperature data.
-- Phase 1D is authorized only to display the local stream and source state. It may not snapshot, record, analyze the palette, infer heat direction, or speak guidance.
+- Phase 1E is the sole palette exception: it analyzes an ephemeral downscaled current live display only for near-white coverage, then emits a labelled visible cue and optional tone. It may not snapshot, record, sample Replay, infer temperature/heat/direction/severity/guidance, identify people, or speak.
 
 ---
 

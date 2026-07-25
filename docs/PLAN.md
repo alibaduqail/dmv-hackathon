@@ -4,7 +4,7 @@
 
 Two builders. **L** = integration/build lead. **D** = second developer. One owner controls a path at a time. Claim files and give handoffs through `docs/COLLABORATION.md`.
 
-**Hard feature freeze: 17:30. Submission: 19:00.** The final ninety minutes are documentation, captioned recording, and submission—not unfinished product work.
+**Planned hard feature freeze: 17:30. Submission: 19:00.** At 18:03 the user explicitly reopened one bounded post-freeze feature, Phase 1E. That exception does not reopen any other product scope; packaging begins immediately after its verified increment or documented failure.
 
 ---
 
@@ -15,12 +15,13 @@ Two builders. **L** = integration/build lead. **D** = second developer. One owne
 | 0 — replay foundation | complete by 14:00 | Implemented | `EMB-P0-*` | Replay checks, lint, and build green; shell remains truthfully simulated |
 | 1A — hardware/radiometry proof | closed at 15:25 | Complete investigation; pass gate blocked | `EMB-P1A-*` | No Y16/calibration proof; no-go recorded in `docs/HARDWARE-PROBE.md` |
 | 1D — display-only UVC preview | 15:25–16:15 | Code complete; hardware gate blocked | `EMB-P1D-*` | Intended device did not play by cutoff; use Replay unless explicitly reopened and passed before freeze |
+| 1E — experimental palette cue | reopened 18:03 | Post-freeze implementation in progress; hardware evidence open | `EMB-P1E-*` | Synthetic checks pass; attached behavior claimed only after two actual-browser staged runs |
 | 1B — radiometric bridge/source | — | Blocked by 1A | `EMB-P1B-*` | Future only; do not implement at this hackathon |
 | 1C — deterministic assessment | — | Blocked by 1A/1B | `EMB-P1C-*` | Future only; no display-pixel substitute |
 | 2 — assessment speech | — | Blocked by 1C | `EMB-P2-*` | Future only; no spoken heat guidance |
 | 3 — demo/accessibility QA | 16:15–17:00 | In progress; manual matrix open | `EMB-P3-*` | Both builders complete the locked demo and manual accessibility matrix |
 | 4 — offline/failure hardening | 17:00–17:30 | In progress | `EMB-P4-*` | Every completed path runs twice; all required checks pass |
-| **Feature freeze** | **17:30** | Hard stop | — | No product code changes |
+| **Feature freeze** | **17:30** | Passed; one explicit exception at 18:03 | — | Phase 1E only; no radiometric, assessment, speech, object-recognition, or unrelated polish work |
 | 5 — package | 17:30–18:30 | Planned | `EMB-P5-*` | README, evidence, captioned recording, and form match frozen build |
 | Submission buffer | 18:30–19:00 | Reserved | — | Submit; do not build |
 
@@ -31,10 +32,11 @@ Two builders. **L** = integration/build lead. **D** = second developer. One owne
   ├─ calibrated radiometry proven → 1B bridge → 1C assessment → 2 speech
   │                                BLOCKED      BLOCKED         BLOCKED
   └─ calibrated radiometry unavailable → 1D display-only UVC preview
+                                               ├─ 1E experimental palette cue
                                                └─ 3 QA → 4 hardening → 5 package
 ```
 
-No builder skips a gate. Phase 0 remains the independent labelled fallback. Phase 1D proves only browser video transport and cleanup; it has no route into radiometric validation or assessment.
+No builder skips a gate. Phase 0 remains the independent labelled fallback. Phase 1D proves only browser video transport and cleanup. Phase 1E may inspect its current live display only for a labelled near-white brightness cue; it has no route into radiometric validation or assessment.
 
 ### Recorded hardware-cutoff decision
 
@@ -45,6 +47,17 @@ At 15:25, Phase 1A was closed as a calibrated-radiometry no-go:
 3. Do not present synthetic assessment fixtures or colorized display pixels as camera temperature output.
 4. Use the remaining implementation window for Phase 1D display-only preview plus the existing replay fallback.
 5. Preserve the exact preview and replay truth statements in UI, demo, recording, and submission.
+
+### Recorded post-freeze scope decision
+
+At 18:03 the user explicitly reopened one narrow feature after the 17:30 freeze:
+
+1. Add **“Experimental palette brightness cue — not temperature or safety detection”** to the current playing live preview only.
+2. Use deterministic near-white RGB coverage plus temporal hysteresis; add no model, YOLO, object recognition, or person suppression.
+3. Require visible `!` + complete text before an explicitly enabled non-speech tone.
+4. Keep Replay outside the sampler and keep all sampled pixels ephemeral, local, unlogged, and unpersisted.
+5. Clear cue, sampler, hysteresis, and tone on every inactive lifecycle transition.
+6. Preserve Phase 1D’s blocked attached-device gate and keep Phases 1B, 1C, and 2 blocked.
 
 ---
 
@@ -123,7 +136,7 @@ No numeric assessment policy enters code in Phase 1A.
 
 **Outcome:** the intended PureThermal UVC input either plays locally with persistent non-radiometric truth and complete cleanup, or Phase 1D is marked blocked and the team keeps replay only.
 
-**Current state:** contracts, adapter, session, interface, and focused verification are complete. The Codex in-app browser could not present its camera-permission surface, so the exact attached-device label/settings, two playback runs, permission denial, unplug, and camera-indicator closure remain unchecked. The 16:15 cutoff passed, so the hardware gate is blocked and Replay is the submission path. The team may explicitly reopen the gate only before 17:30 by completing and recording two actual-browser playback/cleanup runs.
+**Current state:** contracts, adapter, session, interface, and focused verification are complete. The Codex in-app browser could not present its camera-permission surface, so the exact attached-device label/settings, two playback runs, permission denial, unplug, and camera-indicator closure remain unchecked. The 16:15 cutoff blocked this hardware gate. The user’s later 18:03 Phase 1E exception does not retroactively pass it; actual-browser evidence remains required for any live claim.
 
 Before implementation, **D** served as the sole contract editor for `src/types.ts`, `docs/SCHEMA.md`, and the matching decision entry. That review locked the replay-frame versus live-`MediaStream` viewport union; no stream fabricates thermal metadata.
 
@@ -155,7 +168,7 @@ Owned paths: `src/features/scan/**`, `src/styles/**`, `src/App.tsx` only if rout
 - [x] Never leave a paused/stopped/error preview frame visible.
 - [x] Keep every control keyboard-operable, named, visibly focused, and at least 44 × 44 CSS pixels.
 - [x] Keep the assessment panel at **“No current assessment”**.
-- [x] Add no canvas, snapshot, recording, upload, storage, palette analysis, temperature, hotspot, direction, warning, or speech path.
+- [x] Phase 1D added no canvas, snapshot, recording, upload, storage, palette analysis, temperature, hotspot, direction, warning, or speech path. Phase 1E is a later separately gated exception.
 
 ### Joint exit gate
 
@@ -167,7 +180,42 @@ Owned paths: `src/features/scan/**`, `src/styles/**`, `src/App.tsx` only if rout
 
 ---
 
-## 5. Phase 1B — local bridge, live adapter, and session lifecycle
+## 5. Phase 1E — experimental palette-brightness cue
+
+**Outcome:** a staged live preview can demonstrate a deterministic near-white display cue without being presented as temperature, person, or safety detection.
+
+**Current state:** the user authorized this exception at 18:03. Implementation and synthetic verification are complete and green. Actual attached-device behavior remains unverified until it runs in the normal demo browser.
+
+### L — deterministic cue and verification
+
+Owned paths: `src/lib/palette-cue.ts`, `scripts/verify-palette-cue.ts`, focused package scripts.
+
+- [x] Lock inclusive near-white constants: RGB channels at least `248`, channel spread at most `6`, and qualifying coverage at least `1%`.
+- [x] Enter after three consecutive qualifying samples and exit after two consecutive other samples.
+- [x] Reset on invalid/empty RGBA input and expose no thermal, safety, object, or person semantics.
+- [x] Add a plain Node verifier for RGBA validity, threshold boundaries, coverage, hysteresis, reset, and detector isolation.
+
+### D — ephemeral sampler, visible cue, and additive tone
+
+Owned paths: `src/features/scan/usePaletteCue.ts`, `src/features/scan/ScanView.tsx`, focused styles only if required.
+
+- [x] Sample only the current playing live `<video>` into one bounded downscaled canvas; never sample Replay.
+- [x] Keep the exact experimental label visible and retain both live non-radiometric statements plus **“No current assessment”**.
+- [x] Render active state with a visible `!` and complete text that does not use heat, danger, direction, severity, or guidance language.
+- [x] Start sound disabled; provide an accessible user control for a bounded non-speech tone.
+- [x] Stop the sampler and tone, reset detector state/coverage, and clear the cue on inactive lifecycle transitions.
+- [x] Retain no pixel buffers, frames, recordings, identifiers, logs, uploads, or persisted cue history.
+
+### Joint exit gate
+
+- [x] `npm run verify:palette`, `verify:preview`, `verify:replay`, lint, and build pass.
+- [x] Code review confirms Replay isolation, one bounded sampler, additive audio, no YOLO/person branch, and lifecycle cleanup.
+- [ ] The intended PureThermal input crosses and leaves the cue twice in a staged non-personal actual-browser run; otherwise attached behavior remains explicitly unverified.
+- [ ] Demo, README, recording, and submission use the exact experimental label and do not say hot detection, temperature, danger, person exclusion, or safety warning.
+
+---
+
+## 6. Phase 1B — local bridge, live adapter, and session lifecycle
 
 **State:** blocked by the Phase 1A result. Retained as future architecture; do not implement during this hackathon.
 
@@ -226,7 +274,7 @@ Owned paths: `src/lib/purethermal-source.ts`, `src/lib/purethermal/**`, `src/fea
 
 ---
 
-## 6. Phase 1C — deterministic validation and assessment
+## 7. Phase 1C — deterministic validation and assessment
 
 **Outcome:** one device-validated policy turns only current live radiometry into one structured spatial assessment.
 
@@ -282,7 +330,7 @@ Before L edits the scan presentation, D hands off the exact Phase 1B session-hoo
 
 ---
 
-## 7. Phase 2 — spoken interaction
+## 8. Phase 2 — spoken interaction
 
 **Outcome:** speech is an optional renderer of the same canonical structured state visible on screen.
 
@@ -318,7 +366,7 @@ No Phase 2 fallback is authorized for the current build.
 
 ---
 
-## 8. Phase 3 — demo flow and accessibility QA
+## 9. Phase 3 — demo flow and accessibility QA
 
 **Outcome:** both builders can run the supported path, and a blind/low-vision interaction does not depend on color, speech, or precision pointing.
 
@@ -352,7 +400,7 @@ No architecture refactor begins in this phase.
 
 ---
 
-## 9. Phase 4 — offline and failure hardening
+## 10. Phase 4 — offline and failure hardening
 
 **Outcome:** every completed capability is local, recoverable, resource-bounded, and repeatable at freeze.
 
@@ -406,7 +454,7 @@ No architecture refactor begins in this phase.
 
 ---
 
-## 10. Phase 5 — package the frozen truth
+## 11. Phase 5 — package the frozen truth
 
 **Outcome:** a judge can reproduce the supported build and distinguish every live, simulated, verified, planned, and blocked capability.
 
@@ -436,7 +484,7 @@ No architecture refactor begins in this phase.
 
 ---
 
-## 11. Integration cadence
+## 12. Integration cadence
 
 At each phase boundary:
 
@@ -451,11 +499,12 @@ Do not merge an unreviewed shared-contract change or let two lanes edit the same
 
 ---
 
-## 12. Standing rules
+## 13. Standing rules
 
 - Never claim that an object is safe to touch.
 - Deterministic code owns classification; generated language cannot change it.
 - Text + symbol are required; color and speech reinforce them.
+- Phase 1E is a non-semantic display-brightness cue, not classification: no temperature, direction, severity, guidance, person exclusion, or all-clear.
 - Live streams, tracks, frames, and radiometric arrays are ephemeral and local. A reviewed external staged Phase 5 recording does not authorize in-app capture.
 - Replay is visibly and audibly simulated and never enters analysis.
 - No smart plug, relay, notification, cloud frame store, or autonomous action.

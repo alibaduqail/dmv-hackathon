@@ -1,10 +1,10 @@
-# Ember — MVP Spec v2
+# Ember — MVP Spec v3
 
 **Supersedes all prior specs.** Track 02, Health Tech & Accessibility. **Feature freeze 17:30. Submit 19:00.**
 
 **Product target in one line:** Ember would give blind and low-vision people a non-contact way to locate higher-heat areas before reaching toward them.
 
-**Hackathon MVP form:** a handheld Lepton 3.5 thermal camera on a PureThermal USB board, paired with a local web interface. The current build has an accessible labelled replay and an implemented display-only colorized UVC path; the attached-device gate is blocked after missing its 16:15 cutoff, so Replay is the submission path unless the team explicitly reopens and completes two actual-browser runs before the 17:30 freeze. Calibrated heat guidance and speech are blocked by the Phase 1A hardware result. Atomic acceptance and dependency gates live in `docs/REQUIREMENTS.md`; mutable phase timing lives in `docs/PLAN.md`.
+**Hackathon MVP form:** a handheld Lepton 3.5 thermal camera on a PureThermal USB board, paired with a local web interface. The current build has an accessible labelled replay, an implemented display-only colorized UVC path, and a user-authorized post-freeze experimental near-white palette cue for the current live preview. The cue is labelled **“Experimental palette brightness cue — not temperature or safety detection”** and may add a user-enabled non-speech tone. Attached-device behavior remains unverified until it passes in the actual demo browser. Calibrated heat guidance and assessment speech remain blocked by the Phase 1A hardware result. Atomic acceptance and dependency gates live in `docs/REQUIREMENTS.md`; mutable phase timing lives in `docs/PLAN.md`.
 
 ---
 
@@ -24,17 +24,23 @@ PureThermal frame
 
 The model is deliberately narrow. Ember does not identify objects, diagnose injury, or guarantee touch safety. A future radiometric build may report where higher heat was observed and prompt the person to keep distance or verify another way.
 
-The current hackathon capture path does not supply calibrated radiometry. Its authorized live branch ends at a display-only colorized preview:
+The current hackathon capture path does not supply calibrated radiometry. Its live branch is still non-radiometric. Phase 1E adds one separate display heuristic:
 
 ```text
 PureThermal UVC MediaStream
   → local video viewport
   → persistent non-radiometric provenance
   → “No current assessment”
+  → ephemeral 40 × 30 display sample
+  → deterministic near-white coverage + hysteresis
+  → visible ! + fixed cue text
+  → optional user-enabled non-speech tone
 
   ✕ no temperature
   ✕ no hotspot or direction
-  ✕ no warning or assessment speech
+  ✕ no severity, guidance, or safety warning
+  ✕ no person/object detection or exclusion
+  ✕ no assessment speech
 ```
 
 ### Why thermal
@@ -45,7 +51,7 @@ A visible-light camera answers *what does this look like?* Calibrated thermal da
 
 Primary user: a blind or low-vision person checking a nearby surface in a kitchen, workshop, bathroom, or charging area.
 
-The intended radiometric interaction is deliberately simple:
+The intended future radiometric interaction is deliberately simple:
 
 1. Point the handheld camera toward the area.
 2. Start the source.
@@ -55,7 +61,7 @@ The intended radiometric interaction is deliberately simple:
 
 No account, setup wizard, object labelling, smart-home integration, or remote monitoring.
 
-Even if Phase 1D is explicitly reopened and passes, its display-only preview will not deliver steps 4–5 for a blind user. That limitation must be explicit in the pitch.
+Phase 1E’s optional tone makes its experimental display-brightness cue perceivable without sight, but it still does not deliver step 4: it has no calibrated heat, direction, severity, or guidance result. That limitation must be explicit in the pitch.
 
 ---
 
@@ -72,7 +78,7 @@ Ember observes surface radiation under imperfect conditions. Material emissivity
 | “No current assessment” | “Everything is clear.” |
 | “The source is paused.” | “The camera proved it is cold.” |
 
-Any future classification must be deterministic code over validated radiometric values. An LLM may later turn the resulting structured assessment into natural language, but it cannot select thresholds or alter severity. Colorized replay or UVC pixels are not valid classification input.
+Any future thermal classification must be deterministic code over validated radiometric values. An LLM may later turn the resulting structured assessment into natural language, but it cannot select thresholds or alter severity. Colorized replay or UVC pixels are not valid thermal-classification input. Phase 1E’s fixed RGB and coverage values classify display brightness only and may never be presented as heat or safety evidence.
 
 ---
 
@@ -94,6 +100,9 @@ This repository reset builds the seam before the hardware path.
 - `UvcPreviewSource` with temporary authorization cleanup, opaque operator choices, private exact-device matching, playback gating, pause/reacquire, structured failure recovery, and complete media lifecycle cleanup.
 - A replay-frame/live-`MediaStream` viewport union; a live stream never fabricates thermal metadata.
 - Persistent live truth: **“Live thermal preview — non-radiometric”**, **“Display-only colorized video. No temperature or safety assessment.”**, and **“No current assessment”**.
+- Phase 1E’s exact experimental label, deterministic near-white coverage/hysteresis, visible `!` + complete text, and user-enabled additive tone.
+- A live-only 40 × 30 ephemeral sampler that resets and releases its timer, canvas, detector, and audio on inactive lifecycle transitions.
+- Explicit truth that people and every other near-white display region can activate the same cue; no YOLO or object/person branch.
 - `#history` with an honest empty state.
 - Build, lint, replay verification, and dependency-injected preview verification commands.
 - A privacy-safe Phase 1A no-go report for the attached PureThermal UVC device.
@@ -105,11 +114,11 @@ This repository reset builds the seam before the hardware path.
 - PureThermal native radiometric bridge and calibrated live frames.
 - Radiometric hotspot analysis.
 - Severity thresholds.
-- Text-to-speech.
+- Assessment text-to-speech. Phase 1E’s fixed tone is non-speech and does not describe heat.
 - LLM explanation.
 - Alerts, notifications, or saved incidents.
 
-The replay proves its source boundary and interface lifecycle. The preview fakes prove permission/currentness/resource behavior in code. Neither proves attached-camera playback, temperature accuracy, or safety performance.
+The replay proves its source boundary and interface lifecycle. Preview fakes prove permission/currentness/resource behavior in code, and the palette verifier proves synthetic RGB boundaries and hysteresis. None proves attached-camera playback, temperature accuracy, heat detection, person exclusion, or safety performance.
 
 ---
 
@@ -132,6 +141,29 @@ The preview must keep these statements adjacent:
 - **“Display-only colorized video. No temperature or safety assessment.”**
 - **“No current assessment”**
 
+### Phase 1E experimental palette cue
+
+At 18:03 the user explicitly reopened scope after the planned 17:30 freeze for
+one staged-demo interaction. Only the current playing live `<video>` is sampled;
+Replay is never sampled. Every RGB channel must be at least `248`, the channel
+spread must be at most `6`, and at least `1%` of the 40 × 30 sample must qualify.
+Three consecutive qualifying samples enter the cue; two other samples exit it.
+
+Those constants describe palette pixels, not a temperature. Auto gain and
+palette behavior can make a person or any other region near white, and Ember
+does not attempt to distinguish them. No YOLO model or person suppression is
+included.
+
+The cue always shows **“Experimental palette brightness cue — not temperature
+or safety detection”**. Active state adds a visible `!` and fixed text. Sound
+starts disabled; an explicit user gesture may enable a bounded non-speech tone.
+The visible result remains complete if audio is muted or unavailable.
+
+Pixels are consumed synchronously and never stored, uploaded, logged, returned
+from the hook, or added to history. Pause, Stop, Restart, failure, source switch,
+page hide, route change, and unmount clear the cue and release the sampler and
+audio.
+
 ### Future radiometric bridge — blocked
 
 A future hardware revision or capture path may reopen the native bridge. It must first reproduce calibrated Y16 data, exact encoding, orientation, and conversion evidence. Only then may it produce a display image separately from validated analysis data and enter a `PureThermalSource`.
@@ -153,7 +185,7 @@ Thresholds are configuration owned by deterministic code and must be validated w
 
 ### Spoken interaction
 
-Future speech repeats a validated structured assessment. It never outruns or replaces visible text. Phase 1D may use accessible browser status/live regions, but it must not speak heat guidance from display pixels.
+Future speech repeats a validated structured assessment. It never outruns or replaces visible text. Phase 1E’s user-enabled sine tone contains no words and communicates only that its plainly labelled display-brightness cue is active; it is not Phase 2 assessment speech.
 
 ---
 
@@ -168,6 +200,7 @@ Future speech repeats a validated structured assessment. It never outruns or rep
 - Current replay frame metadata or browser-reported live display settings; never invented temperature metadata.
 - Start, pause, resume, restart, and stop controls.
 - Live region for source changes.
+- When Live is selected, the exact experimental label, visible cue state, current near-white coverage, and an accessible Enable/Mute cue sound control.
 - Future assessment panel beneath the viewport.
 
 Every interactive target is at least 44 × 44 CSS pixels, keyboard operable, visibly focused, and named for assistive technology.
@@ -184,14 +217,15 @@ History becomes real only after a later, explicit privacy decision. Any future l
 
 Use a heating pad, reusable hand warmer, or warm mug. Do not bring an exposed heating element or create a burn hazard for the pitch.
 
-The current demo, only if Phase 1D is explicitly reopened and passes:
+The current live demo, only after the intended input plays in the actual demo browser:
 
 1. Explain the residual-heat accessibility problem and the intended radiometric product.
 2. Show the exact PureThermal input selected only after permission.
 3. Keep **“Live thermal preview — non-radiometric”** visible while the local stream plays.
-4. Point out **“No current assessment”**. Say that Ember deliberately does not infer temperature or direction from palette colors.
-5. Stop the preview and show that the camera indicator closes and `#history` remains empty.
-6. Switch deliberately to the labelled replay to demonstrate pause/resume/restart without calling it camera data.
+4. Point out **“No current assessment”** and **“Experimental palette brightness cue — not temperature or safety detection”**.
+5. Enable cue sound, move a staged non-personal near-white palette region into and out of view, and show the visible `!` + text and optional tone. Say explicitly that people and any other near-white region can also activate it.
+6. Stop the preview and show that the cue/video clear, audio stops, the camera indicator closes, and `#history` remains empty.
+7. Switch deliberately to the labelled replay to demonstrate pause/resume/restart; Replay must never activate the cue.
 
 If Phase 1D fails, run replay only. The UI must continue to display **“Demo replay — not live”**.
 
@@ -206,6 +240,7 @@ If Phase 1D fails, run replay only. The UI must continue to display **“Demo re
 - Static PNG replay manifest.
 - Plain Node verification script; no test framework.
 - Browser MediaDevices for the implemented display-only preview; no camera SDK.
+- Browser canvas and Web Audio APIs for the bounded Phase 1E experiment; no model or new dependency.
 - Future local native bridge for PureThermal Y16, blocked pending a new calibrated proof.
 
 No API, database, authentication, cloud storage, model endpoint, or persistence in the foundation.
@@ -219,9 +254,10 @@ No API, database, authentication, cloud storage, model endpoint, or persistence 
 1. Phase 1A investigation completed; calibrated radiometry did not pass.
 2. Radiometric bridge, assessment, and assessment speech are blocked.
 3. Phase 1D code is implemented; its separate attached-device permission/playback/cleanup gate is blocked after the missed 16:15 cutoff.
-4. Replay remains the independent labelled fallback.
+4. At 18:03 the user explicitly authorized Phase 1E after freeze; its deterministic synthetic gate is separate from its still-open attached-browser evidence.
+5. Replay remains the independent labelled fallback and never enters Phase 1E.
 
-Deterministic classification over validated radiometry remains mandatory for **any live warning claim**. The team will not fabricate it to make a preview or replay look complete.
+Deterministic classification over validated radiometry remains mandatory for **any live thermal or safety-warning claim**. Phase 1E is presented only as a display-brightness cue. The team will not turn it into a heat claim to make the preview look complete.
 
 ---
 
@@ -246,32 +282,35 @@ Deterministic classification over validated radiometry remains mandatory for **a
 - The camera indicator closes after stop and route change.
 - The assessment panel remains **“No current assessment”**.
 - Replay remains a plainly labelled fallback and passes the disconnected-network gate.
-- Every claimed path runs twice before freeze.
+- The experimental cue remains separately labelled, visible without audio, live-only, ephemeral, and clear on every inactive lifecycle.
+- Any video says explicitly that near-white pixels—including a person if present—can activate it and that it is not hot detection.
+- Every claimed path runs twice before recording; the Phase 1E exception was explicitly authorized after the planned freeze.
 
 ### Honest fallback
 
 - The accessible replay lifecycle is self-contained and local; offline behavior is claimed only after the Phase 4 disconnected-network rehearsal.
 - Exact simulated provenance remains visible.
 - No replay assessment or temperature-accuracy claim appears.
-- Browser preview is described as implemented with a blocked hardware gate unless that gate is explicitly reopened and passes before freeze.
+- Browser preview and Phase 1E are described as implemented with blocked actual-hardware evidence unless their actual-browser gates pass and are recorded.
 - Radiometric bridge, assessment, and assessment speech are described as future work.
 
 ---
 
 ## 9. Out of scope
 
-Smart plugs, relays, appliance control, third-party alerts, remote monitoring, cloud frame storage, medical diagnosis, injury assessment, fever screening, object recognition, RGB fusion, user accounts, billing, settings, mobile-native packaging, and multi-tenancy.
+Smart plugs, relays, appliance control, third-party alerts, remote monitoring, cloud frame storage, medical diagnosis, injury assessment, fever screening, object/person recognition or suppression, YOLO, RGB fusion, user accounts, billing, settings, mobile-native packaging, and multi-tenancy.
 
-The future radiometric product would act by warning the person. The current build makes no thermal warning, and neither version acts on the physical environment.
+The future radiometric product would act by warning the person. The current build makes no thermal warning; its experimental cue reports only a near-white display condition. Neither version acts on the physical environment.
 
 ---
 
 ## 10. Questions to answer honestly
 
-- **“Can it tell me something is safe?”** No. The current build makes no heat assessment. A future radiometric build may locate and describe higher heat, but it still cannot guarantee touch safety.
+- **“Can it tell me something is safe?”** No. The current build makes no heat assessment. Its palette cue cannot establish temperature or danger. A future radiometric build may locate and describe higher heat, but it still cannot guarantee touch safety.
 - **“Is the replay a camera feed?”** No. It is a simulated six-frame UI and lifecycle fixture, visibly labelled at all times.
-- **“Does the AI decide what is hot?”** No. The current build makes no heat assessment. A future assessment must come from deterministic code over validated radiometry; language could only explain that result.
+- **“Does the AI decide what is hot?”** No. There is no hot decision in the current build. Phase 1E uses fixed deterministic RGB rules only to report near-white display coverage. A future heat assessment must come from deterministic code over validated radiometry; language could only explain that result.
 - **“Are frames uploaded?”** No. The implemented preview path keeps a `MediaStream` local and ephemeral and includes no upload, recording, snapshot, logging, or persistence path. Actual attached-device playback remains unproven. The replay PNGs are committed simulated fixtures served locally.
 - **“Is the live preview RGB?”** It may be delivered in an RGB-formatted video stream, but the Lepton is a thermal sensor. Those colorized display pixels are not calibrated per-pixel temperatures.
-- **“Does the live preview locate higher heat for a blind user?”** No. The implemented path is designed to demonstrate local display transport and accessible source state, but attached-device capture was not proven before the gate closed. The directional feature remains blocked without validated radiometry.
+- **“Does the live preview locate higher heat for a blind user?”** No. Its optional sound makes an experimental near-white palette cue perceivable without sight, but it does not measure heat or provide direction. Attached-device capture also remains unverified until the actual-browser gate passes.
+- **“Does it ignore people?”** No. There is no person detector. A person and any other region rendered near white can activate the same cue. The staged demo should keep people out of frame for privacy, not because Ember filters them.
 - **“What happens if browser camera playback fails on stage?”** The team switches explicitly to the labelled local replay; it is called offline only after the disconnected-network gate passes.
