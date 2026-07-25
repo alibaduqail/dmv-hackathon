@@ -40,6 +40,17 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* Simulation is marked by texture as well as by colour, symbol, and words, so the
+   difference between a replayed frame and a live camera survives greyscale,
+   colour-blindness, and a photograph of the screen. */
+.sim-hatch {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 7px,
+    color-mix(in oklab, var(--color-caution) 26%, transparent) 7px 9px
+  );
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

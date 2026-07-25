@@ -11,11 +11,11 @@ export default function HistoryView() {
 
         <section
           aria-labelledby="empty-history-title"
-          className="mt-10 rounded-2xl border border-line bg-panel p-6 md:p-8"
+          className="mt-10 rounded-2xl border border-divider bg-panel p-6 md:p-8"
         >
           <div
             aria-hidden="true"
-            className="grid size-12 place-items-center rounded-full border-2 border-line text-xl text-muted"
+            className="grid size-12 place-items-center rounded-full border-2 border-divider text-xl text-muted"
           >
             ○
           </div>

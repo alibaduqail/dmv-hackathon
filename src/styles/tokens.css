@@ -8,6 +8,10 @@
   --color-text: #f7fafc;
   --color-muted: #bdc9d6;
   --color-line: #56677c;
+  /* `line` was carrying borders, internal rules, and disabled fills at once.
+     Splitting them keeps a real border readable while a divider stays quiet. */
+  --color-divider: #2b3644;
+  --color-inert: #33404f;
   --color-accent: #6ee7b7;
   --color-caution: #ffd166;
   --color-danger: #ff7b7b;
