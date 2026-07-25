@@ -4,13 +4,13 @@ import { ReplayThermalSource } from '../../lib/thermal-source.ts';
 import { UvcPreviewSource } from '../../lib/uvc-preview-source.ts';
 import type {
   PreviewDeviceChoice,
-  PreviewPlaybackSink,
   ScanSourceKind,
   SourceStatus,
   UvcPreviewObserver,
   UvcPreviewState,
   ViewportSurface,
 } from '../../types.ts';
+import { createPreviewPlaybackSink } from './preview-playback-sink.ts';
 
 const INITIAL_PREVIEW_STATE: UvcPreviewState = {
   status: 'idle',
@@ -33,20 +33,10 @@ export function usePreviewSession() {
     [],
   );
 
-  const sink = useMemo<PreviewPlaybackSink>(() => ({
-    async play(stream) {
-      const video = videoRef.current;
-      if (!video) throw { name: 'NotSupportedError' };
-      if (video.srcObject !== stream) video.srcObject = stream;
-      await video.play();
-    },
-    clear(stream) {
-      const video = videoRef.current;
-      if (!video || (stream !== null && video.srcObject !== stream)) return;
-      video.pause();
-      video.srcObject = null;
-    },
-  }), []);
+  const sink = useMemo(
+    () => createPreviewPlaybackSink(() => videoRef.current),
+    [],
+  );
 
   const observer = useMemo<UvcPreviewObserver>(() => ({
     onState(state) {
@@ -79,6 +69,26 @@ export function usePreviewSession() {
       previewSource.stop();
     };
   }, [previewSource, replaySource]);
+
+  useEffect(() => {
+    if (sourceKind !== 'replay') return;
+
+    const clearReplay = () => {
+      replaySource.stop();
+      setReplayStatus('idle');
+      setSurface(current => current?.kind === 'replay-frame' ? null : current);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') clearReplay();
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pagehide', clearReplay);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pagehide', clearReplay);
+    };
+  }, [replaySource, sourceKind]);
 
   const selectSource = useCallback((nextSource: ScanSourceKind) => {
     if (nextSource === sourceKind) return;

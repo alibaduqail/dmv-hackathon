@@ -1,6 +1,7 @@
 import { UvcPreviewSource } from '../src/lib/uvc-preview-source.ts';
 import { emberReplayManifest } from '../src/fixtures/replay.ts';
 import { ReplayThermalSource } from '../src/lib/thermal-source.ts';
+import { createPreviewPlaybackSink } from '../src/features/scan/preview-playback-sink.ts';
 import type {
   LivePreviewSurface,
   PreviewDeviceChoice,
@@ -60,6 +61,7 @@ class FakeEventTarget {
 class FakeTrack extends FakeEventTarget {
   readonly kind = 'video';
   readonly label: string;
+  readyState: MediaStreamTrackState = 'live';
   stopped = false;
   stopCount = 0;
   private readonly settings: MediaTrackSettings;
@@ -77,6 +79,12 @@ class FakeTrack extends FakeEventTarget {
   stop(): void {
     this.stopped = true;
     this.stopCount += 1;
+    this.readyState = 'ended';
+  }
+
+  end(dispatchEvent = true): void {
+    this.readyState = 'ended';
+    if (dispatchEvent) this.dispatch('ended');
   }
 }
 
@@ -336,6 +344,43 @@ const verifyIdentityMismatchAndPlaybackFailure = async () => {
   assertNoListeners(playbackHarness, stream.track);
 };
 
+const verifyEndedTrackRaces = async () => {
+  const alreadyEndedHarness = makeHarness();
+  await authorize(alreadyEndedHarness);
+  const alreadyEnded = liveStream();
+  alreadyEnded.track.end(false);
+  alreadyEndedHarness.mediaDevices.queueStream(alreadyEnded);
+  await alreadyEndedHarness.source.start();
+
+  assert(alreadyEnded.track.stopped, 'An already-ended track was retained.');
+  assert(alreadyEndedHarness.sink.played.length === 0, 'An already-ended track reached playback.');
+  assert(
+    alreadyEndedHarness.observation.state.error?.code === 'device-disconnected',
+    'An already-ended track did not fail as disconnected.',
+  );
+  assertNoListeners(alreadyEndedHarness, alreadyEnded.track);
+
+  const playbackRaceHarness = makeHarness();
+  await authorize(playbackRaceHarness);
+  const endedDuringPlayback = liveStream();
+  const playback = deferred<void>();
+  playbackRaceHarness.mediaDevices.queueStream(endedDuringPlayback);
+  playbackRaceHarness.sink.queuePromise(playback.promise);
+  const starting = playbackRaceHarness.source.start();
+  await tick();
+  endedDuringPlayback.track.end(false);
+  playback.resolve();
+  await starting;
+
+  assert(endedDuringPlayback.track.stopped, 'A track ending during playback was retained.');
+  assert(
+    playbackRaceHarness.observation.state.error?.code === 'device-disconnected',
+    'A track ending during playback did not fail as disconnected.',
+  );
+  assert(playbackRaceHarness.observation.surface === null, 'An ended track produced a live surface.');
+  assertNoListeners(playbackRaceHarness, endedDuringPlayback.track);
+};
+
 const verifyPauseResumeAndDisconnect = async () => {
   const harness = makeHarness();
   await authorize(harness);
@@ -355,7 +400,7 @@ const verifyPauseResumeAndDisconnect = async () => {
   assert(harness.mediaDevices.calls.length === 3, 'Resume did not reacquire the selected input.');
   assert(resumedObservation.state.status === 'streaming', 'Reacquired preview did not stream.');
 
-  second.track.dispatch('ended');
+  second.track.end();
   assert(second.track.stopped, 'Disconnect did not stop remaining active tracks.');
   assert(harness.observation.state.error?.code === 'device-disconnected', 'Track disconnect did not produce its explicit error.');
   assert(harness.observation.surface === null, 'Disconnect left a stale preview visible.');
@@ -484,13 +529,37 @@ const verifyErrorsAndUnsupportedContext = async () => {
   assertNoListeners(unsupportedHarness);
 };
 
+const verifyDetachedPlaybackElementCleanup = async () => {
+  const stream = liveStream() as unknown as MediaStream;
+  const video = {
+    srcObject: null as MediaProvider | null,
+    play: () => Promise.resolve(),
+    pauseCount: 0,
+    pause() {
+      this.pauseCount += 1;
+    },
+  };
+  let currentVideo: Pick<HTMLVideoElement, 'pause' | 'play' | 'srcObject'> | null = video;
+  const sink = createPreviewPlaybackSink(() => currentVideo);
+
+  await sink.play(stream);
+  assert(video.srcObject === stream, 'Playback sink did not attach the selected stream.');
+  currentVideo = null;
+  sink.clear(stream);
+
+  assert(video.pauseCount === 1, 'Detached playback element was not paused during cleanup.');
+  assert(video.srcObject === null, 'Detached playback element retained srcObject after cleanup.');
+};
+
 verifyReplayDoesNotRequestCameraAccess();
 await verifyAuthorizationAndExactPlayback();
 await verifyIdentityMismatchAndPlaybackFailure();
+await verifyEndedTrackRaces();
 await verifyPauseResumeAndDisconnect();
 await verifyDeviceChangeDisconnect();
 await verifyLateResultsAndRestart();
 await verifyHiddenAndPageHideCleanup();
 await verifyErrorsAndUnsupportedContext();
+await verifyDetachedPlaybackElementCleanup();
 
-console.log('UVC preview verified: authorization, exact-device playback gate, lifecycle cleanup, late-result rejection, and errors.');
+console.log('UVC preview verified: authorization, exact-device playback gate, ended-track races, retained-element cleanup, lifecycle invalidation, and errors.');

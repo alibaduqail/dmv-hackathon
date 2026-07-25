@@ -49,6 +49,8 @@ const stopTracks = (stream: MediaStream | null): void => {
   for (const track of stream.getTracks()) track.stop();
 };
 
+const hasEnded = (track: MediaStreamTrack): boolean => track.readyState === 'ended';
+
 const finitePositive = (value: unknown): number | undefined => (
   typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined
 );
@@ -262,6 +264,10 @@ export class UvcPreviewSource {
       this.activeStream = stream;
       this.attachTrackListener(generation, track);
       this.attachDeviceListener(generation, selected.deviceId);
+      if (hasEnded(track)) {
+        this.fail(generation, 'device-disconnected');
+        return;
+      }
       this.setState('connecting', 'awaiting-playback');
 
       playbackStarted = true;
@@ -270,6 +276,10 @@ export class UvcPreviewSource {
       if (!this.isCurrent(generation) || this.activeStream !== stream) {
         this.sink.clear(stream);
         stopTracks(stream);
+        return;
+      }
+      if (hasEnded(track)) {
+        this.fail(generation, 'device-disconnected');
         return;
       }
 

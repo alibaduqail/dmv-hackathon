@@ -9,6 +9,11 @@ const VIEWS = {
 
 type ViewName = keyof typeof VIEWS;
 
+const VIEW_TITLES: Record<ViewName, string> = {
+  scan: 'Scan · Ember',
+  history: 'History · Ember',
+};
+
 const currentView = (): ViewName => {
   const candidate = location.hash.slice(1);
   return candidate === 'scan' || candidate === 'history' ? candidate : 'scan';
@@ -16,12 +21,21 @@ const currentView = (): ViewName => {
 
 export default function App() {
   const [view, setView] = useState(currentView);
+  const [navigationCount, setNavigationCount] = useState(0);
 
   useEffect(() => {
-    const onHashChange = () => setView(currentView());
+    const onHashChange = () => {
+      setView(currentView());
+      setNavigationCount(count => count + 1);
+    };
     addEventListener('hashchange', onHashChange);
     return () => removeEventListener('hashchange', onHashChange);
   }, []);
+
+  useEffect(() => {
+    document.title = VIEW_TITLES[view];
+    if (navigationCount > 0) document.getElementById('main')?.focus();
+  }, [navigationCount, view]);
 
   const View = VIEWS[view];
 
