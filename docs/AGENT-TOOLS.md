@@ -50,7 +50,7 @@ Before installing a project-scoped tool:
 ```sh
 git status --short --untracked-files=all
 git fetch origin
-git switch codex/ember
+git switch main
 git pull --ff-only
 git switch -c codex/tool-name-evaluation
 ```
@@ -63,6 +63,7 @@ After installing:
 git status --short --untracked-files=all
 git diff -- .gitignore AGENTS.md CLAUDE.md .agents .claude .codex .impeccable
 npm run verify:replay
+npm run verify:preview
 npm run lint
 npm run build
 ```
@@ -333,7 +334,7 @@ Own only: <exact paths>.
 Do not persist or upload thermal frames.
 Do not classify replay pixels.
 Do not say “safe to touch.”
-Run: npm run verify:replay, npm run lint, npm run build.
+Run: npm run verify:replay, npm run verify:preview, npm run lint, npm run build.
 Report changed files, verification, and unresolved risks.
 ```
 

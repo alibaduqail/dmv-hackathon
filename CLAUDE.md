@@ -36,4 +36,4 @@ Ember reports observed thermal conditions; it never guarantees touch safety. Det
 
 ## Commits
 
-Conventional commits, one line, no body, no co-author trailer. Commit after each working increment. `codex/ember` is the integration branch; do not push directly to `main`, rewrite shared history, or let a subagent push unless it is the assigned integration owner.
+Conventional commits, one line, no body, no co-author trailer. Commit after each working increment. Branch from current `main`, push only the short-lived branch, and integrate through a reviewed pull request; do not push feature work directly to `main`, rewrite shared history, or let a subagent push unless it is the assigned integration owner.

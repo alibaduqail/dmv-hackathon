@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import HistoryView from './features/history/HistoryView.tsx';
 import ScanView from './features/scan/ScanView.tsx';
 
@@ -9,6 +9,11 @@ const VIEWS = {
 
 type ViewName = keyof typeof VIEWS;
 
+const VIEW_TITLES: Record<ViewName, string> = {
+  scan: 'Scan · Ember',
+  history: 'History · Ember',
+};
+
 const currentView = (): ViewName => {
   const candidate = location.hash.slice(1);
   return candidate === 'scan' || candidate === 'history' ? candidate : 'scan';
@@ -16,23 +21,21 @@ const currentView = (): ViewName => {
 
 export default function App() {
   const [view, setView] = useState(currentView);
-  const isFirstRender = useRef(true);
+  const [navigationCount, setNavigationCount] = useState(0);
 
   useEffect(() => {
-    const onHashChange = () => setView(currentView());
+    const onHashChange = () => {
+      setView(currentView());
+      setNavigationCount(count => count + 1);
+    };
     addEventListener('hashchange', onHashChange);
     return () => removeEventListener('hashchange', onHashChange);
   }, []);
 
-  // Hash routing swaps the view without moving focus, so a screen-reader or keyboard
-  // user stays on the old page position. Focus the new route's main content instead.
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    document.getElementById('main')?.focus();
-  }, [view]);
+    document.title = VIEW_TITLES[view];
+    if (navigationCount > 0) document.getElementById('main')?.focus();
+  }, [navigationCount, view]);
 
   const View = VIEWS[view];
 
@@ -62,7 +65,7 @@ export default function App() {
             <span>
               <span className="block text-xl font-bold tracking-tight">Ember</span>
               <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                Thermal guidance
+                Thermal companion
               </span>
             </span>
           </a>

@@ -13,11 +13,11 @@ The goal is not to keep every agent busy. The goal is to reach Ember’s next de
 ```sh
 git clone https://github.com/alibaduqail/dmv-hackathon.git
 cd dmv-hackathon
-git fetch origin
-git switch --track origin/codex/ember
 node --version
 npm ci
 npm run verify:replay
+npm run verify:preview
+npm run verify:speech
 npm run lint
 npm run build
 ```
@@ -28,11 +28,13 @@ Preserve local work before switching. Then:
 
 ```sh
 git fetch origin
-git switch codex/ember
+git switch main
 git pull --ff-only
 node --version
 npm ci
 npm run verify:replay
+npm run verify:preview
+npm run verify:speech
 npm run lint
 npm run build
 ```
@@ -73,9 +75,11 @@ The committed foundation currently proves:
 - Start, pause, resume, restart, stop, completion, and cleanup.
 - Visible replay provenance: **“Demo replay — not live”**.
 - Keyboard-sized controls, visible focus, text status, and a non-color status symbol.
-- No live camera, hotspot classification, speech, model endpoint, notifications, or persisted history.
+- Phase 1A is closed with calibrated radiometry blocked; `docs/HARDWARE-PROBE.md` records the attached USB/UVC evidence and missing Y16/calibration proof.
+- The Phase 1D browser preview adapter, session, interface, and fake-MediaDevices verification are implemented; its attached-device gate is blocked after the intended input did not play by the 16:15 cutoff.
+- No hotspot classification, assessment speech, model endpoint, notifications, or persisted history is implemented. Optional source-status speech is implemented and accepts no frame or assessment input.
 
-Do not describe a planned Phase 1 capability as present. The replay proves the interface and transport seam only; it does not prove temperature accuracy or touch safety.
+Describe Phase 1D precisely: the local display-only path is implemented and its source lifecycle is verified with fakes, while the attached-device gate is blocked and Replay is the submission path. React source-switch and route cleanup remain code/manual evidence, not `verify:preview` coverage. The team may explicitly reopen the hardware gate only before the 17:30 freeze by completing two actual-browser playback/cleanup runs and recording the result. Neither path proves temperature accuracy, direction, warning behavior, or touch safety.
 
 ---
 
@@ -98,10 +102,10 @@ Recommended lanes:
 
 | Lane | Primary owner | Owned paths | Coordinate before touching |
 |---|---|---|---|
-| PureThermal hardware/bridge | Builder A | future `native/purethermal-bridge/**` | shared types, protocol contract |
-| Browser live source/session | Builder B | future `PureThermalSource`, protocol client, session hook | shared types, scan UI |
-| Deterministic analysis | Builder B after bridge gate | future validator and assessment module | shared types, assessment UI |
-| Accessible interface | Builder B | `src/features/**`, `src/styles/**` | `src/App.tsx`, shared types |
+| UVC device preflight and preview adapter | Builder A | future `src/lib/uvc-preview-source.ts`, focused preview verifier | shared preview/session contract |
+| Preview session and accessible viewport | Builder B | future preview session hook, `src/features/**`, `src/styles/**` | `src/types.ts`, preview adapter API |
+| Radiometric hardware/bridge | Blocked future lane | future `native/purethermal-bridge/**` | requires a new calibrated Phase 1A pass |
+| Deterministic analysis | Blocked future lane | future validator and assessment module | requires passed radiometric transport; never preview pixels |
 | Replay and verification | Builder A | `src/fixtures/**`, `public/replay/**`, `scripts/**` | manifest contracts |
 | Documentation and submission | designated writer | `docs/**`, `mvp.md`, root instructions | behavior claims from both builders |
 
@@ -109,8 +113,9 @@ One owner controls a path at a time. A research or review agent should usually r
 
 ### Good parallel split
 
-- Builder A proves one real Y16 frame outside React.
-- Builder B designs a pure frame validator against the already agreed payload.
+- Builder A proves authorize/discover cleanup plus exact operator-selected PureThermal input matching and implements page-hide/track lifecycle behind a locked preview adapter.
+- Builder B implements the replay-frame/live-`MediaStream` viewport after the adapter contract handoff.
+- Builder A writes fake-MediaDevices cleanup checks while Builder B runs keyboard and source-truth QA.
 - A design specialist critiques screenshots and returns a checklist without editing thermal contracts.
 - A review agent checks the combined diff after both lanes land.
 
@@ -118,19 +123,20 @@ One owner controls a path at a time. A research or review agent should usually r
 
 - Two agents both refactor `src/types.ts`.
 - Two orchestrators recursively delegate the same feature.
-- A design agent changes warning copy while an implementation agent changes the same component.
+- A design agent changes preview provenance or warning copy while an implementation agent changes the same component.
+- An agent snapshots or analyzes UVC pixels to “recover” temperature or direction after the radiometric gate failed.
 - An agent “cleans up” unrelated files while another builder has uncommitted work.
 
 ---
 
 ## 4. Branch and integration workflow
 
-`codex/ember` is the shared integration branch. Do not push feature work directly to `main`.
+`main` is the integration target. Do not push feature work directly to it.
 
 Create a short-lived branch from the latest integration state:
 
 ```sh
-git switch codex/ember
+git switch main
 git pull --ff-only
 git switch -c <initials>/<bounded-lane>
 ```
@@ -138,8 +144,8 @@ git switch -c <initials>/<bounded-lane>
 Examples:
 
 ```text
-ad/purethermal-probe
-partner/hotspot-validator
+ad/preview-lifecycle
+partner/uvc-preview
 codex/accessibility-qa
 ```
 
@@ -149,7 +155,7 @@ During the lane:
 2. Rebase or merge only after checking whether another owner touched the same files.
 3. Run the full shared verification gate before handoff.
 4. Give the integration owner the commit hash and handoff record.
-5. Let one integration owner update and push `codex/ember`.
+5. Push the short-lived branch and let one integration owner merge its reviewed pull request.
 
 Never force-push, rewrite shared history, or use destructive cleanup commands on a collaborator’s worktree.
 
@@ -182,6 +188,8 @@ text plus a non-color cue. Frames are ephemeral. Replay stays visibly labelled.
 Acceptance:
 <focused checks>
 npm run verify:replay
+npm run verify:preview
+npm run verify:speech
 npm run lint
 npm run build
 
@@ -291,6 +299,8 @@ A lane is ready to integrate when:
 
    ```sh
    npm run verify:replay
+   npm run verify:preview
+   npm run verify:speech
    npm run lint
    npm run build
    ```
