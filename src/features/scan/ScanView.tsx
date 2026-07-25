@@ -247,409 +247,374 @@ export default function ScanView() {
   ]);
 
 
+
+  const isStreaming = session.status === 'streaming';
+
   return (
-    <main id="main" tabIndex={-1} className="mx-auto max-w-[92rem] px-4 py-6 outline-none md:px-8 md:py-10">
-      <section aria-labelledby="scan-title" className="border-b-2 border-line pb-5">
-        <h1 id="scan-title" className="text-xl font-bold tracking-tight md:text-2xl">
-          Point toward heat you cannot see.
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-          Ember can display a clearly labelled simulation or a local, non-radiometric PureThermal
-          video preview. Neither display path produces temperature, direction, or a safety
-          assessment.
-        </p>
-      </section>
+    <main id="main" tabIndex={-1} className="mx-auto max-w-[104rem] px-3 py-4 outline-none md:px-6 md:py-6">
+      {/* The instrument carries the identity visually, so the page heading is spoken
+          rather than printed. It stays first in the reading order. */}
+      <h1 id="scan-title" className="sr-only">Point toward heat you cannot see.</h1>
 
-      <fieldset className="mt-6">
-        <legend className="gutter">Source</legend>
-        {/* Hairline rules come from the container background showing through a 1px gap,
-            so the two choices read as one switch rather than two floating cards. */}
-        <div className="mt-2 grid gap-px border border-line bg-line sm:grid-cols-2">
-          <label className={`flex min-h-14 cursor-pointer items-center gap-4 px-4 py-3 outline-none focus-within:outline-2 focus-within:outline-offset-[-2px] focus-within:outline-focus ${
-            isReplay ? 'bg-panel-strong' : 'bg-canvas'
-          }`}>
-            <input
-              type="radio"
-              name="source"
-              value="replay"
-              checked={isReplay}
-              onChange={() => session.selectSource('replay')}
-              className="size-5 shrink-0 accent-sim"
-            />
-            <span>
-              <span className={`block font-bold ${isReplay ? 'text-sim' : ''}`}>Demo replay</span>
-              <span className="readout mt-1 block text-xs text-muted">SIMULATED · NO CAMERA ACCESS</span>
-            </span>
-            {isReplay && <span aria-hidden="true" className="sim-hatch ml-auto h-9 w-12 border border-sim" />}
-          </label>
-          <label className={`flex min-h-14 cursor-pointer items-center gap-4 px-4 py-3 outline-none focus-within:outline-2 focus-within:outline-offset-[-2px] focus-within:outline-focus ${
-            !isReplay ? 'bg-panel-strong' : 'bg-canvas'
-          }`}>
-            <input
-              type="radio"
-              name="source"
-              value="live-preview"
-              checked={!isReplay}
-              onChange={() => session.selectSource('live-preview')}
-              className="size-5 shrink-0 accent-accent"
-            />
-            <span>
-              <span className={`block font-bold ${!isReplay ? 'text-accent' : ''}`}>Live preview</span>
-              <span className="readout mt-1 block text-xs text-muted">LOCAL VIDEO · NO ANALYSIS</span>
-            </span>
-            {!isReplay && <span aria-hidden="true" className="ml-auto h-9 w-12 border border-accent bg-accent/15" />}
-          </label>
-        </div>
-      </fieldset>
-
-      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(21rem,0.7fr)]">
-        <section aria-label={isReplay ? 'Demo replay viewport' : 'Live preview viewport'}>
-          {/* The frame is the instrument. Cold slate and hatching while simulated,
-              amber while a real camera is attached. */}
-          <div className={`border-2 bg-panel ${isReplay ? 'border-sim' : 'border-accent'}`}>
-            <div className={`grid grid-cols-[3.5rem_1fr] items-center gap-x-3 border-b border-divider px-3 py-2 ${
-              isReplay ? 'sim-hatch' : ''
+      {/* Source switch and provenance sit on one line above the instrument, the way a
+          mode selector sits on the body of a camera rather than in a panel beside it. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <fieldset>
+          <legend className="sr-only">Choose source</legend>
+          <div className="flex gap-px bg-line">
+            <label className={`flex min-h-12 cursor-pointer items-center gap-2.5 px-4 outline-none focus-within:outline-2 focus-within:outline-offset-[-2px] focus-within:outline-focus ${
+              isReplay ? 'bg-sim text-canvas' : 'bg-panel text-muted hover:bg-panel-strong'
             }`}>
-              <span className="gutter">SRC</span>
-              <span className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-                <span className={`inline-flex min-h-9 items-center gap-2 font-bold ${
-                  isReplay ? 'text-sim' : 'text-accent'
-                }`}>
-                  <span aria-hidden="true">{isReplay ? '◆' : '◉'}</span>
-                  {isReplay ? 'Demo replay — not live' : 'Live thermal preview — non-radiometric'}
-                </span>
-                <span className="readout text-xs text-muted">
-                  {isReplay
-                    ? (replayFrame
-                        ? `SEQ ${String(frameNumber).padStart(3, '0')}/${String(frameCount).padStart(3, '0')}`
-                        : `${frameCount} FRAMES · 160×120`)
-                    : (liveSurface ? 'LOCAL VIDEO PLAYING' : 'NO LIVE VIDEO ATTACHED')}
-                </span>
-              </span>
-            </div>
-
-            <figure className="relative grid aspect-[4/3] place-items-center bg-black">
-              {isReplay ? (
-                replayFrame ? (
-                  <img
-                    key={replayFrame.id}
-                    src={replayFrame.displayUrl}
-                    width={replayFrame.width}
-                    height={replayFrame.height}
-                    alt={`Simulated thermal replay frame ${frameNumber} of ${frameCount}. A bright region moves across a dark field. No assessment is produced from this image.`}
-                    className="h-full w-full object-contain [image-rendering:pixelated]"
-                  />
-                ) : (
-                  <div className="max-w-sm px-8 text-center">
-                    <span aria-hidden="true" className="readout text-5xl text-line">◎</span>
-                    <p className="mt-4 font-bold">No replay frame in memory</p>
-                    <p className="mt-2 text-sm leading-6 text-muted">
-                      Start the demo replay to exercise the simulated source lifecycle.
-                    </p>
-                  </div>
-                )
-              ) : (
-                <>
-                  <video
-                    ref={session.videoRef}
-                    muted
-                    playsInline
-                    aria-label="Live colorized thermal video preview. No temperature or safety assessment."
-                    className={`h-full w-full object-contain ${liveSurface ? 'visible' : 'invisible'}`}
-                  />
-                  {!liveSurface && (
-                    <div className="absolute inset-0 grid place-items-center px-8 text-center">
-                      <div className="max-w-sm">
-                        <span aria-hidden="true" className="readout text-5xl text-line">◉</span>
-                        <p className="mt-4 font-bold">No live video attached</p>
-                        <p className="mt-2 text-sm leading-6 text-muted">
-                          Authorize camera names, choose the intended PureThermal input, then Start.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Corner ticks frame the image the way a viewfinder does. */}
-              <span aria-hidden="true" className={`pointer-events-none absolute inset-2 border ${
-                isReplay ? 'border-sim/30' : 'border-accent/30'
-              }`} />
-
-              {isReplay && replayFrame && (
-                <span className="readout absolute bottom-3 left-3 border border-sim bg-canvas/95 px-2 py-1 text-[0.6875rem] font-bold uppercase text-sim">
-                  Demo replay — not live
-                </span>
-              )}
-              {!isReplay && liveSurface && (
-                <span className="readout absolute bottom-3 left-3 border border-accent bg-canvas/95 px-2 py-1 text-[0.6875rem] font-bold uppercase text-accent">
-                  Live preview · non-radiometric
-                </span>
-              )}
-            </figure>
-
-            {isReplay ? (
-              <div className="grid grid-cols-[3.5rem_1fr] items-center gap-x-3 border-t border-divider px-3 py-3">
-                <label htmlFor="replay-progress" className="gutter">SEQ</label>
-                <span className="flex items-center gap-3">
-                  <progress
-                    id="replay-progress"
-                    value={frameNumber}
-                    max={frameCount}
-                    className="h-1.5 w-full accent-sim"
-                  />
-                  <span className="readout shrink-0 text-xs text-muted">
-                    {String(frameNumber).padStart(3, '0')} / {String(frameCount).padStart(3, '0')}
-                  </span>
-                </span>
-              </div>
-            ) : (
-              <div className="grid grid-cols-[3.5rem_1fr] gap-x-3 border-t border-divider px-3 py-3">
-                <span className="gutter">Feed</span>
-                <div>
-                  <p className="text-sm font-bold">Display-only colorized video. No temperature or safety assessment.</p>
-                  <dl className="readout mt-2 grid gap-1 text-xs text-muted sm:grid-cols-2">
-                    <div className="flex gap-2">
-                      <dt className="text-muted">INPUT</dt>
-                      <dd className="truncate">{liveSurface?.label ?? 'NONE PLAYING'}</dd>
-                    </div>
-                    <div className="flex gap-2">
-                      <dt className="text-muted">MODE</dt>
-                      <dd>{liveSettings || 'AFTER PLAYBACK BEGINS'}</dd>
-                    </div>
-                  </dl>
-                </div>
-              </div>
-            )}
+              <input
+                type="radio"
+                name="source"
+                value="replay"
+                checked={isReplay}
+                onChange={() => session.selectSource('replay')}
+                className="size-4 shrink-0 accent-canvas"
+              />
+              <span className="readout text-xs font-bold">DEMO REPLAY</span>
+            </label>
+            <label className={`flex min-h-12 cursor-pointer items-center gap-2.5 px-4 outline-none focus-within:outline-2 focus-within:outline-offset-[-2px] focus-within:outline-focus ${
+              !isReplay ? 'bg-accent text-canvas' : 'bg-panel text-muted hover:bg-panel-strong'
+            }`}>
+              <input
+                type="radio"
+                name="source"
+                value="live-preview"
+                checked={!isReplay}
+                onChange={() => session.selectSource('live-preview')}
+                className="size-4 shrink-0 accent-canvas"
+              />
+              <span className="readout text-xs font-bold">LIVE PREVIEW</span>
+            </label>
           </div>
-        </section>
+        </fieldset>
 
-        {/* One console, divided by rules. Four equal cards were the reason this
-            read as a template rather than an instrument. */}
-        <aside className="divide-y divide-divider border border-line bg-panel lg:sticky lg:top-6">
-          <section aria-labelledby="source-status-title" className="bg-panel-strong px-4 py-4">
-            <p className="gutter">Status</p>
-            <div
-              role="status"
-              aria-live={speechEnabled && !speechMuted ? 'off' : 'polite'}
-              aria-atomic="true"
-              className="mt-3 flex items-start gap-3"
-            >
-              <span aria-hidden="true" className={`text-3xl font-bold leading-none ${statusCopy.tone}`}>
-                {statusCopy.symbol}
-              </span>
-              <div>
-                <h2 id="source-status-title" className="text-lg font-bold uppercase tracking-wide">
-                  {statusTitle}
-                </h2>
-                <p className="mt-1.5 text-sm leading-6 text-muted">{statusDetail}</p>
-              </div>
-            </div>
-          </section>
+        <p className={`readout inline-flex min-h-12 items-center gap-2 border-2 px-3 text-xs font-bold uppercase ${
+          isReplay ? 'sim-hatch border-sim text-sim' : 'border-accent text-accent'
+        }`}>
+          <span aria-hidden="true">{isReplay ? '◆' : '◉'}</span>
+          {isReplay ? 'Demo replay — not live' : 'Live thermal preview — non-radiometric'}
+        </p>
+      </div>
 
-          <section aria-labelledby="controls-title" className="px-4 py-4">
-            <h2 id="controls-title" className="gutter">
-              {isReplay ? 'Replay control' : 'Preview control'}
-            </h2>
+      {/* The instrument. The frame is the product, so it takes the page rather than
+          sitting in a card beside four panels of equal weight. */}
+      <section
+        aria-label={isReplay ? 'Demo replay viewport' : 'Live preview viewport'}
+        className={`mt-3 border-2 ${isReplay ? 'border-sim' : 'border-accent'}`}
+      >
+        <div className="flex bg-black">
+          {/* The sensor's own palette, standing in for the scale a radiometric build
+              would label. It carries no numbers because Ember measures nothing. */}
+          <div className="relative w-4 shrink-0 md:w-6">
+            <div className="ironbow absolute inset-0" aria-hidden="true" />
+          </div>
 
-            {!isReplay && (
-              <div className="mt-3 border border-divider bg-canvas p-3">
-                <p className="text-sm leading-6 text-muted">
-                  Authorizing cameras may briefly activate the browser’s default video input only
-                  to reveal device names. That temporary stream is never displayed and is stopped
-                  before choices appear.
-                </p>
-                <button
-                  type="button"
-                  onClick={session.authorize}
-                  disabled={session.status === 'connecting' || session.status === 'streaming'}
-                  className="mt-3 min-h-12 w-full border border-accent bg-accent px-4 font-bold uppercase tracking-wider text-canvas outline-none hover:bg-text hover:border-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:border-inert disabled:bg-inert disabled:text-muted"
-                >
-                  Authorize cameras
-                </button>
-
-                {session.devices.length > 0 && (
-                  <div className="mt-3">
-                    <label htmlFor="preview-device" className="gutter">
-                      PureThermal input
-                    </label>
-                    <select
-                      id="preview-device"
-                      value={session.selectedOptionId}
-                      onChange={event => session.selectDevice(event.target.value)}
-                      disabled={session.status === 'connecting' || session.status === 'streaming'}
-                      className="mt-1.5 min-h-12 w-full border border-line bg-canvas px-3 text-text outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:text-muted"
-                    >
-                      <option value="">Choose the intended input</option>
-                      {session.devices.map(device => (
-                        <option key={device.optionId} value={device.optionId}>
-                          {device.label}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="readout mt-2 text-xs text-muted">
-                      {selectedDevice
-                        ? `CHOSEN: ${selectedDevice.label}`
-                        : 'NO INPUT SELECTED AUTOMATICALLY'}
-                    </p>
+          <figure className={`relative grid aspect-[4/3] max-h-[64vh] flex-1 place-items-center overflow-hidden ${
+            isStreaming ? 'sweep' : ''
+          }`}>
+            {isReplay ? (
+              replayFrame ? (
+                <img
+                  key={replayFrame.id}
+                  src={replayFrame.displayUrl}
+                  width={replayFrame.width}
+                  height={replayFrame.height}
+                  alt={`Simulated thermal replay frame ${frameNumber} of ${frameCount}. A bright region moves across a dark field. No assessment is produced from this image.`}
+                  className="h-full w-full object-contain [image-rendering:pixelated]"
+                />
+              ) : (
+                <div className="max-w-sm px-8 text-center">
+                  <p className="readout text-5xl text-line">◎</p>
+                  <p className="mt-4 font-bold">No replay frame in memory</p>
+                  <p className="mt-2 text-sm leading-6 text-muted">
+                    Start the demo replay to exercise the simulated source lifecycle.
+                  </p>
+                </div>
+              )
+            ) : (
+              <>
+                <video
+                  ref={session.videoRef}
+                  muted
+                  playsInline
+                  aria-label="Live colorized thermal video preview. No temperature or safety assessment."
+                  className={`h-full w-full object-contain ${liveSurface ? 'visible' : 'invisible'}`}
+                />
+                {!liveSurface && (
+                  <div className="absolute inset-0 grid place-items-center px-8 text-center">
+                    <div className="max-w-sm">
+                      <p className="readout text-5xl text-line">◉</p>
+                      <p className="mt-4 font-bold">No live video attached</p>
+                      <p className="mt-2 text-sm leading-6 text-muted">
+                        Authorize camera names, choose the intended PureThermal input, then Start.
+                      </p>
+                    </div>
                   </div>
                 )}
-              </div>
+              </>
             )}
 
-            <div className="mt-3 grid grid-cols-2 gap-px bg-line">
-              <button
-                type="button"
-                onClick={session.start}
-                disabled={
-                  session.status === 'connecting'
-                  || session.status === 'streaming'
-                  || session.status === 'paused'
-                  || (!isReplay && !session.selectedOptionId)
-                }
-                className="col-span-2 min-h-12 bg-accent px-4 font-bold uppercase tracking-wider text-canvas outline-none hover:bg-text focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus disabled:bg-inert disabled:text-muted"
-              >
-                Start
-              </button>
-              <button
-                type="button"
-                onClick={session.pause}
-                disabled={session.status !== 'streaming'}
-                className={CONTROL_CLASS}
-              >
-                Pause
-              </button>
-              <button
-                type="button"
-                onClick={session.resume}
-                disabled={session.status !== 'paused'}
-                className={CONTROL_CLASS}
-              >
-                Resume
-              </button>
-              <button
-                type="button"
-                onClick={session.restart}
-                disabled={
-                  session.status === 'connecting'
-                  || (!isReplay && !session.selectedOptionId)
-                }
-                className={`col-span-2 ${CONTROL_CLASS}`}
-              >
-                Restart
-              </button>
-              <button
-                type="button"
-                onClick={session.stop}
-                disabled={session.status === 'idle'}
-                className="col-span-2 min-h-12 bg-panel px-4 font-bold uppercase tracking-wider text-danger outline-none hover:bg-danger hover:text-canvas focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus disabled:bg-panel disabled:text-muted disabled:opacity-55"
-              >
-                {isReplay ? 'Stop and clear frame' : 'Stop and clear video'}
-              </button>
+            {/* Viewfinder brackets, not a border: they mark the field of view. */}
+            <span aria-hidden="true" className={`pointer-events-none absolute left-3 top-3 size-6 border-l-2 border-t-2 ${isReplay ? 'border-sim' : 'border-accent'}`} />
+            <span aria-hidden="true" className={`pointer-events-none absolute right-3 top-3 size-6 border-r-2 border-t-2 ${isReplay ? 'border-sim' : 'border-accent'}`} />
+            <span aria-hidden="true" className={`pointer-events-none absolute bottom-3 left-3 size-6 border-b-2 border-l-2 ${isReplay ? 'border-sim' : 'border-accent'}`} />
+            <span aria-hidden="true" className={`pointer-events-none absolute bottom-3 right-3 size-6 border-b-2 border-r-2 ${isReplay ? 'border-sim' : 'border-accent'}`} />
+
+            {/* HUD. Solid backing, never a translucent wash, so overlaid text keeps its contrast. */}
+            <span className={`readout absolute left-3 top-3 border bg-canvas px-2 py-1 text-[0.6875rem] font-bold uppercase ${
+              isReplay ? 'border-sim text-sim' : 'border-accent text-accent'
+            }`}>
+              {isReplay ? 'Demo replay — not live' : 'Live · non-radiometric'}
+            </span>
+            <span className="readout absolute right-3 top-3 border border-line bg-canvas px-2 py-1 text-[0.6875rem] text-muted">
+              {isReplay
+                ? `SEQ ${String(frameNumber).padStart(3, '0')}/${String(frameCount).padStart(3, '0')} · 160×120`
+                : (liveSettings || 'AWAITING PLAYBACK')}
+            </span>
+            <span className="readout absolute bottom-3 left-1/2 -translate-x-1/2 border border-line bg-canvas px-2 py-1 text-[0.6875rem] uppercase text-muted">
+              No temperature · no assessment
+            </span>
+          </figure>
+        </div>
+
+        {/* Progress reads as a strip under the image, the width of the instrument. */}
+        {isReplay && (
+          <div className="border-t-2 border-line bg-canvas">
+            <div className="h-1.5 bg-panel" aria-hidden="true">
+              <div
+                className="ironbow h-full transition-[width] duration-200"
+                style={{ width: `${(frameNumber / frameCount) * 100}%` }}
+              />
             </div>
+            <label htmlFor="replay-progress" className="sr-only">Replay progress</label>
+            <progress id="replay-progress" value={frameNumber} max={frameCount} className="sr-only" />
+          </div>
+        )}
 
-            {!isReplay && error && (
-              <div className="mt-3 border-2 border-danger p-3">
-                <div className="flex gap-3">
-                  <span aria-hidden="true" className="text-2xl font-bold leading-none text-danger">!</span>
-                  <div>
-                    <h3 className="font-bold uppercase tracking-wide">{error.title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-muted">{error.detail}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={session.retry}
-                  className="mt-3 min-h-12 w-full border border-danger px-4 font-bold uppercase tracking-wider text-danger outline-none hover:bg-danger hover:text-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                >
-                  {session.previewState.error?.retryAction === 'start'
-                    ? 'Retry preview'
-                    : 'Retry camera authorization'}
-                </button>
-              </div>
-            )}
-          </section>
+        {/* Status is a full-width bar on the instrument, the loudest text on the page. */}
+        <div
+          role="status"
+          aria-live={speechEnabled && !speechMuted ? 'off' : 'polite'}
+          aria-atomic="true"
+          className="flex items-start gap-4 border-t-2 border-line bg-panel-strong px-4 py-4"
+        >
+          <span aria-hidden="true" className={`text-4xl font-bold leading-none ${statusCopy.tone}`}>
+            {statusCopy.symbol}
+          </span>
+          <div className="min-w-0">
+            <h2 id="source-status-title" className="text-lg font-bold uppercase tracking-wide md:text-xl">
+              {statusTitle}
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-muted">{statusDetail}</p>
+          </div>
+        </div>
+      </section>
 
-          <details className="px-4 py-4">
-            <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
-              <h2 id="speech-title" className="gutter">Source speech</h2>
-              <span className="readout text-xs font-bold text-muted">
-                {speechAvailable ? (speechEnabled ? (speechMuted ? 'MUTED' : 'ON') : 'OFF') : 'UNAVAILABLE'}
-              </span>
-            </summary>
+      {/* Control dock: one row of hard-edged keys across the instrument, like the
+          button strip on a handheld camera. */}
+      <section aria-labelledby="controls-title" className="mt-3">
+        <h2 id="controls-title" className="sr-only">
+          {isReplay ? 'Replay controls' : 'Live preview controls'}
+        </h2>
+        <div className="grid grid-cols-2 gap-px bg-line md:grid-cols-5">
+          <button
+            type="button"
+            onClick={session.start}
+            disabled={
+              session.status === 'connecting'
+              || session.status === 'streaming'
+              || session.status === 'paused'
+              || (!isReplay && !session.selectedOptionId)
+            }
+            className="col-span-2 min-h-14 bg-accent px-4 font-bold uppercase tracking-[0.18em] text-canvas outline-none hover:bg-text focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus disabled:bg-inert disabled:text-muted md:col-span-1"
+          >
+            Start
+          </button>
+          <button type="button" onClick={session.pause} disabled={session.status !== 'streaming'} className={CONTROL_CLASS}>
+            Pause
+          </button>
+          <button type="button" onClick={session.resume} disabled={session.status !== 'paused'} className={CONTROL_CLASS}>
+            Resume
+          </button>
+          <button
+            type="button"
+            onClick={session.restart}
+            disabled={session.status === 'connecting' || (!isReplay && !session.selectedOptionId)}
+            className={CONTROL_CLASS}
+          >
+            Restart
+          </button>
+          <button
+            type="button"
+            onClick={session.stop}
+            disabled={session.status === 'idle'}
+            className="col-span-2 min-h-14 bg-panel px-4 text-sm font-bold uppercase tracking-wider text-danger outline-none hover:bg-danger hover:text-canvas focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus disabled:text-muted disabled:opacity-55 md:col-span-1"
+          >
+            {isReplay ? 'Stop and clear frame' : 'Stop and clear video'}
+          </button>
+        </div>
+      </section>
+
+      <div className="mt-3 grid gap-3 lg:grid-cols-3">
+        <section aria-labelledby="setup-title" className="border border-line bg-panel px-4 py-4">
+          <h2 id="setup-title" className="gutter">{isReplay ? 'Replay source' : 'Camera setup'}</h2>
+          {isReplay ? (
             <p className="mt-3 text-sm leading-6 text-muted">
-              {speechFailureText
-                ? 'Browser speech failed. Visible source status remains complete.'
-                : speechAvailable
-                ? speechEnabled
-                  ? speechMuted
-                    ? 'Speech is enabled and muted.'
-                    : 'Speech is enabled for source status and provenance.'
-                  : 'Speech is off.'
-                : 'Browser speech is unavailable. Visible source status remains complete.'}
+              Six committed 160 × 120 frames play in a fixed order. They are simulated fixtures, not
+              a recording of anything real, and their pixels never become temperature.
             </p>
-            <div className="mt-3 grid grid-cols-2 gap-px bg-line">
-              <button
-                type="button"
-                aria-pressed={speechEnabled}
-                disabled={!speechAvailable}
-                onClick={() => {
-                  const nextEnabled = !speechEnabled;
-                  if (nextEnabled) setSpeechFailureText(null);
-                  setSpeechEnabled(nextEnabled);
-                }}
-                className={CONTROL_CLASS}
-              >
-                {speechEnabled ? 'Disable speech' : 'Enable speech'}
-              </button>
-              <button
-                type="button"
-                aria-pressed={speechMuted}
-                disabled={!speechEnabled}
-                onClick={() => {
-                  const nextMuted = !speechMuted;
-                  setSpeechMuted(nextMuted);
-                }}
-                className={CONTROL_CLASS}
-              >
-                {speechMuted ? 'Unmute' : 'Mute'}
-              </button>
-              <button
-                type="button"
-                disabled={!speechEnabled || speechMuted}
-                onClick={() => speechController?.repeat()}
-                className={`col-span-2 ${CONTROL_CLASS}`}
-              >
-                Repeat source status
-              </button>
-            </div>
-            <p className="mt-3 text-xs leading-5 text-muted">
-              Speech never creates temperature, direction, guidance, or a safety assessment.
-            </p>
-            {speechFailureText && (
-              <p role="status" aria-live="polite" className="sr-only">
-                Browser speech failed. {speechFailureText}
+          ) : (
+            <>
+              <p className="mt-3 text-sm leading-6 text-muted">
+                Authorizing cameras may briefly activate the browser’s default video input only
+                to reveal device names. That temporary stream is never displayed and is stopped
+                before choices appear.
               </p>
-            )}
-          </details>
+              <button
+                type="button"
+                onClick={session.authorize}
+                disabled={session.status === 'connecting' || session.status === 'streaming'}
+                className="mt-3 min-h-12 w-full bg-accent px-4 text-sm font-bold uppercase tracking-wider text-canvas outline-none hover:bg-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:bg-inert disabled:text-muted"
+              >
+                Authorize cameras
+              </button>
 
-          <section aria-labelledby="assessment-title" className="px-4 py-4">
-            <p className="gutter">Assessment</p>
-            <div className="mt-3 flex items-start gap-3">
-              <span aria-hidden="true" className="text-2xl font-bold leading-none text-line">—</span>
-              <div>
-                <h2 id="assessment-title" className="text-lg font-bold uppercase tracking-wide">
-                  No current assessment
-                </h2>
-                <p className="mt-1.5 text-sm leading-6 text-muted">
-                  Replay pixels are never assessed. Live preview pixels are display-only and never
-                  create temperature, direction, guidance, warnings, or speech.
-                </p>
-              </div>
-            </div>
-          </section>
-        </aside>
+              {session.devices.length > 0 && (
+                <div className="mt-3">
+                  <label htmlFor="preview-device" className="gutter">PureThermal input</label>
+                  <select
+                    id="preview-device"
+                    value={session.selectedOptionId}
+                    onChange={event => session.selectDevice(event.target.value)}
+                    disabled={session.status === 'connecting' || session.status === 'streaming'}
+                    className="mt-1.5 min-h-12 w-full border border-line bg-canvas px-3 text-text outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:text-muted"
+                  >
+                    <option value="">Choose the intended input</option>
+                    {session.devices.map(device => (
+                      <option key={device.optionId} value={device.optionId}>{device.label}</option>
+                    ))}
+                  </select>
+                  <p className="readout mt-2 text-xs text-muted">
+                    {selectedDevice ? `CHOSEN: ${selectedDevice.label}` : 'NO INPUT SELECTED AUTOMATICALLY'}
+                  </p>
+                </div>
+              )}
+
+              <dl className="readout mt-3 grid gap-1 border-t border-divider pt-3 text-xs text-muted">
+                <div className="flex gap-2">
+                  <dt className="text-muted">INPUT</dt>
+                  <dd className="truncate text-text">{liveSurface?.label ?? 'NONE PLAYING'}</dd>
+                </div>
+                <div className="flex gap-2">
+                  <dt className="text-muted">MODE</dt>
+                  <dd className="text-text">{liveSettings || 'AFTER PLAYBACK BEGINS'}</dd>
+                </div>
+              </dl>
+
+              {error && (
+                <div className="mt-3 border-2 border-danger p-3">
+                  <div className="flex gap-3">
+                    <span aria-hidden="true" className="text-2xl font-bold leading-none text-danger">!</span>
+                    <div>
+                      <h3 className="font-bold uppercase tracking-wide">{error.title}</h3>
+                      <p className="mt-1 text-sm leading-6 text-muted">{error.detail}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={session.retry}
+                    className="mt-3 min-h-12 w-full border border-danger px-4 text-sm font-bold uppercase tracking-wider text-danger outline-none hover:bg-danger hover:text-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                  >
+                    {session.previewState.error?.retryAction === 'start'
+                      ? 'Retry preview'
+                      : 'Retry camera authorization'}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+
+        <details className="border border-line bg-panel px-4 py-4">
+          <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+            <h2 id="speech-title" className="gutter">Source speech</h2>
+            <span className="readout text-xs font-bold text-muted">
+              {speechAvailable ? (speechEnabled ? (speechMuted ? 'MUTED' : 'ON') : 'OFF') : 'UNAVAILABLE'}
+            </span>
+          </summary>
+          <p className="mt-3 text-sm leading-6 text-muted">
+            {speechFailureText
+              ? 'Browser speech failed. Visible source status remains complete.'
+              : speechAvailable
+              ? speechEnabled
+                ? speechMuted
+                  ? 'Speech is enabled and muted.'
+                  : 'Speech is enabled for source status and provenance.'
+                : 'Speech is off.'
+              : 'Browser speech is unavailable. Visible source status remains complete.'}
+          </p>
+          <div className="mt-3 grid grid-cols-2 gap-px bg-line">
+            <button
+              type="button"
+              aria-pressed={speechEnabled}
+              disabled={!speechAvailable}
+              onClick={() => {
+                const nextEnabled = !speechEnabled;
+                if (nextEnabled) setSpeechFailureText(null);
+                setSpeechEnabled(nextEnabled);
+              }}
+              className={CONTROL_CLASS}
+            >
+              {speechEnabled ? 'Disable speech' : 'Enable speech'}
+            </button>
+            <button
+              type="button"
+              aria-pressed={speechMuted}
+              disabled={!speechEnabled}
+              onClick={() => setSpeechMuted(!speechMuted)}
+              className={CONTROL_CLASS}
+            >
+              {speechMuted ? 'Unmute' : 'Mute'}
+            </button>
+            <button
+              type="button"
+              disabled={!speechEnabled || speechMuted}
+              onClick={() => speechController?.repeat()}
+              className={`col-span-2 ${CONTROL_CLASS}`}
+            >
+              Repeat source status
+            </button>
+          </div>
+          <p className="mt-3 text-xs leading-5 text-muted">
+            Speech never creates temperature, direction, guidance, or a safety assessment.
+          </p>
+          {speechFailureText && (
+            <p role="status" aria-live="polite" className="sr-only">
+              Browser speech failed. {speechFailureText}
+            </p>
+          )}
+        </details>
+
+        <section aria-labelledby="assessment-title" className="border border-line bg-panel px-4 py-4">
+          <p className="gutter">Assessment</p>
+          <h2 id="assessment-title" className="mt-3 text-lg font-bold uppercase tracking-wide">
+            No current assessment
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            Replay pixels are never assessed. Live preview pixels are display-only and never
+            create temperature, direction, guidance, warnings, or speech.
+          </p>
+          <p className="mt-3 border-t border-divider pt-3 text-sm leading-6 text-muted">
+            Ember can display a clearly labelled simulation or a local, non-radiometric PureThermal
+            video preview. Neither display path produces temperature, direction, or a safety
+            assessment.
+          </p>
+        </section>
       </div>
+
     </main>
   );
 }

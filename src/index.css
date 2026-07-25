@@ -51,6 +51,46 @@ button:disabled {
   );
 }
 
+/* The ironbow ramp is the subject's own material: the palette a thermal sensor
+   maps heat through. It is the brand element, used as a scale beside the
+   viewport and as the progress fill, never as decoration on unrelated surfaces. */
+.ironbow {
+  background-image: linear-gradient(
+    to top,
+    #000000 0%,
+    #2b0a4a 18%,
+    #8c1d5e 38%,
+    #d63d2b 58%,
+    #ff8c00 76%,
+    #ffd166 90%,
+    #fffbe8 100%
+  );
+}
+
+/* One authored motion moment: a sensor sweep across the frame while a source is
+   actually streaming. It stops entirely under reduced-motion. */
+@keyframes sensor-sweep {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(2400%); }
+}
+
+.sweep::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(to right, transparent, var(--color-accent), transparent);
+  opacity: 0.55;
+  animation: sensor-sweep 3.2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sweep::after {
+    display: none;
+  }
+}
+
 /* Instrument readouts: fixed-width digits so a changing frame count never
    shifts the row it sits in. */
 .readout {
