@@ -64,6 +64,42 @@ Production build: 24 modules, 225.22 kB JavaScript / 69.16 kB gzip, 16.15 kB CSS
 
 `#history` renders an empty state and explains that live video, replay activity, and incidents are not stored.
 
+### Phase 3 QA record (in progress)
+
+Environment for every row below: macOS 15 (Darwin 25.5.0), repository build `npm run build` at 15:5x. Rows requiring a browser or assistive technology are **not run** — no operator has executed them in this session, and no result may be claimed until they are.
+
+| Requirement | Method | Result |
+|---|---|---|
+| `EMB-P3-FR-005` thermal image is not a focus target | Code check — the replay `<img>` carries no `tabindex` or handler and its `alt` repeats the frame number, provenance, and “no assessment” | Passed |
+| `EMB-P3-FR-004` status without color or speech | Code check — every status renders text plus a non-color symbol; the assessment panel is fixed text | Passed |
+| `EMB-P3-AC-002` route change is announced | Fixed this session — hash routing now moves focus to the new route’s `main`; previously focus stayed on the old page | Fixed, needs VoiceOver confirmation |
+| Replay restart runs clean | `npm run verify:replay` — restart mid-run replays six ordered frames and detaches the previous run | Passed |
+| `EMB-P3-FR-001` keyboard-only demo | Manual browser | **Not run** |
+| `EMB-P3-FR-002` focus and 44px targets at 200% zoom | Manual browser | **Not run** |
+| `EMB-P3-FR-003` VoiceOver names, state, provenance, status | Manual VoiceOver | **Not run** |
+| `EMB-P3-FR-006` 320–390px and 200% zoom reflow | Manual browser | **Not run** |
+| `EMB-P3-FR-008` both builders run the demo | Manual rehearsal | **Not run** |
+| Live warning and app-speech rows | — | Not applicable; Phases 1C and 2 did not pass |
+
+Known keyboard behavior, unfixed: pressing Start disables Start, so focus moves to the document body. Same for Pause and Resume. A keyboard operator must re-tab to reach the next control.
+
+### Phase 4 QA record (in progress)
+
+| Requirement | Method | Result |
+|---|---|---|
+| `EMB-P4-NFR-001` resources return to zero | `npm run verify:replay` — five start/pause/resume/stop cycles with a `setTimeout`/`clearTimeout` spy; the pending count is asserted synchronously at stop, and no frame or status arrives afterwards | Passed |
+| `EMB-P4-NFR-002` clean-checkout verification | Fresh `git clone` of the repository plus `npm ci`; `verify:replay`, `lint`, and `build` each exited 0 | Passed |
+| `EMB-P4-AC-001` no network request is needed | Build audit — the bundle names no remote host (the `react.dev` and `tailwindcss.com` strings are error-message and comment text), contains no `XMLHttpRequest` or `WebSocket`, and its only `fetch` is Vite’s same-origin modulepreload polyfill, which `index.html` never triggers | Passed by inspection |
+| `EMB-P4-FR-001` labelled replay twice offline, reload between | Manual browser with the network disconnected | **Not run** |
+| `EMB-P4-FR-004` reload `#scan` and `#history` offline | Manual browser with the network disconnected; served locally, `/`, the JavaScript and CSS bundles, a replay PNG, and the favicon all returned 200 | Partial — server evidence only, browser reload **not run** |
+| `EMB-P4-FR-002`, `EMB-P4-FR-003`, `EMB-P4-FR-005`, `EMB-P4-AC-002`, `EMB-P4-AC-003` | — | Not applicable; Phase 1B did not pass |
+| `EMB-P4-AC-005` offline speech | — | Not applicable; Phase 2 did not pass |
+| `EMB-P4-NFR-003` 17:30 freeze | — | Pending |
+
+The spy was mutation-checked: deleting `clearTimer()` from `ReplayThermalSource.stop()` fails the run with `Cycle 1 left 1 timers pending after stop.` The behavioral assertions alone did not catch that leak, because `emitNext` already refuses to emit while idle.
+
+Demo constraint: `dist/index.html` references `/assets/...` absolutely, so the production build must be served by a static local server. Opening the file directly with `file://` will not load the bundle.
+
 ---
 
 ## 2. Next
@@ -96,7 +132,7 @@ If all required runs and cleanup checks are not completed before freeze, keep Ph
 | 7 | 200% zoom and VoiceOver remain unproven; replay route reload, controls, cleanup, and mobile layout were manually checked | D — Phase 3 |
 | 8 | `error` and `live-purethermal` are reserved contracts with no current producer | do not reuse `live-purethermal` for a non-radiometric stream |
 | 9 | Replay min/max values are simulated metadata | never display them as evidence or use them for classification |
-| 10 | Automated replay checks still do not cover restart, route cleanup, or DOM accessibility | record the remaining Phase 3 manual environment and results |
+| 10 | Automated replay checks now cover restart and five-cycle timer release; route cleanup and DOM accessibility remain manual | no DOM test runner is installed; record the remaining Phase 3 manual environment and results |
 
 ---
 
