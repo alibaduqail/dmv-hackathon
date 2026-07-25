@@ -46,9 +46,66 @@ button:disabled {
 .sim-hatch {
   background-image: repeating-linear-gradient(
     135deg,
-    transparent 0 7px,
-    color-mix(in oklab, var(--color-caution) 26%, transparent) 7px 9px
+    transparent 0 5px,
+    color-mix(in oklab, var(--color-sim) 42%, transparent) 5px 8px
   );
+}
+
+/* The ironbow ramp is the subject's own material: the palette a thermal sensor
+   maps heat through. It is the brand element, used as a scale beside the
+   viewport and as the progress fill, never as decoration on unrelated surfaces. */
+.ironbow {
+  background-image: linear-gradient(
+    to top,
+    #000000 0%,
+    #2b0a4a 18%,
+    #8c1d5e 38%,
+    #d63d2b 58%,
+    #ff8c00 76%,
+    #ffd166 90%,
+    #fffbe8 100%
+  );
+}
+
+/* One authored motion moment: a sensor sweep across the frame while a source is
+   actually streaming. It stops entirely under reduced-motion. */
+@keyframes sensor-sweep {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(2400%); }
+}
+
+.sweep::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(to right, transparent, var(--color-accent), transparent);
+  opacity: 0.55;
+  animation: sensor-sweep 3.2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sweep::after {
+    display: none;
+  }
+}
+
+/* Instrument readouts: fixed-width digits so a changing frame count never
+   shifts the row it sits in. */
+.readout {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+
+/* The label column of the console. Uppercase, small, quiet, always the same width. */
+.gutter {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {
