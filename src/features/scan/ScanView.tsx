@@ -1,3 +1,9 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createBrowserSpeechController,
+  formatLivePreviewStatus,
+  formatReplayStatus,
+} from '../../lib/speech.ts';
 import type { SourceStatus, UvcPreviewPhase } from '../../types.ts';
 import { usePreviewSession } from './usePreviewSession.ts';
 
@@ -156,6 +162,8 @@ export default function ScanView() {
   const error = session.previewState.error
     ? PREVIEW_ERRORS[session.previewState.error.code]
     : null;
+  const statusTitle = error?.title ?? statusCopy.title;
+  const statusDetail = error?.detail ?? statusCopy.detail;
   const selectedDevice = session.devices.find(
     device => device.optionId === session.selectedOptionId,
   );
@@ -169,6 +177,58 @@ export default function ScanView() {
           : null,
       ].filter(Boolean).join(' · ')
     : '';
+  const speechController = useMemo(createBrowserSpeechController, []);
+  const speechSuspended = useRef(false);
+  const [speechEnabled, setSpeechEnabled] = useState(false);
+  const [speechMuted, setSpeechMuted] = useState(false);
+  const speechAvailable = speechController !== null;
+
+  useEffect(() => {
+    const statusKey = isReplay
+      ? session.status
+      : `${session.previewState.phase}:${session.previewState.error?.code ?? 'none'}`;
+    const presentation = isReplay
+      ? formatReplayStatus(statusKey, statusTitle, statusDetail)
+      : formatLivePreviewStatus(statusKey, statusTitle, statusDetail);
+    const cancelSpeech = () => speechController?.cancel();
+    const presentIfCurrent = () => {
+      if (speechSuspended.current || document.visibilityState === 'hidden') {
+        cancelSpeech();
+      } else {
+        speechController?.present(presentation);
+      }
+    };
+    const onVisibilityChange = () => {
+      speechSuspended.current = document.visibilityState === 'hidden';
+      presentIfCurrent();
+    };
+    const onPageHide = () => {
+      speechSuspended.current = true;
+      cancelSpeech();
+    };
+    const onPageShow = () => {
+      speechSuspended.current = document.visibilityState === 'hidden';
+      presentIfCurrent();
+    };
+    presentIfCurrent();
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pagehide', onPageHide);
+    window.addEventListener('pageshow', onPageShow);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pagehide', onPageHide);
+      window.removeEventListener('pageshow', onPageShow);
+      cancelSpeech();
+    };
+  }, [
+    isReplay,
+    session.previewState.error?.code,
+    session.previewState.phase,
+    session.status,
+    speechController,
+    statusDetail,
+    statusTitle,
+  ]);
 
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-7xl px-5 py-8 outline-none md:px-8 md:py-12">
@@ -344,10 +404,63 @@ export default function ScanView() {
                 {statusCopy.symbol}
               </span>
               <div>
-                <h2 id="source-status-title" className="text-xl font-bold">{statusCopy.title}</h2>
-                <p className="mt-1 leading-6 text-muted">{statusCopy.detail}</p>
+                <h2 id="source-status-title" className="text-xl font-bold">{statusTitle}</h2>
+                <p className="mt-1 leading-6 text-muted">{statusDetail}</p>
               </div>
             </div>
+          </section>
+
+          <section aria-labelledby="speech-title" className="rounded-2xl border border-line bg-panel p-5 md:p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Optional audio</p>
+            <h2 id="speech-title" className="mt-2 text-xl font-bold">Source speech</h2>
+            <p className="mt-2 leading-6 text-muted">
+              {speechAvailable
+                ? speechEnabled
+                  ? speechMuted
+                    ? 'Speech is enabled and muted.'
+                    : 'Speech is enabled for source status and provenance.'
+                  : 'Speech is off.'
+                : 'Browser speech is unavailable. Visible source status remains complete.'}
+            </p>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                aria-pressed={speechEnabled}
+                disabled={!speechAvailable}
+                onClick={() => {
+                  const nextEnabled = !speechEnabled;
+                  speechController?.setEnabled(nextEnabled);
+                  setSpeechEnabled(nextEnabled);
+                }}
+                className={CONTROL_CLASS}
+              >
+                {speechEnabled ? 'Disable speech' : 'Enable speech'}
+              </button>
+              <button
+                type="button"
+                aria-pressed={speechMuted}
+                disabled={!speechEnabled}
+                onClick={() => {
+                  const nextMuted = !speechMuted;
+                  speechController?.setMuted(nextMuted);
+                  setSpeechMuted(nextMuted);
+                }}
+                className={CONTROL_CLASS}
+              >
+                {speechMuted ? 'Unmute' : 'Mute'}
+              </button>
+              <button
+                type="button"
+                disabled={!speechEnabled || speechMuted}
+                onClick={() => speechController?.repeat()}
+                className={`col-span-2 ${CONTROL_CLASS}`}
+              >
+                Repeat source status
+              </button>
+            </div>
+            <p className="mt-4 text-sm leading-6 text-muted">
+              Speech never creates temperature, direction, guidance, or a safety assessment.
+            </p>
           </section>
 
           <section aria-labelledby="controls-title" className="rounded-2xl border border-line bg-panel p-5 md:p-6">
@@ -452,7 +565,7 @@ export default function ScanView() {
             </div>
 
             {!isReplay && error && (
-              <div role="alert" className="mt-5 rounded-xl border border-danger p-4">
+              <div className="mt-5 rounded-xl border border-danger p-4">
                 <div className="flex gap-3">
                   <span aria-hidden="true" className="text-2xl font-bold text-danger">!</span>
                   <div>

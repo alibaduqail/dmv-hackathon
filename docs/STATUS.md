@@ -1,6 +1,6 @@
 # STATUS.md — where the build actually is
 
-**Current baseline:** Phase 0 and the Phase 1D display-only browser implementation are committed on the Ember integration branch. Phase 1A closed with a calibrated-radiometry **no-go**. Phase 1D code and dependency-injected source-lifecycle verification are complete, but its hardware exit gate is **blocked** after the intended input did not play by the 16:15 cutoff. The Codex in-app browser reached a pending camera-permission request and could not present the permission surface, so no attached PureThermal label, stream settings, playback, or camera-indicator closure is claimed. Replay is the submission path unless the team explicitly reopens and passes the two-run gate before the 17:30 feature freeze. Radiometric bridge, assessment, and assessment speech remain blocked.
+**Current baseline:** Phase 0, the Phase 1D display-only browser implementation, and optional source-status speech are implemented. Phase 1A closed with a calibrated-radiometry **no-go**. Phase 1D code and dependency-injected source-lifecycle verification are complete, but its hardware exit gate is **blocked** after the intended input did not play by the 16:15 cutoff. The Codex in-app browser reached a pending camera-permission request and could not present the permission surface, so no attached PureThermal label, stream settings, playback, or camera-indicator closure is claimed. Replay is the submission path unless the team explicitly reopens and passes the two-run gate before the 17:30 feature freeze. Radiometric bridge, assessment, and assessment speech remain blocked; source speech announces operational status and provenance only.
 
 This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule) or `docs/DECISIONS.md` (the running log). It says what exists, what is next, and what remains unproven.
 
@@ -23,6 +23,7 @@ This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule
 | Preview session | `usePreviewSession` keeps Replay selected by default, composes both sources, owns the identity-guarded `<video>` sink, and clears both surfaces on switch/route/unmount |
 | Preview interface | Explicit Live selection, authorization disclosure/action, operator chooser, accessible controls/errors/Retry, persistent non-radiometric truth, sanitized active label/settings, and no-assessment copy |
 | Preview verification | Plain Node fakes cover replay isolation, discovery cleanup, exact matching, playback gating/failure, ended-track races, errors, late results, pause/resume, restart, the `stop()`/generation boundary, disconnect/devicechange, hidden/pagehide, detached playback-sink cleanup, and zero listener/track retention; React switching/routing remains code/manual evidence |
+| Source speech | Native Web Speech support is optional and defaults off; Enable, Mute, and Repeat announce only visible source status and provenance, with dedupe, a 2.5-second minimum interval, lifecycle cancellation, and fail-open TTS errors |
 | Phase 1D browser attempt | DOM/source-truth/pending-request-invalidation/mobile-target checks passed; OS/browser camera permission could not be completed in the in-app browser, so the attached-device gate is blocked |
 | Documentation | Product, atomic phased requirements, safety boundary, implemented schema, target architecture, schedule, demo, setup, references, and decisions describe Ember |
 | Collaboration | Repo-local `ember-collaboration` skill, partner onboarding, lane ownership, handoff template, and verified optional agent-tool guide |
@@ -34,11 +35,12 @@ This is the cold-start briefing. It does not repeat `docs/PLAN.md` (the schedule
 ```text
 npm run verify:replay  →  green
 npm run verify:preview →  green
+npm run verify:speech  →  green
 npm run lint           →  green
 npm run build          →  green
 ```
 
-Production build: 23 modules, 221.32 kB JavaScript / 68.00 kB gzip, 16.01 kB CSS / 4.19 kB gzip.
+Production build: 24 modules, 224.60 kB JavaScript / 68.93 kB gzip, 16.01 kB CSS / 4.19 kB gzip.
 
 ### What runs now
 
@@ -58,6 +60,7 @@ Production build: 23 modules, 221.32 kB JavaScript / 68.00 kB gzip, 16.01 kB CSS
 - The operator must choose an input. Start uses the private exact identity, verifies the active track identity, attaches locally, and reaches `streaming` only after `<video>.play()` resolves.
 - Pause stops tracks and clears `srcObject`; Resume reacquires. Stop, Restart, errors, switch, route change, hidden visibility, `pagehide`, unmount, and late results share the same cleanup/generation boundary.
 - Fixed visible errors include a non-color `!` symbol and explicit Retry. Raw exception messages and device/group identifiers never render.
+- Optional source speech defaults off. When enabled it announces the same visible source status and exact provenance; Mute affects audio only, Repeat replays the current source status, and no replay or preview pixels enter speech.
 
 `#history` renders an empty state and explains that live video, replay activity, and incidents are not stored.
 
@@ -104,7 +107,7 @@ If all required runs and cleanup checks are not completed before freeze, keep Ph
 - Replay timestamps are logical fixture timestamps: `startedAtMs + capturedAtOffsetMs`. Pausing delays delivery but does not rewrite capture offsets.
 - `usePreviewSession` is the focused local composition boundary; no global store exists.
 - No API, model endpoint, database, local storage, analytics, or cloud frame path exists.
-- A display-only live stream path exists, but no successful attached-device playback, live frame capture, assessment, warning, speech, history record, notification, smart plug, or relay is claimed.
+- A display-only live stream path exists, but no successful attached-device playback, live frame capture, assessment, warning, assessment speech, history record, notification, smart plug, or relay is claimed.
 - Display images and radiometric values are separate by contract. Replay has only the display side.
 - The attached sensor is thermal. A colorized webcam-compatible stream may contain RGB-formatted display pixels, but it is not a visible-light RGB sensor and its pixels are not temperature data.
 - Phase 1D is authorized only to display the local stream and source state. It may not snapshot, record, analyze the palette, infer heat direction, or speak guidance.

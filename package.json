@@ -12,7 +12,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "verify:replay": "node --experimental-strip-types scripts/verify-replay.ts",
-    "verify:preview": "node --experimental-strip-types scripts/verify-uvc-preview.ts"
+    "verify:preview": "node --experimental-strip-types scripts/verify-uvc-preview.ts",
+    "verify:speech": "node --experimental-strip-types scripts/verify-speech.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

@@ -4,12 +4,12 @@ Acceptance criteria for the repo. If a change does not improve a beat below or p
 
 Use a heating pad, reusable hand warmer, or warm mug. No exposed burner and no invitation for a judge to touch a heated object.
 
-The radiometric assessment sequence is blocked by Phase 1A and must not be used for this hackathon build. Phase 1D’s adapter/UI are implemented, but its attached-device gate is blocked after the intended input did not play by the 16:15 cutoff. Run the foundation/replay sequence for the submission. The display-only sequence below becomes available only if the team explicitly reopens the gate, completes two actual-browser playback/cleanup runs before the 17:30 feature freeze, and records the new evidence and decision. Never narrate implemented-but-unverified hardware behavior as working.
+The radiometric assessment sequence is blocked by Phase 1A and must not be used for this hackathon build. Optional speech may announce source status and provenance only; it never speaks heat guidance. Phase 1D’s adapter/UI are implemented, but its attached-device gate is blocked after the intended input did not play by the 16:15 cutoff. Run the foundation/replay sequence for the submission. The display-only sequence below becomes available only if the team explicitly reopens the gate, completes two actual-browser playback/cleanup runs before the 17:30 feature freeze, and records the new evidence and decision. Never narrate implemented-but-unverified hardware behavior as working.
 
 | Time | Beat | Depends on |
 |---|---|---|
 | 0:00–0:25 | Hold up the ordinary-looking object. “Residual heat has no reliable sound. Finding it by contact means finding it too late.” | object, pitch |
-| 0:25–0:45 | Open `#scan`. Explain that Ember is the accessible interface foundation for a handheld thermal companion. Source status is visible and announced. | accessible shell |
+| 0:25–0:45 | Open `#scan`, enable optional source speech, and explain that it repeats only the same visible status/provenance. Demonstrate Mute and Repeat without changing the visual state. | accessible shell, source speech |
 | 0:45–1:10 | Explicitly select Live preview, activate **Authorize cameras**, choose the intended PureThermal-labelled input, then Start. Show its active track label and **“Live thermal preview — non-radiometric”**. | Phase 1D only |
 | 1:10–1:35 | Point to **“Display-only colorized video. No temperature or safety assessment.”** and **“No current assessment”**. Say that Ember does not convert palette colors into warnings. | source truth |
 | 1:35–1:55 | Stop the preview. Show that the image clears and the camera indicator closes. | lifecycle, privacy |
@@ -29,7 +29,7 @@ Say:
 
 > “This is our self-contained interface fixture. It is simulated, not camera data, and it does not produce a safety assessment.”
 
-The viewport must display **“Demo replay — not live”** for the entire sequence. Demonstrate start, pause, resume, restart, and stop. Do not narrate PNG colors as temperatures.
+The viewport must display **“Demo replay — not live”** for the entire sequence. Enable source speech once, demonstrate exact spoken provenance, Mute, Repeat, start, pause, resume, restart, and stop. Do not narrate PNG colors as temperatures or call source speech an assessment.
 
 ---
 
@@ -116,5 +116,5 @@ Land on the visible replay provenance and stop.
 - **“Are you storing video?”** No. The implemented preview keeps any stream local, exposes no recording path, and stops all tracks on cleanup. Actual attached-device playback remains unverified. A reviewed submission recording may externally capture only a staged non-personal demo. The replay PNGs are committed simulated fixtures, and `#history` stores nothing.
 - **“Is the replay real camera output?”** No. It is a simulated interface fixture labelled on screen at all times.
 - **“Is the preview RGB?”** It may be carried as RGB-formatted display video, but the Lepton is a thermal sensor. Those colors are not calibrated temperature values.
-- **“Does the preview locate higher heat?”** No. It is display-only. Temperature, hotspot, direction, warning, and speech remain disabled.
+- **“Does the preview locate higher heat?”** No. It is display-only. Temperature, hotspot, direction, warning, and assessment speech remain disabled. Optional speech reports source status only.
 - **“Why no smart plug?”** The current build makes no warning and never controls the physical environment. A future radiometric product would warn the person rather than actuate an appliance.

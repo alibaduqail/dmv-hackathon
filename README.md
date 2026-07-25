@@ -17,8 +17,9 @@ The current repository is an accessible application with a clearly labelled simu
 - Pause stops live tracks and clears video; Resume reacquires. Stop, Restart, error, switch, route change, hidden/pagehide, unmount, and late results clean up through one generation boundary.
 - Live setup persistently says **“Live thermal preview — non-radiometric”**, **“Display-only colorized video. No temperature or safety assessment.”**, and **“No current assessment”**.
 - Status uses visible words and a non-color symbol.
+- Optional source speech defaults off and provides Enable, Mute, and Repeat for the same visible status/provenance; it never speaks heat guidance.
 - `#history` truthfully explains that video, replay activity, and incidents are not stored.
-- Preview/replay verification, lint, and production build are green.
+- Preview, replay, and source-speech verification, lint, and production build are green.
 - macOS identifies the attached GroupGets `PureThermal (fw:v1.3.0)` USB/UVC interfaces; the privacy-safe no-go evidence is documented.
 
 ## Run it
@@ -28,8 +29,6 @@ Requirements: Node.js 22.12 or newer and npm. If you use `nvm`, the committed `.
 ```sh
 git clone https://github.com/alibaduqail/dmv-hackathon.git
 cd dmv-hackathon
-git fetch origin
-git switch --track origin/codex/ember
 node --version
 npm ci
 npm run dev
@@ -42,6 +41,7 @@ Before handing off:
 ```sh
 npm run verify:replay
 npm run verify:preview
+npm run verify:speech
 npm run lint
 npm run build
 ```
@@ -60,7 +60,7 @@ Read [AGENTS.md](AGENTS.md) before changing code or copy.
 
 ## Collaborate
 
-The shared integration branch is `codex/ember`. Use short-lived branches for parallel work and let one integration owner push the shared branch.
+Create short-lived branches from `main` and integrate them through reviewed pull requests. Do not push feature work directly to `main`.
 
 - [Partner workflow](docs/COLLABORATION.md)
 - [Repo-local collaboration skill](.agents/skills/ember-collaboration/SKILL.md)

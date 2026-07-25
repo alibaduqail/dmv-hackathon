@@ -13,12 +13,11 @@ The goal is not to keep every agent busy. The goal is to reach Ember’s next de
 ```sh
 git clone https://github.com/alibaduqail/dmv-hackathon.git
 cd dmv-hackathon
-git fetch origin
-git switch --track origin/codex/ember
 node --version
 npm ci
 npm run verify:replay
 npm run verify:preview
+npm run verify:speech
 npm run lint
 npm run build
 ```
@@ -29,12 +28,13 @@ Preserve local work before switching. Then:
 
 ```sh
 git fetch origin
-git switch codex/ember
+git switch main
 git pull --ff-only
 node --version
 npm ci
 npm run verify:replay
 npm run verify:preview
+npm run verify:speech
 npm run lint
 npm run build
 ```
@@ -131,12 +131,12 @@ One owner controls a path at a time. A research or review agent should usually r
 
 ## 4. Branch and integration workflow
 
-`codex/ember` is the shared integration branch. Do not push feature work directly to `main`.
+`main` is the integration target. Do not push feature work directly to it.
 
 Create a short-lived branch from the latest integration state:
 
 ```sh
-git switch codex/ember
+git switch main
 git pull --ff-only
 git switch -c <initials>/<bounded-lane>
 ```
@@ -155,7 +155,7 @@ During the lane:
 2. Rebase or merge only after checking whether another owner touched the same files.
 3. Run the full shared verification gate before handoff.
 4. Give the integration owner the commit hash and handoff record.
-5. Let one integration owner update and push `codex/ember`.
+5. Push the short-lived branch and let one integration owner merge its reviewed pull request.
 
 Never force-push, rewrite shared history, or use destructive cleanup commands on a collaborator’s worktree.
 
@@ -189,6 +189,7 @@ Acceptance:
 <focused checks>
 npm run verify:replay
 npm run verify:preview
+npm run verify:speech
 npm run lint
 npm run build
 
@@ -299,6 +300,7 @@ A lane is ready to integrate when:
    ```sh
    npm run verify:replay
    npm run verify:preview
+   npm run verify:speech
    npm run lint
    npm run build
    ```

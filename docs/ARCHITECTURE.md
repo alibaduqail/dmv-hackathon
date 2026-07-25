@@ -51,7 +51,7 @@ usePreviewSession
 
     ✕ no fabricated ThermalFrame
     ✕ no canvas/snapshot/palette analysis
-    ✕ no assessment, warning, or speech
+    ✕ no assessment, warning, or assessment speech
 ```
 
 ```text
@@ -127,7 +127,8 @@ React may know the operator-selected surface, truthful provenance, and whether a
 | Loopback transport | **Blocked future layer.** Treat bytes as untrusted even on localhost. Validate origin, version, type, length, sequence, calibration state, and allocation size. |
 | `PureThermalSource` | **Blocked future layer.** Would convert structurally valid protocol messages into decoded radiometric frames and own temporary display resources. |
 | Assessment engine | **Blocked future layer.** Owns semantic/calibration/freshness narrowing and classification; no preview pixels can enter it. |
-| Safety presenter and speech | **Blocked future layers.** Render an existing validated assessment and cannot change its decision. |
+| Source speech | **Implemented source-only layer.** Renders visible operational status/provenance through optional browser speech; receives no frame, stream, or assessment data. |
+| Safety presenter and assessment speech | **Blocked future layers.** Render an existing validated assessment and cannot change its decision. |
 | Replay | Display/lifecycle fixture only. It is rejected from analysis at the provenance and validation gates. |
 | Logs, disk, cloud, agent memory | Outside the runtime frame-data boundary. Live streams, frames, screenshots, recordings, and radiometric arrays may not enter them, except for the reviewed external staged Phase 5 media artifact defined below. |
 
@@ -141,6 +142,7 @@ React may know the operator-selected surface, truthful provenance, and whether a
 | Preview session controller | Explicit source choice, viewport union, current status/provenance, media-element detachment, stale-result rejection | Device heuristics, pixel analysis, fabricated metadata |
 | `ThermalSource` adapters | Start/pause/resume/stop, frame delivery, status mapping, source resource cleanup | DOM, policy, speech, history |
 | `ScanView` | Render replay `<img>` or live `<video>`, exact provenance/status, and named controller actions | Construct sources, select an arbitrary camera, analyze pixels, retain stale state |
+| Source speech controller | Native feature detection, source-status dedupe, 2.5-second minimum interval, mute, repeat, cancellation, and fail-open TTS errors | Frames, streams, assessment decisions, heat guidance, or visual completeness |
 | Future native bridge | USB/Y16, calibration interpretation, Celsius conversion, orientation, display encoding, WebSocket framing | UI, thresholds, hotspots, speech, persistence |
 | Future bridge client | Handshake, message validation, binary decoding, protocol errors | React state, classification, source selection |
 | Future radiometric session | Active source, run identity, frame currentness, assessment expiry, analyzer reset | USB details, binary parsing, threshold implementation |
@@ -187,6 +189,7 @@ scripts/
   generate-replay-assets.mjs     deterministic fixture generator
   verify-replay.ts               source-level replay checks
   verify-uvc-preview.ts           fake MediaDevices and cleanup cases
+  verify-speech.ts                source speech lifecycle and failure checks
 
 src/
   types.ts                        implemented shared contracts
@@ -194,6 +197,7 @@ src/
   fixtures/replay.ts             replay manifest
   lib/thermal-source.ts           ReplayThermalSource
   lib/uvc-preview-source.ts       MediaDevices, private identity, generation, tracks
+  lib/speech.ts                   optional source-status speech controller
   features/scan/preview-playback-sink.ts
                                     retained video-element attachment and cleanup
   features/scan/usePreviewSession.ts
@@ -653,9 +657,20 @@ No current assessment is represented as `null`, not as a `ThermalAssessment` wit
 
 ---
 
-## 11. Blocked future safety presentation and assessment speech
+## 11. Implemented source speech and blocked assessment speech
 
-Assessment and copy have one path:
+The current speech path is deliberately narrower:
+
+```text
+visible source status + truthful provenance
+        │ formatReplayStatus / formatLivePreviewStatus
+        ▼
+optional native Web Speech
+```
+
+It defaults off, uses semantic source-status keys, enforces a 2.5-second minimum interval, keeps only the latest queued status, and cancels on replacement, route/unmount, hidden/pagehide, mute, or disable. Enable, Mute, and Repeat are visible native buttons. Missing or throwing browser speech leaves visual status unchanged. No replay frame, preview stream/pixel, or `ThermalAssessment` reaches this path.
+
+Future assessment and copy still have one separate path:
 
 ```text
 ThermalAssessment
@@ -677,9 +692,9 @@ The canonical pattern is observable and conservative:
 
 `AgentMessage` and free-form `SafetyAction.message` are reserved foundation seams, not the MVP decision path. Do not let them create parallel warning copy. Phase 2 may replace or narrow them around `SafetyPresentation` after a contract decision.
 
-### Speech renderer
+### Future assessment speech renderer
 
-Default Phase 2 adapter: browser Web Speech API, subject to offline rehearsal. No new runtime dependency is needed.
+The implemented source-status controller proves the browser Web Speech boundary without accepting assessment data. A future reopened Phase 2 may extend that boundary only after the assessment contract is current and validated; no new runtime dependency is needed.
 
 ```ts
 interface SpeechRenderer {
@@ -792,7 +807,8 @@ Keep verification dependency-free and proportionate:
 | current `verify:preview` | Replay camera isolation, fake MediaDevices, authorize/discover cleanup, opaque/exact-device selection, playback gate, already-ended and during-playback track races, late permission resolution, pause/reacquire, restart, disconnect/devicechange, the reusable `stop()`/generation boundary, hidden/pagehide handling, detached playback-sink cleanup, error mapping, and track/listener cleanup; it does not execute the React source-switch or router |
 | future bridge protocol verifier | Handshake, frame length/encoding, origin/version/error fixtures, credit/ack backpressure, timeout, sequence/run rejection, size ceiling, and resource-release spies |
 | future assessment verifier | Validator, clocks, connected regions, persistence/reset, expiry callback, boundaries, tie-break, replay/stale rejection, deterministic output |
-| future speech verifier | Pure formatter, dedupe, cancellation, mute, unavailable synthesizer through a fake adapter |
+| current `verify:speech` | Source provenance/status formatting, dedupe, minimum interval, stale replacement, cancellation, mute, repeat, and unavailable/throwing synthesizer |
+| future assessment-speech verifier | Canonical assessment formatter parity and assessment-currentness cancellation |
 | lint + build | Static integration and production compilation |
 | manual QA record | Hash reload, keyboard/focus/target size, VoiceOver, live regions, 200% zoom, narrow reflow, exact selected device, permission denial, camera indicator/track cleanup, device unplug, offline run |
 
@@ -819,7 +835,7 @@ Synthetic numeric assessment fixtures must be generated in code and clearly labe
 - Exact non-radiometric provenance and **“No current assessment”** persist throughout the Live-preview surface.
 - The in-app browser reached a pending camera-permission request, but its permission surface could not be presented. Ember logically invalidated that generation and would stop any late stream; no intended-device label, stream settings, playback, or camera-indicator closure was captured.
 - Replay is the submission path. The team may explicitly reopen the gate only before the 17:30 feature freeze and only by running the actual intended input through two complete playback/cleanup cycles in the operator’s demo browser and recording the new evidence.
-- Add no snapshot, recording, canvas, palette analysis, temperature, direction, warning, or speech.
+- Add no snapshot, recording, canvas, palette analysis, temperature, direction, warning, or assessment speech from preview pixels.
 
 ### Phase 1B — future transport and session, blocked
 
@@ -836,10 +852,11 @@ Synthetic numeric assessment fixtures must be generated in code and clearly labe
 - Add canonical safety presentation and visible assessment UI.
 - Do not classify replay.
 
-### Phase 2 — future assessment speech, blocked
+### Phase 2 — source speech implemented; assessment speech blocked
 
-- Add the speech renderer and controls.
-- Verify copy parity, cancellation, dedupe, mute, and failure.
+- Source-status renderer and controls are implemented without an assessment input.
+- Source truth, cancellation, dedupe, mute, repeat, and failure are verified.
+- Add canonical assessment formatting only after Phase 1C passes.
 - Add no model endpoint.
 
 ### Phase 3 — demo/accessibility QA

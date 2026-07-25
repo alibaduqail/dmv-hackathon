@@ -17,7 +17,7 @@ Two builders. **L** = integration/build lead. **D** = second developer. One owne
 | 1D — display-only UVC preview | 15:25–16:15 | Code complete; hardware gate blocked | `EMB-P1D-*` | Intended device did not play by cutoff; use Replay unless explicitly reopened and passed before freeze |
 | 1B — radiometric bridge/source | — | Blocked by 1A | `EMB-P1B-*` | Future only; do not implement at this hackathon |
 | 1C — deterministic assessment | — | Blocked by 1A/1B | `EMB-P1C-*` | Future only; no display-pixel substitute |
-| 2 — assessment speech | — | Blocked by 1C | `EMB-P2-*` | Future only; no spoken heat guidance |
+| 2 — speech | — | Source-status subset implemented; assessment speech blocked by 1C | `EMB-P2-*` | Operational status may speak; no spoken heat guidance |
 | 3 — demo/accessibility QA | 16:15–17:00 | Planned | `EMB-P3-*` | Both builders complete the locked demo and manual accessibility matrix |
 | 4 — offline/failure hardening | 17:00–17:30 | Planned | `EMB-P4-*` | Every completed path runs twice; all required checks pass |
 | **Feature freeze** | **17:30** | Hard stop | — | No product code changes |
@@ -29,7 +29,7 @@ Two builders. **L** = integration/build lead. **D** = second developer. One owne
 ```text
 1A hardware probe
   ├─ calibrated radiometry proven → 1B bridge → 1C assessment → 2 speech
-  │                                BLOCKED      BLOCKED         BLOCKED
+  │                                BLOCKED      BLOCKED         assessment speech BLOCKED
   └─ calibrated radiometry unavailable → 1D display-only UVC preview
                                                └─ 3 QA → 4 hardening → 5 package
 ```
@@ -41,7 +41,7 @@ No builder skips a gate. Phase 0 remains the independent labelled fallback. Phas
 At 15:25, Phase 1A was closed as a calibrated-radiometry no-go:
 
 1. Stop Y16 bridge, calibration, assessment, and assessment-speech implementation.
-2. Keep Phases 1B, 1C, and 2 blocked.
+2. Keep Phases 1B, 1C, and Phase 2 assessment speech blocked.
 3. Do not present synthetic assessment fixtures or colorized display pixels as camera temperature output.
 4. Use the remaining implementation window for Phase 1D display-only preview plus the existing replay fallback.
 5. Preserve the exact preview and replay truth statements in UI, demo, recording, and submission.
@@ -155,7 +155,7 @@ Owned paths: `src/features/scan/**`, `src/styles/**`, `src/App.tsx` only if rout
 - [x] Never leave a paused/stopped/error preview frame visible.
 - [x] Keep every control keyboard-operable, named, visibly focused, and at least 44 × 44 CSS pixels.
 - [x] Keep the assessment panel at **“No current assessment”**.
-- [x] Add no canvas, snapshot, recording, upload, storage, palette analysis, temperature, hotspot, direction, warning, or speech path.
+- [x] Add no canvas, snapshot, recording, upload, storage, palette analysis, temperature, hotspot, direction, warning, or assessment-speech path from preview pixels.
 
 ### Joint exit gate
 
@@ -286,35 +286,35 @@ Before L edits the scan presentation, D hands off the exact Phase 1B session-hoo
 
 **Outcome:** speech is an optional renderer of the same canonical structured state visible on screen.
 
-**State:** product assessment speech is blocked by Phase 1C. Do not speak heat guidance from Phase 1D pixels.
+**State:** optional source-status speech is implemented; product assessment speech remains blocked by Phase 1C. Do not speak heat guidance from Phase 1D pixels.
 
-Phase 1C is blocked. Do not add a formatter, product speech controls, synthetic assessment fixture, or staged warning during this hackathon. The rows below are retained as future work only.
+Phase 1C is blocked, so no assessment formatter, synthetic assessment fixture, or staged warning exists. The implemented subset announces only the visible operational status and truthful source provenance through the native Web Speech API.
 
 ### L — formatter and speech adapter
 
 - [ ] Define one pure assessment-to-`SafetyPresentation` formatter.
-- [ ] Implement browser speech feature detection behind a small adapter.
-- [ ] Deduplicate semantically equivalent current assessments.
-- [ ] Lock and verify a minimum announcement interval.
-- [ ] Cancel speech on replacement, expiry, pause, stop, error, switch, route change, page hide, and mute.
-- [ ] Verify through a fake synthesizer; add no model endpoint.
+- [x] Implement browser speech feature detection behind a small adapter.
+- [x] Deduplicate equivalent source-status presentations.
+- [x] Lock and verify a 2.5-second minimum announcement interval.
+- [x] Cancel source speech on replacement, source/route lifecycle changes, page hide, and mute.
+- [x] Verify through injected fakes; add no model endpoint.
 
 ### D — accessible controls and live regions
 
-- [ ] Add speech enable, Mute, and Repeat with visible state and accessible names.
-- [ ] Keep complete warning text + symbol when speech is unavailable or muted.
-- [ ] Use polite status for routine source changes and assertive output only for a new urgent validated warning.
-- [ ] Prevent duplicate VoiceOver and Ember speech announcements.
-- [ ] Announce replay provenance/source failure as status, never as an assessment.
+- [x] Add speech enable, Mute, and Repeat source-status controls with visible state and accessible names.
+- [x] Keep complete source text + symbol when speech is unavailable or muted.
+- [x] Use polite status for routine source changes; no urgent validated warning exists.
+- [x] Keep the source live region polite so TTS failure cannot remove assistive output; Ember speech defaults off.
+- [x] Announce replay provenance/source failure as status, never as an assessment.
 
 ### Exit gate
 
-- [ ] Applicable `EMB-P2-AC-*` scenarios pass and blocked live-only rows are labelled not applicable.
+- [x] Source-status speech verification passes; assessment-only rows remain blocked/not applicable.
 - [ ] On the live branch, visible and spoken copy match one structured live assessment.
-- [ ] Repetition, staleness, mute, and unavailable TTS behave correctly.
-- [ ] Replay may speak provenance but never thermal guidance.
+- [x] Source-status repetition, staleness, mute, and unavailable TTS behave correctly.
+- [x] Replay may speak provenance but never thermal guidance.
 
-No Phase 2 fallback is authorized for the current build.
+This does not pass the Phase 2 assessment-speech gate. A future passed Phase 1C must supply the canonical validated assessment before heat guidance can be formatted or spoken.
 
 ---
 
@@ -329,8 +329,8 @@ No architecture refactor begins in this phase.
 - [ ] Lock and record OS, browser/version, VoiceOver version, viewport, and commit.
 - [ ] Run every action from passed gates by keyboard only in a logical focus order.
 - [ ] Verify visible focus and 44 × 44 targets.
-- [ ] Test VoiceOver labels, state, provenance, and status; test warning and announcement count only if Phase 1C/2 passed.
-- [ ] Test with Ember speech muted, then enabled if Phase 2 passed.
+- [ ] With Ember speech muted, test VoiceOver labels, state, provenance, and source-status announcement count; test warnings only if Phase 1C passed.
+- [ ] In a separate pass, test implemented Ember source speech muted and enabled; test assessment speech only after its future gate passes.
 - [ ] Test 200% zoom and 320–390px reflow.
 - [ ] Verify replay images and any live `<video>` never receive keyboard focus or carry essential meaning.
 - [ ] Test with color unavailable and audio muted.
@@ -346,7 +346,7 @@ No architecture refactor begins in this phase.
 
 ### Exit gate
 
-- [ ] Applicable `EMB-P3-AC-*` scenarios pass; live warning/speech rows are marked blocked/not applicable when their upstream gate failed.
+- [ ] Applicable `EMB-P3-AC-*` scenarios pass; source-speech rows run, while live warning/assessment-speech rows are blocked/not applicable when their upstream gate failed.
 - [ ] Manual evidence identifies environment and limitations.
 - [ ] Both builders can explain what is live, simulated, verified, and planned.
 
@@ -370,7 +370,7 @@ No architecture refactor begins in this phase.
 - [ ] Reload `#scan` and `#history` with the network disconnected.
 - [ ] If Phase 1D passed, test permission denial, wrong/missing intended device, device in use, unplug, playback failure, late permission result, and hidden page.
 - [ ] If Phase 1D passed, deliberately switch failed Live preview → Replay and verify the stream, tracks, element attachment, and provenance are gone first.
-- [ ] If Phase 2 passed, verify the selected voice works without network or record app speech unavailable while visible output remains complete.
+- [ ] Verify source speech works without network or record app speech unavailable while visible output remains complete; assessment speech remains conditional on its future gate.
 - [ ] Update `docs/STATUS.md` with each gate marked passed, blocked, or not applicable and review the frozen candidate.
 
 ### Joint freeze gate

@@ -4,7 +4,7 @@
 
 **Product target in one line:** Ember would give blind and low-vision people a non-contact way to locate higher-heat areas before reaching toward them.
 
-**Hackathon MVP form:** a handheld Lepton 3.5 thermal camera on a PureThermal USB board, paired with a local web interface. The current build has an accessible labelled replay and an implemented display-only colorized UVC path; the attached-device gate is blocked after missing its 16:15 cutoff, so Replay is the submission path unless the team explicitly reopens and completes two actual-browser runs before the 17:30 freeze. Calibrated heat guidance and speech are blocked by the Phase 1A hardware result. Atomic acceptance and dependency gates live in `docs/REQUIREMENTS.md`; mutable phase timing lives in `docs/PLAN.md`.
+**Hackathon MVP form:** a handheld Lepton 3.5 thermal camera on a PureThermal USB board, paired with a local web interface. The current build has an accessible labelled replay, an implemented display-only colorized UVC path, and optional source-status speech; the attached-device gate is blocked after missing its 16:15 cutoff, so Replay is the submission path unless the team explicitly reopens and completes two actual-browser runs before the 17:30 freeze. Calibrated heat guidance and assessment speech are blocked by the Phase 1A hardware result. Atomic acceptance and dependency gates live in `docs/REQUIREMENTS.md`; mutable phase timing lives in `docs/PLAN.md`.
 
 ---
 
@@ -94,8 +94,9 @@ This repository reset builds the seam before the hardware path.
 - `UvcPreviewSource` with temporary authorization cleanup, opaque operator choices, private exact-device matching, playback gating, pause/reacquire, structured failure recovery, and complete media lifecycle cleanup.
 - A replay-frame/live-`MediaStream` viewport union; a live stream never fabricates thermal metadata.
 - Persistent live truth: **“Live thermal preview — non-radiometric”**, **“Display-only colorized video. No temperature or safety assessment.”**, and **“No current assessment”**.
+- Optional native speech for the same visible source status/provenance, defaulting off with Mute and Repeat.
 - `#history` with an honest empty state.
-- Build, lint, replay verification, and dependency-injected preview verification commands.
+- Build, lint, replay verification, dependency-injected preview verification, and source-speech verification commands.
 - A privacy-safe Phase 1A no-go report for the attached PureThermal UVC device.
 - A privacy-safe Phase 1D browser attempt that records pending permission and no playback claim.
 
@@ -105,7 +106,7 @@ This repository reset builds the seam before the hardware path.
 - PureThermal native radiometric bridge and calibrated live frames.
 - Radiometric hotspot analysis.
 - Severity thresholds.
-- Text-to-speech.
+- Assessment text-to-speech.
 - LLM explanation.
 - Alerts, notifications, or saved incidents.
 
@@ -153,7 +154,7 @@ Thresholds are configuration owned by deterministic code and must be validated w
 
 ### Spoken interaction
 
-Future speech repeats a validated structured assessment. It never outruns or replaces visible text. Phase 1D may use accessible browser status/live regions, but it must not speak heat guidance from display pixels.
+Current optional speech repeats visible source status and provenance only. Future assessment speech would repeat a validated structured assessment; it may never outrun or replace visible text. Neither replay nor Phase 1D display pixels can create spoken heat guidance.
 
 ---
 
@@ -235,7 +236,7 @@ Deterministic classification over validated radiometry remains mandatory for **a
 - Leaving the route cancels timers.
 - Replay provenance remains visible for the entire replay.
 - `#history` truthfully states that nothing is stored.
-- `npm run verify:replay`, `npm run verify:preview`, `npm run lint`, and `npm run build` pass.
+- `npm run verify:replay`, `npm run verify:preview`, `npm run verify:speech`, `npm run lint`, and `npm run build` pass.
 
 ### Target final hackathon MVP — only if Phase 1D is explicitly reopened and passes
 
